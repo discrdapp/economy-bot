@@ -35,7 +35,17 @@ class Shop(commands.Cog):
 			return 0
 
 	@shop.command()
-	async def buy(self, ctx, ID: int=0, amnt: int=1):
+	async def buy(self, ctx, ID, amnt: int=1):
+		try:
+			ID = int(ID)
+		except:
+			if ID == "crate" or ID == "crates":
+				ID = 1
+			elif ID == "key" or ID == "keys":
+				ID = 2
+			else:
+				ID = 100
+
 		if ID != 1 and ID != 2 and ID != 3 and ID != 7:
 			await ctx.send("Invalid item ID.")
 			await ctx.invoke(self.bot.get_command('shop'))
@@ -127,11 +137,11 @@ class Shop(commands.Cog):
 	async def sell(ctx, ID: int, amnt: int):
 		await ctx.send("WORK IN PROGRESS!")
 
-	@commands.group()
+	@commands.group(aliases=['open'])
 	async def crate(self, ctx):
 		# await ctx.send(".crate open 1*")
 		if ctx.invoked_subcommand is None:
-			await ctx.send(f"Open a crate to receive a prize. \nPossible prizes and their chance:\n\t\t**(30%)** 0-3 Crates\n\t\t**(30%)** 1-3 Keys\n\t\t**(20%)** 5000-10000{self.coin}\n\t\t**(20%)** 0 - 500{self.coin}\n.crate open *amnt*")
+			await ctx.send(f"Open a crate to receive a prize. \nPossible prizes and their chance:\n\t\t**(30%)** 0-3 Crates\n\t\t**(30%)** 1-3 Keys\n\t\t**(20%)** 5000-10000{self.coin}\n\t\t**(20%)** 0 - 500{self.coin}\n**.crate open *amnt***")
 
 
 	@crate.command()
