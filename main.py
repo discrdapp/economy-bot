@@ -27,8 +27,8 @@ async def get_prefix(bot, message):
 bot = commands.Bot(command_prefix = get_prefix, case_insensitive=True)
 bot.remove_command('help')
 
-extensions = ["cogs.admin", "cogs.economy", "cogs.roulette", "cogs.coinflip", "cogs.color_guesser", "cogs.daily", "cogs.slots", "cogs.ttt", "cogs.rps", 
-			  "cogs.bj", "cogs.crash", "cogs.xp", "cogs.totals", "cogs.error_handling", "cogs.shop", "cogs.user_settings", "cogs.others", "cogs.vote"] # list of cogs to call
+extensions = ["cogs.scratch", "cogs.admin", "cogs.economy", "cogs.roulette", "cogs.coinflip", "cogs.color_guesser", "cogs.daily", "cogs.slots", "cogs.ttt", "cogs.rps", 
+			  "cogs.bj", "cogs.crash", "cogs.xp", "cogs.totals", "cogs.error_handling", "cogs.shop", "cogs.user_settings", "cogs.others"] # list of cogs to call
 # took out "cogs.minesweeper"
 
 # async def background_loop():
