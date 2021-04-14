@@ -96,7 +96,7 @@ class Others(commands.Cog):
 
 		embed.add_field(name = ":gear: Other commands",
 					   value = "`credits`, `top`, `position`, `shop`, `stats`, "
-							 + "`profile`, `level`, `freemoney`, `rewards`", inline=False)
+							 + "`profile`, `level`, `freemoney`, `rewards`, `crate`", inline=False)
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `.claim` for free 7,500{self.coin}")
