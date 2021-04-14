@@ -22,7 +22,7 @@ class ErrorHandling(commands.Cog):
 			return
 
 		elif isinstance(error, commands.CommandNotFound):
-			lst = ["bal", "balance", "roulette", "crash", "bank", "blackjack", "coinflip", "crate", "credits", "earn", "free", "freemoney", "level", "position", "shop", "slot", "slots", "stats", "top"]
+			lst = ["bal", "balance", "roulette", "crash", "bank", "blackjack", "coinflip", "crate", "credits", "earn", "free", "freemoney", "level", "position", "shop", "slot", "slots", "stats", "top", "claim"]
 		#	embed.description = "Command not found!"
 			cmd = ctx.message.content.split()[0][1:]
 			try:
