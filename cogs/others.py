@@ -105,6 +105,14 @@ class Others(commands.Cog):
 						value = f"Your prefix is **{prefix}**\n\n***\*\*NEW\*\**** [Join official server](https://discord.gg/ggUksVN) and use `.claim` for free 7,500{self.coin}", inline=False)
 		await ctx.send(embed=embed)
 
+	@help.command()
+	async def bank(self, ctx):
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Store your credits in the bank", inline=False)
+		embed.add_field(name = "Usage", value="**.bank <deposit/withdraw> amount**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
+
 	# @help.command()
 	# async def roulette(self, ctx):
 	# 	prefix = await self.get_prefix(ctx)
@@ -135,7 +143,6 @@ class Others(commands.Cog):
 
 	# @help.command()
 	# async def coinflip(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
 	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
 	# 		description=f"Send money to someone else in the server.\nUsage: `+send <user> <amount>`\nUsage: {prefix}coinflip <sideBet> <betAmount>\nExample: {prefix}coinflip heads 100")
 	# 	await ctx.send(embed=embed)
