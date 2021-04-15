@@ -95,7 +95,7 @@ class Others(commands.Cog):
 							 + "`slots`, `coinflip`, `rps`, `colorguesser`")
 
 		embed.add_field(name = ":gear: Other commands",
-					   value = "`credits`, `top`, `position`, `shop`, `stats`, "
+					   value = "`credits`, `top`, `position`, `shop`, `stats`, `bank`, `claim`, "
 							 + "`profile`, `level`, `freemoney`, `rewards`, `crate`", inline=False)
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
