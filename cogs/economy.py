@@ -64,7 +64,7 @@ class Economy(commands.Cog):
 		await ctx.send(embed=embed)
 		
 
-	@commands.command(aliases=['bal', 'credits', 'bank'])
+	@commands.command(aliases=['bal', 'credits'])
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def balance(self, ctx):
 		""" Show your balance """
