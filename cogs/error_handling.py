@@ -34,6 +34,7 @@ class ErrorHandling(commands.Cog):
 
 
 		elif isinstance(error, commands.MissingRequiredArgument):
+			# await ctx.invoke(self.bot.get_command(f'help {ctx.command.name}'))
 			err = str(error.param)
 			err = err.replace("_", " ")
 			err = str(err.split(":")[0])
