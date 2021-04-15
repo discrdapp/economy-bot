@@ -35,7 +35,10 @@ class Bank(commands.Cog):
 
 
 	@bank.command()
-	async def withdraw(self, ctx, amnt:int=1):
+	async def withdraw(self, ctx, amnt):
+		if amnt < 0:
+			await ctx.send("You cannot withdraw a negative amount.")
+			return
 		if self.getBankBal(ctx.author.id) < amnt:
 			await ctx.send("You do not have enough funds in your bank to withdraw that amount.")
 			return
