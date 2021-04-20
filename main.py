@@ -27,7 +27,7 @@ async def get_prefix(bot, message):
 bot = commands.Bot(command_prefix = get_prefix, case_insensitive=True)
 bot.remove_command('help')
 
-extensions = ["cogs.bank", "cogs.scratch", "cogs.admin", "cogs.economy", "cogs.roulette", "cogs.coinflip", "cogs.color_guesser", "cogs.daily", "cogs.slots", "cogs.ttt", "cogs.rps", 
+extensions = ["cogs.miner", "cogs.bank", "cogs.scratch", "cogs.admin", "cogs.economy", "cogs.roulette", "cogs.coinflip", "cogs.color_guesser", "cogs.daily", "cogs.slots", "cogs.ttt", "cogs.rps", 
 			  "cogs.bj", "cogs.crash", "cogs.xp", "cogs.totals", "cogs.error_handling", "cogs.shop", "cogs.user_settings", "cogs.others"] # list of cogs to call
 # took out "cogs.minesweeper"
 
@@ -122,6 +122,8 @@ async def reload(ctx, extension):
 		lst = bot.extensions.copy()
 		for ext in lst:
 			try:
+				if ext == "cogs.daily":
+					continue
 				bot.reload_extension(ext)
 				print(f"Reloaded {ext}.")
 				# await ctx.send(f"Reloaded {ext}")
