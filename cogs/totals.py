@@ -9,6 +9,7 @@ import time
 import datetime
 import config
 from PIL import Image, ImageDraw, ImageFont
+from math import floor
 
 actualGame = ["Slt", "BJ", "Crsh", "RLTTE", "CF", "RPS"]
 
@@ -25,6 +26,10 @@ def log(discordID, creditsSpent, creditsWon, gameNumber, bal): # Logs what credi
 class Totals(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
+		self.gameBadge = 250
+		self.balBadge = 10000
+		self.profitBadge = 1000
+		self.lvlBadge = 5
 
 	@commands.command(pass_context=True)
 	async def profile(self, ctx):
@@ -39,22 +44,22 @@ class Totals(commands.Cog):
 					  FROM Totals
 					  WHERE DiscordID = '{ctx.author.id}';"""
 			cursor.execute(sql)
-			db.commit()
+			# db.commit()
 			getRow = cursor.fetchone()
 
 			profit = getRow[0]
 			games = getRow[1]
 
-			db.close()
+			# db.close()
 
-			db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-			cursor = db.cursor()
+			# db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
+			# cursor = db.cursor()
 
 			sql = f"""SELECT Credits, Level, XP
 					  FROM Economy
 					  WHERE DiscordID = '{ctx.author.id}';"""
 			cursor.execute(sql)
-			db.commit()
+			# db.commit()
 			getRow = cursor.fetchone()
 			db.close()
 			balance = getRow[0]
@@ -77,10 +82,35 @@ class Totals(commands.Cog):
 			embed.add_field(name = "Keys", value = f"{keys}", inline=True)
 
 			img = Image.open("./images/scroll.png")
+			if games >= self.gameBadge:
+				img250 = Image.open("./images/badges/250.png")
+				newSize = (60, 48)
+				img250 = img250.resize(newSize)
+				img.paste(img250, (100, 230), img250)
+
+			if balance >= self.balBadge:
+				img10k = Image.open("./images/badges/10k.png")
+				newSize = (75, 55)
+				img10k = img10k.resize(newSize)
+				img.paste(img10k, (200, 227), img10k)
+
+			if profit >= self.profitBadge:
+				img1k = Image.open("./images/badges/1k.png")
+				newSize = (75, 75)
+				img1k = img1k.resize(newSize)
+				img.paste(img1k, (320, 216), img1k)
+
+			if level >= self.lvlBadge:
+				img1k = Image.open("./images/badges/level5.png")
+				newSize = (75, 75)
+				img1k = img1k.resize(newSize)
+				img.paste(img1k, (430, 216), img1k)
+
 			font_type = ImageFont.truetype('arial.ttf',30)
 			draw = ImageDraw.Draw(img)
 			draw.text(xy=(125,100), text=f"{ctx.author.name}",fill=(170,126,0),font=font_type)
 			draw.text(xy=(375,100), text=f"Level {level}",fill=(170,126,0),font=font_type)
+			draw.text(xy=(100,185), text=f"Badges",fill=(170,126,0),font=font_type)
 			img.save("images/profile.png")
 			file = discord.File("images/profile.png", filename="image.png")
 			embed.set_image(url="attachment://image.png")
@@ -88,6 +118,58 @@ class Totals(commands.Cog):
 			await ctx.send(file=file, embed=embed)
 		except Exception as e:
 			print(e)
+
+
+	@commands.command()
+	async def badges(self, ctx):
+		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
+		cursor = db.cursor()
+
+		sql = f"""SELECT E.Credits, E.Level, T.Profit, T.Games
+				  FROM Economy E
+				  INNER JOIN Totals T
+				  ON E.DiscordID = T.DiscordID
+				  WHERE E.DiscordID = '{ctx.author.id}';"""
+
+		cursor.execute(sql)
+		getRow = cursor.fetchone()
+		db.close()
+		games = getRow[3]
+		balance = getRow[0]
+		profit = getRow[2]
+		level = getRow[1]
+
+		if games >= self.gameBadge:
+			gameMsg = ":white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark:" 
+		else:
+			gameMsg = "[][][][][][][][][][]"
+			for _ in range(0, floor(games/25)):
+				gameMsg = gameMsg.replace("[]",":white_check_mark:",1)
+		
+		if balance >= self.balBadge:
+			balMsg = ":white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark:"
+		else:	
+			balMsg = "[][][][][][][][][][]"
+			for _ in range(0, floor(balance/1000)):
+				balMsg = balMsg.replace("[]",":white_check_mark:",1)
+
+		if profit >= self.profitBadge:
+			profitMsg = ":white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark:" 
+		else:
+			profitMsg = "[][][][][][][][][][]"
+			for _ in range(0, floor(profit/100)):
+				profitMsg = profitMsg.replace("[]",":white_check_mark:" ,1)
+
+		if level >= self.lvlBadge:
+			lvlMsg = ":white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark:"
+		else:
+			lvlMsg = "[][][][][][][][][][]"	
+			for _ in range(0, level*2):
+				lvlMsg = lvlMsg.replace("[]",":white_check_mark:",1)
+
+		await ctx.send(f"Games Badge:\t\t {gameMsg}{self.gameBadge}\nBalance Badge:\t\t{balMsg}{self.balBadge}\nProfit Badge:\t\t    {profitMsg}{self.profitBadge}\nLevel Badge:\t\t     {lvlMsg}{self.lvlBadge}")
+
+
 
 
 
@@ -143,37 +225,16 @@ class Totals(commands.Cog):
 		cursor = db.cursor()
 
 		try:
-			if game == 0:
-				sql = f"""UPDATE Totals
-						  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, Slots = Slots + {profit}
-						  WHERE DiscordID = '{ctx.author.id}';"""
-						  
-			elif game == 1:
-				sql = f"""UPDATE Totals
-						  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, Blackjack = Blackjack + {profit}
-						  WHERE DiscordID = '{ctx.author.id}';"""
+			if game == 0: gameName = "Slots"		  
+			elif game == 1: gameName = "Blackjack"
+			elif game == 2: gameName = "Crash"
+			elif game == 3: gameName = "Roulette"
+			elif game == 4: gameName = "Coinflip"
+			elif game == 5: gameName = "RPS"
 
-
-			elif game == 2:
-				sql = f"""UPDATE Totals
-						  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, Crash = Crash + {profit}
-						  WHERE DiscordID = '{ctx.author.id}';"""
-
-			elif game == 3:
-				sql = f"""UPDATE Totals
-						  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, Roulette = Roulette + {profit}
-						  WHERE DiscordID = '{ctx.author.id}';"""
-
-			elif game == 4:
-				sql = f"""UPDATE Totals
-						  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, Coinflip = Coinflip + {profit}
-						  WHERE DiscordID = '{ctx.author.id}';"""
-
-
-			elif game == 5:
-				sql = f"""UPDATE Totals
-						  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, RPS = RPS + {profit}
-						  WHERE DiscordID = '{ctx.author.id}';"""
+			sql = f"""UPDATE Totals
+					  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, {gameName} = {gameName} + {profit}
+					  WHERE DiscordID = '{ctx.author.id}';"""
 
 
 			cursor.execute(sql)
