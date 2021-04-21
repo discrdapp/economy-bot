@@ -13,7 +13,7 @@ class Economy(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 
-	@commands.command(aliases=['begin', 'new'], pass_context=True)
+	@commands.command(aliases=['begin', 'new'])
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def start(self, ctx):
 		if not await self.accCheck(ctx.author):
@@ -43,7 +43,7 @@ class Economy(commands.Cog):
 		else:
 			await ctx.send("You are already registered, silly")
 
-	@commands.command(aliases=['reward'], pass_context=True)
+	@commands.command(aliases=['reward'])
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def rewards(self, ctx):
 		if not await self.accCheck(ctx.author):
@@ -132,7 +132,7 @@ class Economy(commands.Cog):
 				  FROM Economy
 				  WHERE DiscordID = '{discordID}';"""
 		cursor.execute(sql)
-		db.commit()
+		# db.commit()
 		getRow = cursor.fetchone()
 		donatorCheck = getRow[0] # assign donatorCheck to grabbed column DonatorCheck for the row that has {discordID}
 		db.close()
@@ -146,7 +146,7 @@ class Economy(commands.Cog):
 				  FROM Economy
 				  WHERE DiscordID = '{discordID}';"""
 		cursor.execute(sql)
-		db.commit()
+		# db.commit()
 		getRow = cursor.fetchone()
 		donatorReward = getRow[0] # assign donatorReward to grabbed column DonatorCheck for the row that has {discordID}
 		db.close()
@@ -161,7 +161,7 @@ class Economy(commands.Cog):
 				  FROM Economy
 				  WHERE DiscordID = '{user.id}';"""
 		cursor.execute(sql)
-		db.commit()
+		# db.commit()
 		getRow = cursor.fetchone()
 		multiplier = getRow[0]
 		db.close()
@@ -179,7 +179,7 @@ class Economy(commands.Cog):
 						  SET Credits = Credits - {amntBet}
 						  WHERE DiscordID = '{user.id}';"""
 				cursor.execute(sql)
-				db.commit()
+				# db.commit()
 				db.close()
 				return True # return 1 if user has enough $$$ to bet their amount entered
 			else:
@@ -209,7 +209,7 @@ class Economy(commands.Cog):
 				  FROM Economy
 				  WHERE DiscordID = '{user.id}';"""
 		cursor.execute(sql)
-		db.commit()
+		# db.commit()
 		getRow = cursor.fetchone()
 		db.close()
 		balance = getRow[0]
@@ -225,7 +225,7 @@ class Economy(commands.Cog):
 				  WHERE DiscordID = {user.id};"""
 
 		cursor.execute(sql)
-		db.commit()
+		# db.commit()
 		getRow = cursor.fetchone()
 		db.close()
 		crates = getRow[0]
@@ -251,7 +251,7 @@ class Economy(commands.Cog):
 		sql = f"""SELECT DiscordID, Credits
 				  FROM Economy"""
 		cursor.execute(sql) 
-		db.commit()
+		# db.commit()
 		records = cursor.fetchall() 
 		db.close()
 
@@ -285,7 +285,7 @@ class Economy(commands.Cog):
 		sql = f"""SELECT DiscordID, Credits
 				  FROM Economy"""
 		cursor.execute(sql) 
-		db.commit()
+		# db.commit()
 		records = cursor.fetchall() 
 		db.close()
 
@@ -326,7 +326,7 @@ class Economy(commands.Cog):
 				  WHERE DiscordID = '{user.id}';"""
 
 		cursor.execute(sql) 
-		db.commit()
+		# db.commit()
 
 		getRow = cursor.fetchone()
 		db.close()
