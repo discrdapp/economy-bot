@@ -34,25 +34,26 @@ class ErrorHandling(commands.Cog):
 
 
 		elif isinstance(error, commands.MissingRequiredArgument):
-			# await ctx.invoke(self.bot.get_command(f'help {ctx.command.name}'))
-			err = str(error.param)
-			err = err.replace("_", " ")
-			err = str(err.split(":")[0])
+			await ctx.invoke(self.bot.get_command(f'help {ctx.command.name}'))
+			return
+			# err = str(error.param)
+			# err = err.replace("_", " ")
+			# err = str(err.split(":")[0])
 
-			firstChar = err[0]
-			if firstChar.lower() in "aeiou" and err != "user":
-				a_an = "an"
-			else:
-				a_an = "a"
+			# firstChar = err[0]
+			# if firstChar.lower() in "aeiou" and err != "user":
+			# 	a_an = "an"
+			# else:
+			# 	a_an = "a"
 
-			if err == 'amntBet':
-				err = 'amount to bet'
-			elif err == 'sideBet':
-				err = 'side to vote for (heads or tails)'
-			elif err == 'newprefix':
-				err = 'new prefix'
-				a_an = "the"
-			embed.description = f"Please specify {a_an} {err} for this command to work."
+			# if err == 'amntBet':
+			# 	err = 'amount to bet'
+			# elif err == 'sideBet':
+			# 	err = 'side to vote for (heads or tails)'
+			# elif err == 'newprefix':
+			# 	err = 'new prefix'
+			# 	a_an = "the"
+			# embed.description = f"Please specify {a_an} {err} for this command to work."
 
 		elif isinstance(error, commands.TooManyArguments):
 			embed.description = "You have tried using this command with too many arguments."

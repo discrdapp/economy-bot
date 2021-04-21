@@ -113,88 +113,131 @@ class Others(commands.Cog):
 		embed.set_footer(text=f"User: {ctx.author.name}")
 		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def roulette(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description=f"Predict the characteristics that the number \nUsage: {prefix}roulette")
-	# 	await ctx.send(embed=embed)
+	@help.command()
+	async def roulette(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Bet on the characteristics that the number will land on", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}roulette**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def crash(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description=f"Play reaction-based roulette. No extra parameters necessary.\nUsage: {prefix}crash <betAmount>")
-	# 	await ctx.send(embed=embed)
+	@help.command()
+	async def crash(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Withdraw your funds before the stock market crashes!", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}crash <bet>**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def blackjack(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description=f"Play blackjack! Get your cards to 21 (without going over!) or beat the dealer to win!\nUsage: {prefix}blackjack <betAmount>")
-	# 	await ctx.send(embed=embed)
+	@help.command(aliases=['bj'])
+	async def blackjack(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Get your cards to 21 (without going over!) or beat the dealer to win!", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}blackjack <bet>**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def slots(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description=f"Buy something from the shop! Type +shop for more details.\nUsage: {prefix}slots <betAmount>")
-	# 	await ctx.send(embed=embed)
+	@help.command(aliases=['cg'])
+	async def colorguesser(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Play with friends. Everyone votes for a color the bot will pick.", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}colorguesser <bet>**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def coinflip(self, ctx):
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description=f"Send money to someone else in the server.\nUsage: `+send <user> <amount>`\nUsage: {prefix}coinflip <sideBet> <betAmount>\nExample: {prefix}coinflip heads 100")
-	# 	await ctx.send(embed=embed)
+	@help.command()
+	async def slots(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Play the slots and try to get the same fruit!", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}slots <bet>**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def credits(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description="Show the users with the most money in the server! You can also type `+lb`")
-	# 	await ctx.send(embed=embed)
+	@help.command()
+	async def rps(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Beat the computer in a classic game of Rock-Paper-Scissors", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}rps <rock/paper/scissors> <bet>**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def top(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description="Show the users with the most money in the server!")
-	# 	await ctx.send(embed=embed)
+	@help.command(aliases=["cf"])
+	async def coinflip(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Bet the side the coin will land on", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}coinflip <head/tails> <bet>**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def shop(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description="Try to commit a crime to earn some money.\nUsage: `+crime`")
-	# 	await ctx.send(embed=embed)
+	@help.command()
+	async def credits(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Look at your balance", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}credits**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def stats(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description="Risk some of your money to win some money.\nUsage: `+gamble <amount>`")
-	# 	await ctx.send(embed=embed)
+	@help.command()
+	async def top(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Show the users with the most money in the server!", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}top**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def profile(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description="Risk some of your money and play the slot machine.\nUsage: `+slots <amount>`")
-	# 	await ctx.send(embed=embed)
+	@help.command()
+	async def shop(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Buy something at the shop!", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}shop**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def level(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description="Claim your daily reward!")
-	# 	await ctx.send(embed=embed)
+	@help.command()
+	async def stats(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Check the statistics of the games you've played", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}stats**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
-	# @help.command()
-	# async def freemoney(self, ctx):
-	# 	prefix = await self.get_prefix(ctx)
-	# 	embed = discord.Embed(title=f"{self.bot.user.name} Help: {ctx.command.name}", color=0xdfe324, 
-	# 		description="Claim your daily reward!")
-	# 	await ctx.send(embed=embed)
+	@help.command()
+	async def profile(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="View your profile", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}profile**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
+
+	@help.command()
+	async def level(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Look at your level and your XP", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}level**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
+
+	@help.command()
+	async def freemoney(self, ctx):
+		prefix = await self.get_prefix(ctx)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Help", value="Look at all the ways to get free money!", inline=False)
+		embed.add_field(name = "Usage", value=f"**{prefix}freemoney**", inline=False)
+		embed.set_footer(text=f"User: {ctx.author.name}")
+		await ctx.send(embed=embed)
 
 
 def setup(bot):
