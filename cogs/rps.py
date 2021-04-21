@@ -104,7 +104,7 @@ class rps(commands.Cog):
 	# @rps.error
 	# async def rps_handler(self, ctx, error):
 	# 	embed = discord.Embed(color=0xff2020, title=f"{self.bot.user.name} Help Menu")
-	# 	embed.add_field(name = "`Syntax: /rps <choice> <bet>`", value = "_ _", inline=False)
+	# 	embed.add_field(name = "`Syntax: .rps <choice> <bet>`", value = "_ _", inline=False)
 	# 	embed.add_field(name = "__Verse the bot against some rock, paper, scissors__", value="_ _", inline=False)
 	# 	await ctx.send(embed=embed)
 	# 	print(error)
