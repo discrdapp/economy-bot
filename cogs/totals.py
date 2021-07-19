@@ -122,6 +122,9 @@ class Totals(commands.Cog):
 
 	@commands.command()
 	async def badges(self, ctx):
+		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
+			await ctx.send("Hello! Please type .start to create your wallet. :smiley:")
+			return
 		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
 		cursor = db.cursor()
 
