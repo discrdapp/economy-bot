@@ -34,6 +34,8 @@ class ErrorHandling(commands.Cog):
 
 
 		elif isinstance(error, commands.MissingRequiredArgument):
+			if ctx.command is None:
+				return
 			await ctx.invoke(self.bot.get_command(f'help {ctx.command.name}'))
 			return
 			# err = str(error.param)
@@ -91,7 +93,11 @@ class ErrorHandling(commands.Cog):
 			ch = self.bot.get_channel(790282020009148446)
 			if len(exc) > 1999:
 				await ch.send(f"{exc[:1999]}")
-				await ch.send(f"{exc[1999:]}")
+				if len(exc) > 3998:
+					await ch.send(f"{exc[1999:3998]}")
+					await ch.send(f"{exc[3998:]}")
+				else:
+					await ch.send(f"{exc[1999:]}")
 			else:
 				await ch.send(f"{exc}")
 			await ch.send(f"Error.\nCommand message: {ctx.message.content}\nUser: {ctx.author.id}")
