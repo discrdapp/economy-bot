@@ -6,7 +6,7 @@ It contains an economy system with a shop as well as an XP/Level system giving y
 
 Blackjack:  
 ![](https://i.imgur.com/vgokimI.png)  
-  
-  
-Roulette:  
-![](https://i.imgur.com/FVsN56y.png)
+      Roulette:  
+![](https://i.imgur.com/FVsN56y.png)  
+      Slots:  
+![](https://i.imgur.com/k58NEp8.png)
