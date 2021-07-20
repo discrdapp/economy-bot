@@ -9,4 +9,4 @@ Blackjack:
       Roulette:  
 ![](https://i.imgur.com/FVsN56y.png)  
       Slots:  
-![](https://i.imgur.com/k58NEp8.png)
+![](https://i.imgur.com/ndujf3c.png)
