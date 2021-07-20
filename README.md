@@ -18,3 +18,6 @@ Profile:
   
 Badges:  
 ![](https://i.imgur.com/P3YlZeM.png)
+  
+Stats:  
+![](https://i.imgur.com/IB7kCRo.png)
