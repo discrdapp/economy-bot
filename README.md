@@ -9,4 +9,4 @@ Blackjack:
   
   
 Roulette:  
-![](https://i.imgur.com/5w4wmjP.png)
+![](https://i.imgur.com/FVsN56y.png)
