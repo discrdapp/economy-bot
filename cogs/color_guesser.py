@@ -10,6 +10,7 @@ class CG(commands.Cog):
 
 
 	@commands.command(description="Play Color Guesser!", aliases=['cg', 'colorguess', 'guesscolor', 'guessercolor'], pass_context=True)
+	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, use_external_emojis=True)
 	async def colorguesser(self, ctx, amntBet: int):
 		users = list()
 		usersToRemove = list()
