@@ -22,7 +22,9 @@ class ErrorHandling(commands.Cog):
 			return
 
 		elif isinstance(error, commands.CommandNotFound):
-			lst = ["bal", "balance", "roulette", "crash", "bank", "blackjack", "coinflip", "crate", "credits", "earn", "free", "freemoney", "level", "position", "shop", "slot", "slots", "stats", "top", "claim"]
+			lst = [	"bal", "balance", "bank", "blackjack", 
+					"coinflip", "claim", "colorguesser", "credits", "crash", "crate", "earn", "free", "freemoney", 
+					"level", "position", "profile", "rewards", "roulette", "rps", "shop", "slot", "slots", "stats", "top"]
 		#	embed.description = "Command not found!"
 			cmd = ctx.message.content.split()[0][1:]
 			try:
@@ -37,6 +39,7 @@ class ErrorHandling(commands.Cog):
 			if ctx.command is None:
 				return
 			await ctx.invoke(self.bot.get_command(f'help {ctx.command.name}'))
+			ctx.command.reset_cooldown(ctx)
 			return
 			# err = str(error.param)
 			# err = err.replace("_", " ")
