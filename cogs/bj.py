@@ -22,7 +22,7 @@ class bj(commands.Cog):
 					  "♥ 1","♥ 2","♥ 3","♥ 4","♥ 5","♥ 6","♥ 7","♥ 8","♥ 9","♥ 10","♥ Jack","♥ Queen","♥ King",
 					  "♠ 1","♠ 2","♠ 3","♠ 4","♠ 5","♠ 6","♠ 7","♠ 8","♠ 9","♠ 10","♠ Jack","♠ Queen","♠ King"]
 
-	@commands.command(description="Play BlackJack!", aliases=['blackjack'], pass_context=True)
+	@commands.command(description="Play BlackJack!", aliases=['blackjack'])
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
 	@commands.cooldown(1, 5, commands.BucketType.user)	
 	async def bj(self, ctx, amntBet: int):
