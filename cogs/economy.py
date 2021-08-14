@@ -100,7 +100,7 @@ class Economy(commands.Cog):
 	@commands.command(aliases=['earn', 'free'])
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def freemoney(self, ctx):
-		await ctx.send("Here are all the commands you can type for free money:\n\t\t`.search`\n\t\t`.daily`")
+		await ctx.send("Here are all the commands you can type for free money:\n\t\t`.search`\n\t\t`.daily`\n\t\t`.weekly`\n\t\t`.monthly`")
 
 	@commands.command(aliases=['donate'])
 	@commands.cooldown(1, 5, commands.BucketType.user)
