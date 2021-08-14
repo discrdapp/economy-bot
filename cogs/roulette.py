@@ -21,6 +21,7 @@ class Roulette(commands.Cog):
 	async def roulette(self, ctx):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.send("Hello! Please type .start to create your wallet. :smiley:")
+			ctx.command.reset_cooldown(ctx)
 			return
 
 		msg = ctx.message
@@ -81,7 +82,7 @@ class Roulette(commands.Cog):
 				return user == author
 
 			try:
-				reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=15)
+				reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=30)
 			except:
 				embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 				await msg.edit(embed=embedError)
@@ -91,10 +92,10 @@ class Roulette(commands.Cog):
 				await msg.clear_reactions()
 				if str(reaction) == "🔢":
 					embedSelection.clear_fields()
-					embedSelection.add_field(name = f"{self.bot.user.name}' Casino | Roulette", value = f"Insert the number you'd like to bet on (0 - 36) and the amount of {self.coin} you're betting: \n*ex: typing 30 50\nwill bet 50{self.coin} on number 30*")
+					embedSelection.add_field(name = f"{self.bot.user.name}' Casino | Roulette", value = f"Insert the number you'd like to bet on (0 - 36) and the amount of {self.coin} you're betting: \n*ex: typing 30 50\nwill bet on number 30 with 50{self.coin}*")
 					await msg.edit(embed=embedSelection)
 					try:
-						numberBetMsg = await self.bot.wait_for('message', check=is_me, timeout=15)
+						numberBetMsg = await self.bot.wait_for('message', check=is_me, timeout=30)
 					except asyncio.TimeoutError:
 						embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 						await msg.edit(embed=embedError)
@@ -131,7 +132,7 @@ class Roulette(commands.Cog):
 					await msg.edit(embed=embedSelection)
 					await self.addRangeReactions(msg)
 					try:
-						reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=15)
+						reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=30)
 					except asyncio.TimeoutError:
 						embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 						await msg.edit(embed=embedError)
@@ -144,7 +145,7 @@ class Roulette(commands.Cog):
 							embedSelection.add_field(name = f"{self.bot.user.name}' Casino | Roulette", value = f"Insert how much you'd like to bet on {reaction}: ")
 							await msg.edit(embed=embedSelection)
 							try:
-								amntRangeBetMsg = await self.bot.wait_for('message', check=is_me, timeout=15)
+								amntRangeBetMsg = await self.bot.wait_for('message', check=is_me, timeout=30)
 							except asyncio.TimeoutError:
 								embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 								await msg.edit(embed=embedError)
@@ -178,7 +179,7 @@ class Roulette(commands.Cog):
 					await self.addColorReactions(msg)
 
 					try:
-						reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=15)
+						reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=30)
 					except asyncio.TimeoutError:
 						embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 						await msg.edit(embed=embedError)
@@ -191,7 +192,7 @@ class Roulette(commands.Cog):
 							embedSelection.add_field(name = f"{self.bot.user.name}' Casino | Roulette", value = f"Insert how much you'd like to bet on {reaction}: ")
 							await msg.edit(embed=embedSelection)
 							try:
-								amntColorBetMsg = await self.bot.wait_for('message', check=is_me, timeout=15)
+								amntColorBetMsg = await self.bot.wait_for('message', check=is_me, timeout=30)
 							except asyncio.TimeoutError:
 								embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 								await msg.edit(embed=embedError)
@@ -225,7 +226,7 @@ class Roulette(commands.Cog):
 					await self.addParityReactions(ctx, msg)
 					
 					try:
-						reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=15)
+						reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=30)
 					except asyncio.TimeoutError:
 						embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 						await msg.edit(embed=embedError)
@@ -238,7 +239,7 @@ class Roulette(commands.Cog):
 							embedSelection.add_field(name = f"{self.bot.user.name}' Casino | Roulette", value = f"Insert how much you'd like to bet on {reaction}: ")
 							await msg.edit(embed=embedSelection)
 							try:
-								amntParityBetMsg = await self.bot.wait_for('message', check=is_me, timeout=15)
+								amntParityBetMsg = await self.bot.wait_for('message', check=is_me, timeout=30)
 							except asyncio.TimeoutError:
 								embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 								await msg.edit(embed=embedError)
@@ -351,7 +352,7 @@ class Roulette(commands.Cog):
 					break # end roulette while loop
 
 				embed = discord.Embed(color=1768431, title=f"{self.bot.user.name}' Casino | Roulette")
-				embed.add_field(name = "Welcome to roulette, choose an option to bet on or choose start", value = "_ _", inline=True)
+				embed.add_field(name = "Welcome to roulette, choose an option to bet on or choose start by clicking the flag", value = "_ _", inline=True)
 				embed.add_field(name = "Current picks:", value = f"Number bet: {displayNumberBet}\nHigh/low bet: {displayRangeBet}\nColor bet: {displayColorBet}\nParity bet: {displayParityBet}", inline=True)
 				embed.add_field(name = "Previous Numbers:", value = f"{nums}_ _", inline=True)
 				await msg.edit(embed=embed)
