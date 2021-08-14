@@ -24,6 +24,7 @@ class Slots(commands.Cog):
 		
 		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
 			await ctx.send("Hello! You either need to type .start to create your wallet or you do not have enough to bet that much. :smiley:")
+			ctx.command.reset_cooldown(ctx)
 			return
 
 		emojis = "🍎🍋🍇🍓🍒🍊"
