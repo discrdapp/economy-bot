@@ -43,7 +43,7 @@ class Crash(commands.Cog):
 		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, bet): # checks to see if they have {bet} amount
 			await ctx.send("You either do not have enough to bet that amount or you have not made an account with `.start`")
 			return
-		
+
 
 		self.amntBet = round(bet)
 		self.userId = ctx.author.id
@@ -51,13 +51,13 @@ class Crash(commands.Cog):
 
 		pC = random.randint(1, 10)
 
-		if 1 <= pC <= 4:	self.crashNum = 1.2 								# 40%
-		elif 5 <= pC <= 7:	self.crashNum = round(random.uniform(1.3, 1.4), 1)	# 30% 
-		elif 8 <= pC <= 9:	self.crashNum = round(random.uniform(1.4, 1.8), 1)	# 20%
-		else:	 			self.crashNum = round(random.uniform(1.8, 2.6), 1)	# 10%
-
-		if int(self.crashNum * 10) % 2 == 1: # if crash num is odd (ex: 1.3), make it even (ex: 1.4)
-			self.crashNum = round(self.crashNum + 0.1, 1)
+		if 1 <= pC <= 3:	self.crashNum = 1.2 								# 30%
+		elif 4 <= pC <= 5:	self.crashNum = 1.4									# 20% 
+		elif 6 <= pC <= 8:	self.crashNum = random.choice([1.6, 1.8])			# 30%
+		elif pC == 9:		self.crashNum = random.choice([1.8, 2.0, 2.2, 2.4])	# 10%
+		elif pC == 10:	 	
+			self.crashNum = round(random.uniform(2.6, 12.0), 1)					# 10%
+			if int(self.crashNum * 10) % 2 == 1: self.crashNum = round(self.crashNum + 0.1, 1)
 
 		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name}' Casino | Crash")
 		embed.set_footer(text="Use .done to stop")
@@ -78,7 +78,7 @@ class Crash(commands.Cog):
 			multi = self.bot.get_cog("Economy").getMultiplier(ctx.author)
 			profitInt = 0
 			
-			if self.crash == False: # if they .stop it before it crashes 
+			if not self.crash: # if they .stop it before it crashes 
 				profitInt = int(self.amntBet * self.multiplier - self.amntBet) 
 				moneyToAdd = int(self.amntBet + profitInt)
 				profit = f"**{profitInt}** (+**{int(profitInt * (multi - 1))}**)"
@@ -95,7 +95,11 @@ class Crash(commands.Cog):
 			
 
 			embed.add_field(name = f"Crashed at", value = f"{str(self.multiplier)}x", inline=True)
+
 			embed.add_field(name = "Profit", value = f"{profit}", inline=True)
+
+			if not self.crash:
+				embed.add_field(name = f"Would've crashed at {self.crashNum}", value="_ _", inline=False)
 			embed.add_field(name = "Credits",
 								value = f"You have {balance} credits", inline=False)
 
