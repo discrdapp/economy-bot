@@ -128,6 +128,7 @@ class Others(commands.Cog):
 		embed = discord.Embed(color=1768431)
 		embed.add_field(name = "Help", value="Withdraw your funds before the stock market crashes!", inline=False)
 		embed.add_field(name = "Usage", value=f"**{prefix}crash <bet>**", inline=False)
+		embed.add_field(name = "Chances", value=f"1.0x is 30%\n1.2x is 20%\n1.4x - 1.6x is 30%\n1.6x - 2.4x is 10%\n2.4x - 10.0x is 10%", inline=False)
 		embed.set_footer(text=f"User: {ctx.author.name}")
 		await ctx.send(embed=embed)
 
