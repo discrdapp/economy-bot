@@ -20,9 +20,7 @@ class Roulette(commands.Cog):
 	@commands.cooldown(1, 1, commands.BucketType.user)
 	async def roulette(self, ctx):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.send("Hello! Please type .start to create your wallet. :smiley:")
-			ctx.command.reset_cooldown(ctx)
-			return
+			await ctx.invoke(self.bot.get_command('start'))
 
 		msg = ctx.message
 		channel = msg.channel

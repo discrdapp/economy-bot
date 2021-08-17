@@ -21,8 +21,17 @@ class rps(commands.Cog):
 			await ctx.send("Incorrect choice. Possible choices are rock, paper, and scissors.")
 			return
 
+		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
+			await ctx.invoke(self.bot.get_command('start'))
+
 		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
-			await ctx.send("Hello! You either need to type .start to create your wallet or you do not have enough to bet that much. :smiley:")
+			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | RPS")
+			embed.set_thumbnail(url=ctx.author.avatar_url)
+			embed.add_field(name="ERROR", value="You do not have enough to do that.")
+
+			embed.set_footer(text=ctx.author)
+
+			await ctx.send(embed=embed)
 			return
 			
 		botChoice = random.choice(['rock', 'paper', 'scissors'])

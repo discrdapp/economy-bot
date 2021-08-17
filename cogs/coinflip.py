@@ -18,6 +18,8 @@ class Coinflip(commands.Cog):
 		# if sideBet == None or amntBet == None:
 		# 	await ctx.invoke(self.bot.get_command('help coinflip'))
 		# 	return
+		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
+			await ctx.invoke(self.bot.get_command('start'))
 
 		sideBet = sideBet.lower()
 		if sideBet.find("heads") != -1:
@@ -41,7 +43,13 @@ class Coinflip(commands.Cog):
 				return
 
 			if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
-				await ctx.send("You do not have enough money for this.")
+				embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Coinflip")
+				embed.set_thumbnail(url=ctx.author.avatar_url)
+				embed.add_field(name="ERROR", value="You do not have enough to do that.")
+
+				embed.set_footer(text=ctx.author)
+
+				await ctx.send(embed=embed)
 				return
 
 			if not await self.bot.get_cog("Economy").subtractBet(user, amntBet):
@@ -80,7 +88,13 @@ class Coinflip(commands.Cog):
 		###################
 
 		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
-			await ctx.send("You either do not have enough money for this or you need to type .start ")
+			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Coinflip")
+			embed.set_thumbnail(url=ctx.author.avatar_url)
+			embed.add_field(name="ERROR", value="You do not have enough to do that.")
+
+			embed.set_footer(text=ctx.author)
+
+			await ctx.send(embed=embed)
 			return
 
 

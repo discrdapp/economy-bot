@@ -40,8 +40,17 @@ class Crash(commands.Cog):
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def crash(self, ctx, bet: int): # actual command
-		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, bet): # checks to see if they have {bet} amount
-			await ctx.send("You either do not have enough to bet that amount or you have not made an account with `.start`")
+		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
+			await ctx.invoke(self.bot.get_command('start'))
+
+		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, bet):
+			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Crash")
+			embed.set_thumbnail(url=ctx.author.avatar_url)
+			embed.add_field(name="ERROR", value="You do not have enough to do that.")
+
+			embed.set_footer(text=ctx.author)
+
+			await ctx.send(embed=embed)
 			return
 
 

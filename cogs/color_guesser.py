@@ -34,6 +34,8 @@ class CG(commands.Cog):
 		# take out credits and create list of users who don't have enough credits (or have not typed .start)
 		msg = ""
 		for user in users:
+			if not await self.bot.get_cog("Economy").accCheck(ctx.author):
+				await ctx.invoke(self.bot.get_command('start'))
 			if not await self.bot.get_cog("Economy").subtractBet(user, amntBet):
 				usersToRemove.append(user)
 				msg += f"{user.mention}\n"
@@ -42,7 +44,7 @@ class CG(commands.Cog):
 		if usersToRemove:
 			for user in usersToRemove:
 				users.remove(user)
-			msg += f"You have not typed .start OR you do not have {amntBet} or more credits. You have been removed from this game."
+			msg += f"You do not have {amntBet} or more credits. You have been removed from this game."
 
 			await ctx.send(msg)
 

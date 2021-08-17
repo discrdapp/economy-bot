@@ -40,8 +40,17 @@ class Bank(commands.Cog):
 				await ctx.send("Incorrect withdrawal amount.")
 				return
 
+		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
+			await ctx.invoke(self.bot.get_command('start'))
+
 		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amnt):
-			await ctx.send("You either don't have enough or you haven't made an account with `.start`")
+			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
+			embed.set_thumbnail(url=ctx.author.avatar_url)
+			embed.add_field(name="ERROR", value="You do not have enough to do that.")
+
+			embed.set_footer(text=ctx.author)
+
+			await ctx.send(embed=embed)
 			return
 
 		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)

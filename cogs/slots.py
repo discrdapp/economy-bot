@@ -22,9 +22,17 @@ class Slots(commands.Cog):
 	async def slots(self, ctx, amntBet: int):
 		coin = "<:coins:585233801320333313>"
 		
+		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
+			await ctx.invoke(self.bot.get_command('start'))
+
 		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
-			await ctx.send("Hello! You either need to type .start to create your wallet or you do not have enough to bet that much. :smiley:")
-			ctx.command.reset_cooldown(ctx)
+			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Slots")
+			embed.set_thumbnail(url=ctx.author.avatar_url)
+			embed.add_field(name="ERROR", value="You do not have enough to do that.")
+
+			embed.set_footer(text=ctx.author)
+
+			await ctx.send(embed=embed)
 			return
 
 		emojis = "🍎🍋🍇🍓🍒🍊"
