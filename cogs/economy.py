@@ -47,8 +47,7 @@ class Economy(commands.Cog):
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def rewards(self, ctx):
 		if not await self.accCheck(ctx.author):
-			await ctx.send("Hello! Please type .start to create your wallet. :smiley:")
-			return
+			await ctx.invoke(self.bot.get_command('start'))
 
 		dailyReward = await self.bot.get_cog("Daily").getDailyReward(ctx)
 		multiplier = self.getMultiplier(ctx.author)
@@ -56,6 +55,8 @@ class Economy(commands.Cog):
 		embed = discord.Embed(color=1768431)
 		embed.add_field(name = "Daily", value = f"{dailyReward}{self.coin}", inline=True)
 		embed.add_field(name = "Multiplier", value = f"{multiplier}x", inline=True)
+		embed.add_field(name = "Weekly", value = f"12500{self.coin}", inline=False)
+		embed.add_field(name = "Monthly", value = f"36000{self.coin}", inline=True)
 
 		if self.isDonator(ctx.author.id):
 			embed.add_field(name = "_ _\nDonator Reward", value = f"{self.getDonatorReward(ctx.author.id)}{self.coin}", inline=False)
@@ -68,35 +69,34 @@ class Economy(commands.Cog):
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def balance(self, ctx):
 		""" Show your balance """
-		if await self.accCheck(ctx.author) == True:
-			balance = await self.getBalance(ctx.author)
-			crates, keys = await self.getInventory(ctx.author)
-			embed = discord.Embed(color=1768431)
-			embed.add_field(name = "Credits", value = f"You have **{balance}**{self.coin}", inline=False)
-			embed.add_field(name = "_ _\nCrates", value = f"You have **{crates}** crates", inline=True)
-			embed.add_field(name = "_ _\nKeys", value = f"You have **{keys}** keys", inline=True)
-			embed.set_footer(text="Use `.search` or `.daily` to get credits")
-			await ctx.send(embed=embed)
-		else:
-			await ctx.send("Hello! Please type .start to create your wallet. :smiley:")
+		if not await self.accCheck(ctx.author):
+			await ctx.invoke(self.bot.get_command('start'))
 
+		balance = await self.getBalance(ctx.author)
+		crates, keys = await self.getInventory(ctx.author)
+		embed = discord.Embed(color=1768431)
+		embed.add_field(name = "Credits", value = f"You have **{balance}**{self.coin}", inline=False)
+		embed.add_field(name = "_ _\nCrates", value = f"You have **{crates}** crates", inline=True)
+		embed.add_field(name = "_ _\nKeys", value = f"You have **{keys}** keys", inline=True)
+		embed.set_footer(text="Use .search, .daily, .weekly, and .monthly to get credits")
+		await ctx.send(embed=embed)
+		
 	@commands.command()
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def search(self, ctx):
-		if await self.accCheck(ctx.author) == True:
-			if await self.getBalance(ctx.author) < 100:
-				amnt = random.randint(50, 250)
-				await self.addWinnings(ctx.author.id, amnt)
-				balance = await self.getBalance(ctx.author)
-				
-				embed = discord.Embed(color=1768431)
-				embed.add_field(name = f"You found {amnt}{self.coin}", value = f"You have {balance}{self.coin}", inline=False)
-				await ctx.send(embed=embed)
-			else:
-				await ctx.send(ctx.author.mention + f", you can't use this if you have over 100{self.coin}.")
+		if await self.accCheck(ctx.author):
+			await ctx.invoke(self.bot.get_command('start'))
+		if await self.getBalance(ctx.author) < 100:
+			amnt = random.randint(50, 250)
+			await self.addWinnings(ctx.author.id, amnt)
+			balance = await self.getBalance(ctx.author)
+			
+			embed = discord.Embed(color=1768431)
+			embed.add_field(name = f"You found {amnt}{self.coin}", value = f"You have {balance}{self.coin}", inline=False)
+			await ctx.send(embed=embed)
 		else:
-			await ctx.send("Hello! Please type .start to create your wallet. :smiley:")
-
+			await ctx.send(ctx.author.mention + f", you can't use this if you have over 100{self.coin}.")
+		
 	@commands.command(aliases=['earn', 'free'])
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def freemoney(self, ctx):
@@ -275,8 +275,7 @@ class Economy(commands.Cog):
 			usr = ctx.author
 
 		if not await self.accCheck(ctx.author):
-			await ctx.send("Hello! Please type .start to create your wallet. :smiley:")
-			return
+			await ctx.invoke(self.bot.get_command('start'))
 
 		name = usr.name
 
