@@ -148,7 +148,7 @@ class Shop(commands.Cog):
 		# await ctx.send(".crate open 1*")
 		if ctx.invoked_subcommand is None:
 			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Open a crate to receive a prize!")
-			embed.add_field(name="Possible prizes and their chances:", value=f"**(30%)** 0-3 Crates\n**(30%)** 1-3 Keys\n**(20%)** 5000-10000{self.coin}\n**(20%)** 0 - 500{self.coin}\nMore coming soon...")
+			embed.add_field(name="Possible prizes and their chances:", value=f"**(30%)** 0-3 Crates\n**(30%)** 1-3 Keys\n**(20%)** 5000-12500{self.coin}\n**(20%)** 0 - 500{self.coin}\nMore coming soon...")
 			embed.set_footer(text=".crate open")
 			embed.set_thumbnail(url=ctx.author.avatar_url)
 
@@ -157,54 +157,63 @@ class Shop(commands.Cog):
 
 	@crate.command()
 	async def open(self, ctx, amnt=1):
-		if await self.bot.get_cog("Economy").accCheck(ctx.author) == True:
-			crates, keys = await self.bot.get_cog("Economy").getInventory(ctx.author)
-			if crates < amnt:
-				await ctx.send(f"{ctx.author.mention}, you only have {crates} crates. You cannot open {amnt} crate(s).")
-			elif keys < amnt:
-				await ctx.send(f"{ctx.author.mention}, you only have {keys} keys. You cannot open {amnt} key(s).")
-			elif amnt > 0:
-				await self.bot.get_cog("Economy").subtractInv(ctx.author.id, amnt)
-				
-				crates = crates - amnt
-				keys = keys - amnt
-				for x in range(0, amnt):
-					choice = random.randint(1, 10)
-					if choice <= 3:
-						amnt = random.randint(0, 3)
-						await ctx.send(f"You found {amnt} crates!")
-						crates += amnt
+		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
+			await ctx.invoke(self.bot.get_command('start'))
 
-					elif choice <= 6:
-						amnt = random.randint(1, 3)
-						await ctx.send(f"You found {amnt} keys!")
-						keys += amnt
+		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Shop")
+		embed.set_thumbnail(url=ctx.author.avatar_url)
 
-					elif choice <= 8:
-						bal = random.randint(5000, 10000)
-						await ctx.send(f"You found {bal}{self.coin}!")
-						await self.bot.get_cog("Economy").addWinnings(ctx.author.id, bal)
-						
-					elif choice <= 10:
-						bal = random.randint(0, 500)
-						await ctx.send(f"You found {bal}{self.coin}!")
-						await self.bot.get_cog("Economy").addWinnings(ctx.author.id, bal)
+		crates, keys = await self.bot.get_cog("Economy").getInventory(ctx.author)
+		if crates < amnt:
+			embed.add_field(name="Invalid Amount", value=f"{ctx.author.mention}, you only have {crates} crates. You cannot open {amnt} crate(s).")
+			embed.set_footer(text="Buy more crates from the shop!")
+		elif keys < amnt:
+			embed.add_field(name="Invalid Amount", value=f"{ctx.author.mention}, you only have {keys} keys. You cannot use {amnt} key(s).")
+			embed.set_footer(text="Buy more keys from the shop!")
+		elif amnt > 0:
+			await self.bot.get_cog("Economy").subtractInv(ctx.author.id, amnt)
+			
+			crates = crates - amnt
+			keys = keys - amnt
+			for x in range(0, amnt):
+				choice = random.randint(1, 10)
+				if choice <= 3:
+					amnt = random.randint(0, 3)
+					embed.add_field(name="Crate opened...", value=f"You found {amnt} crates!")
+					crates += amnt
 
-				db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-				cursor = db.cursor()
-				sql = f"""UPDATE Inventory
-						  SET Crates = {crates}, Keyss = {keys}
-						  WHERE DiscordID = '{ctx.author.id}';"""
-				cursor.execute(sql)
-				db.commit()
+				elif choice <= 6:
+					amnt = random.randint(1, 3)
+					embed.add_field(name="Crate opened...", value=f"You found {amnt} keys!")
+					keys += amnt
 
-				db.close()
+				elif choice <= 8:
+					bal = random.randint(5000, 12500)
+					embed.add_field(name="Crate opened...", value=f"You found {bal}{self.coin}!")
+					await self.bot.get_cog("Economy").addWinnings(ctx.author.id, bal)
+					
+				elif choice <= 10:
+					bal = random.randint(0, 500)
+					embed.add_field(name="Crate opened...", value=f"You found {bal}{self.coin}!")
+					await self.bot.get_cog("Economy").addWinnings(ctx.author.id, bal)
+			await ctx.send(embed=embed)
 
-				await ctx.invoke(self.bot.get_command('balance'))
-			else:
-				await ctx.send(f"\n{ctx.author.mention}, you cannot open a negative amount of crates.")
+			db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
+			cursor = db.cursor()
+			sql = f"""UPDATE Inventory
+					  SET Crates = {crates}, Keyss = {keys}
+					  WHERE DiscordID = '{ctx.author.id}';"""
+			cursor.execute(sql)
+			db.commit()
+
+			db.close()
+
+			await ctx.invoke(self.bot.get_command('balance'))
+			return
 		else:
-			await ctx.send("Hello! Please type $start to create your wallet. :smiley:")
+			embed.add_field(name="Invalid Amount", value=f"{ctx.author.mention}, you cannot open a negative amount of crates.")
+
+		await ctx.send(embed=embed)
 
 
 
