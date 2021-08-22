@@ -99,8 +99,10 @@ class Bank(commands.Cog):
 		await ctx.send(f"Successfully withdrew {amnt}{self.coin}!")
 
 
-	@bank.command(aliases=['status', 'stat', 'stats'])
+	@bank.command(aliases=['status', 'stat', 'stats', 'bal'])
 	async def balance(self, ctx):
+		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
+			await ctx.invoke(self.bot.get_command('start'))
 		await ctx.send(f"You have {self.getBankBal(ctx.author.id)}{self.coin} in your bank.")
 
 	def getBankBal(self, discordID):
