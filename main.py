@@ -9,10 +9,6 @@ import json
 
 import ztoken
 
-# intents = discord.Intents.default()
-# intents.members = True
-# intents.reactions = True
-
 async def get_prefix(bot, message):
 	with open(r"prefix.json", 'r') as f:
 		prefixFile = json.load(f)
@@ -27,8 +23,9 @@ async def get_prefix(bot, message):
 bot = commands.Bot(command_prefix = get_prefix, case_insensitive=True)
 bot.remove_command('help')
 
-extensions = ["cogs.miner", "cogs.bank", "cogs.scratch", "cogs.admin", "cogs.economy", "cogs.roulette", "cogs.coinflip", "cogs.color_guesser", "cogs.daily", "cogs.slots", "cogs.ttt", "cogs.rps", 
-			  "cogs.bj", "cogs.crash", "cogs.xp", "cogs.totals", "cogs.error_handling", "cogs.shop", "cogs.user_settings", "cogs.others"] # list of cogs to call
+extensions = ["cogs.admin", "cogs.bank", "cogs.bj", "cogs.coinflip", "cogs.color_guesser", "cogs.crash",
+			  "cogs.daily", "cogs.economy", "cogs.error_handling", "cogs.miner", "cogs.others", "cogs.roulette", "cogs.rps", 
+			  "cogs.scratch", "cogs.shop", "cogs.slots", "cogs.totals", "cogs.ttt", "cogs.user_settings", "cogs.utilities", "cogs.vote", "cogs.xp"] # list of cogs to call
 # took out "cogs.minesweeper"
 
 # async def background_loop():
@@ -122,7 +119,7 @@ async def reload(ctx, extension):
 		lst = bot.extensions.copy()
 		for ext in lst:
 			try:
-				if ext == "cogs.daily":
+				if ext == "cogs.daily" or ext == "cogs.vote":
 					continue
 				bot.reload_extension(ext)
 				print(f"Reloaded {ext}.")
