@@ -14,12 +14,11 @@ class Coinflip(commands.Cog):
 	@commands.command(aliases=['flipcoin', 'flip', 'coin', 'cf', 'coinflips', 'flipscoin', 'flipcoins', 'flipscoins'])
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, use_external_emojis=True)
 	@commands.cooldown(1, 3, commands.BucketType.user)
-	async def coinflip(self, ctx, sideBet:str, amntBet:int, user: discord.Member=None):
-		# if sideBet == None or amntBet == None:
-		# 	await ctx.invoke(self.bot.get_command('help coinflip'))
-		# 	return
+	async def coinflip(self, ctx, sideBet:str, amntBet, user: discord.Member=None):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
+
+		amntBet = await self.bot.get_cog("Economy").GetBetAmount(ctx, amntBet)
 
 		sideBet = sideBet.lower()
 		if sideBet.find("heads") != -1:
