@@ -28,7 +28,7 @@ def log(discordID, creditsSpent, creditsWon, gameNumber, bal): # Logs what credi
 class Totals(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		self.name = bot.user.name
+		# self.bot.user.name = self.bot.user.name
 		self.gameBadge = 250
 		self.balBadge = 10000
 		self.profitBadge = 1000
@@ -178,7 +178,7 @@ class Totals(commands.Cog):
 			with open(r"profiles.json", 'w') as f:
 				json.dump(profileFile, f, indent=4)
 
-		embed = discord.Embed(color=embedColor, title=f"{self.name} | Profile")
+		embed = discord.Embed(color=embedColor, title=f"{self.bot.user.name} | Profile")
 		embed.set_thumbnail(url=ctx.author.avatar_url)
 		# embed.add_field(name = "User", value = f"{ctx.author.name}", inline=True)
 		# embed.add_field(name = "Level", value = f"{level}", inline=True)
@@ -219,20 +219,20 @@ class Totals(commands.Cog):
 		draw = ImageDraw.Draw(img)
 		draw.text(xy=(100,100), text=f"{ctx.author.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript',55))
 		draw.text(xy=(420,160), text=f"Level {level}", fill=tuple(textColor), font=font_type)
-		draw.text(xy=(100,160), text=f"Balance: {balance}123", fill=tuple(textColor), font=font_type)
+		draw.text(xy=(100,160), text=f"Balance: {balance}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,230), text=f"Badges", fill=tuple(textColor), font=font_type)
 		img.save("images/profile.png")
 		file = discord.File("images/profile.png", filename="image.png")
 		embed.set_image(url="attachment://image.png")
 
-		embed.set_footer(text="Customize your profile with .profile edit")
+		embed.set_footer(text=f"Customize your profile with {ctx.prefix}profile edit")
 
 		await ctx.send(file=file, embed=embed)
 
 
 	@commands.command()
 	async def colors(self, ctx):
-		embed = discord.Embed(color=1768431, title=f"{self.name} | Colors")
+		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Colors")
 		embed1 = discord.Embed(color=self.colors["green"], title=f"Shades of Green")
 		embed2 = discord.Embed(color=self.colors["darkorange"], title=f"Shades of Orange")
 		count = 0
@@ -258,23 +258,27 @@ class Totals(commands.Cog):
 	async def background(self, ctx, choice:str=None):
 		await ctx.invoke(self.bot.get_command(f'profile edit'), "3", choice)
 
-	@profile.command(aliases=['help'])
+	@commands.command()
 	async def edit(self, ctx, field=None, choice=None):
-		if ctx.author.id != 547475078082985990:
-			if ctx.guild.id != 585226670361804827:
-				await ctx.send("This is currently being worked on... Feel free to join the support server for updates.")
-				return
-			await ctx.send("This is currently being worked on...")
-			return
+		await ctx.invoke(self.bot.get_command('profile edit'), field, choice)
 
-		embed = discord.Embed(color=1768431, title=f"{self.name} | Edit Profile")
+	@profile.command(name='edit', aliases=['help'])
+	async def _edit(self, ctx, field=None, choice=None):
+		# if ctx.author.id != 547475078082985990:
+		# 	if ctx.guild.id != 585226670361804827:
+		# 		await ctx.send("This is currently being worked on... Feel free to join the support server for updates.")
+		# 		return
+		# 	await ctx.send("This is currently being worked on...")
+		# 	return
+
+		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
 		embed.set_thumbnail(url=ctx.author.avatar_url)
 
 		if (not field or not choice) and field != "3":
 			embed.add_field(name = "_ _\nAvailable profile features you can edit:", value = f"1. Color of embed (DEFAULT: cyan)\n" +
 				"2. Color of text in the scroll (DEFAULT: darkorange)\n" +
 				"3. Image background (DEFAULT: scroll) (type: .background or .bg)", inline=True)
-			embed.set_footer(text="Edit a property with: .profile edit <property> <value> such as .profile edit 1 green\nType .colors to see a list of all available colors")
+			embed.set_footer(text="Edit a property with: .edit <property> <value> such as .edit 1 green\nType .colors to see a list of all available colors")
 
 			await ctx.send(embed=embed)
 			
@@ -349,7 +353,7 @@ class Totals(commands.Cog):
 			return
 
 		embedColor = profileFile[f"{ctx.author.id}"]["embedColor"]
-		embed = discord.Embed(color=embedColor, title=f"{self.name} | Edit Profile")
+		embed = discord.Embed(color=embedColor, title=f"{self.bot.user.name} | Edit Profile")
 		embed.set_thumbnail(url=ctx.author.avatar_url)
 
 		embed.add_field(name="Edited!", value=f"Successfully changed to {choice}.")
@@ -407,7 +411,7 @@ class Totals(commands.Cog):
 			for _ in range(0, level*2):
 				lvlMsg = lvlMsg.replace(":red_square:",":white_check_mark:",1)
 
-		embed = discord.Embed(color=1768431, title=f"{self.name} | Badges")
+		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Badges")
 		embed.add_field(name="Games Badge", value=f"{gameMsg} {self.gameBadge}", inline=False)
 		embed.add_field(name="Balance Badge", value=f"{balMsg} {self.balBadge}", inline=False)
 		embed.add_field(name="Profit Badge", value=f"{profitMsg} {self.profitBadge}", inline=False)
@@ -446,7 +450,7 @@ class Totals(commands.Cog):
 
 		db.close()
 
-		embed = discord.Embed(color=1768431, title="Pit Boss' Casino | Stats")
+		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Stats")
 		embed.add_field(name = "Total Spent", value = f"{creditsSpent}", inline=True)
 		embed.add_field(name = "Total Won", value = f"{creditsWon}", inline=True)
 		embed.add_field(name = "Profit", value = f"{profit}", inline=True)
