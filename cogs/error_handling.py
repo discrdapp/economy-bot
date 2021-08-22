@@ -14,18 +14,17 @@ class ErrorHandling(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_command_error(self, ctx, error):
-		embed = discord.Embed(title="Casino Bot: ERROR", color=0xff0000)
+		embed = discord.Embed(title=f"{self.bot.user.name} | ERROR", color=0xff0000)
 		error = getattr(error, 'original', error)
 
-
-		if "Missing Permissions" in str(error) or "Send Message" in str(error):
+		if "missing permissions" in str(error).lower() or "send message" in str(error).lower():
 			return
 
 		elif isinstance(error, commands.CommandNotFound):
 			lst = [	"background", "bal", "balance", "bank", "blackjack", "bg",
 					"coinflip", "claim", "colorguesser", "credits", "crash", "crate", "earn", "free", "freemoney", 
 					"level", "monthly", "position", "profile", "rewards", "roulette", "rps", 
-					"shop", "slot", "slots", "stats", "top", "weekly"]
+					"shop", "slot", "slots", "stats", "top", "vote", "weekly"]
 		#	embed.description = "Command not found!"
 			cmd = ctx.message.content.split()[0][1:]
 			try:
@@ -34,7 +33,6 @@ class ErrorHandling(commands.Cog):
 				embed.description = f"`{cmd.lower()}` is not a known command."
 			else:
 				embed.description = f"`{cmd.lower()}` is not a command, did you mean `{closest}`?"
-
 
 		elif isinstance(error, commands.MissingRequiredArgument):
 			if ctx.command is None:
@@ -109,14 +107,19 @@ class ErrorHandling(commands.Cog):
 			await ch.send(f"Error.\nCommand message: {ctx.message.content}\nUser: {ctx.author.id}")
 
 			# await ch.send(embed=e)
-			#await ctx.send(f"{error}  {ctx.command.qualified_name}")
+			# await ctx.send(f"{error}  {ctx.command.qualified_name}")
 
 		embed.set_thumbnail(url=ctx.author.avatar_url)
+		embed.set_footer(text=ctx.author)
 
 		try:
 			await ctx.send(embed=embed)
-		except Exception:
-			pass
+		except Exception as e:
+			try:
+				await ctx.author.send(str(e))
+			except:
+				pass
+			
 			
 		if ctx.command is not None and not isinstance(error, commands.CommandOnCooldown):
 			ctx.command.reset_cooldown(ctx)
