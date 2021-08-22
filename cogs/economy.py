@@ -7,6 +7,8 @@ import asyncio
 import random
 import config
 
+import math
+
 class Economy(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
@@ -15,33 +17,64 @@ class Economy(commands.Cog):
 
 	@commands.command(aliases=['begin', 'new'])
 	@commands.cooldown(1, 5, commands.BucketType.user)
-	async def start(self, ctx):
-		if not await self.accCheck(ctx.author):
-			db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-			cursor = db.cursor()
-			sql = f"""INSERT INTO Economy(DiscordID)
-					  VALUES ('{ctx.author.id}');"""
-			cursor.execute(sql)
-			db.commit()
+	async def start(self, ctx, user:discord.Member=None):
+		if not user:
+			user = ctx.author 
+		embed = discord.Embed(color=1768431, title=self.bot.user.name)
+		embed.set_thumbnail(url=user.avatar_url)
+		embed.set_footer(text=user)
+		if await self.accCheck(user):
+			embed.add_field(name="Error", value="You are already registered, silly")
+			await ctx.send(embed=embed)
+			return
 
-			sql = f"""INSERT INTO Inventory(DiscordID)
-					  VALUES ('{ctx.author.id}');"""
-			cursor.execute(sql)
-			db.commit()
+		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
+		cursor = db.cursor()
+		sql = f"""INSERT INTO Economy(DiscordID)
+				  VALUES ('{user.id}');"""
+		cursor.execute(sql)
+		db.commit()
 
-			sql = f"""INSERT INTO Totals(DiscordID)
-					  VALUES ('{ctx.author.id}');"""
-			cursor.execute(sql)
-			db.commit()
+		sql = f"""INSERT INTO Inventory(DiscordID)
+				  VALUES ('{user.id}');"""
+		cursor.execute(sql)
+		db.commit()
 
-			db.close()
+		sql = f"""INSERT INTO Totals(DiscordID)
+				  VALUES ('{user.id}');"""
+		cursor.execute(sql)
+		db.commit()
 
-			await ctx.send("You are now successfully registered! Thank you, and have fun.")
+		# sql = f"""INSERT INTO Economy(DiscordID) VALUES ('{ctx.author.id}'); INSERT INTO Inventory(DiscordID) VALUES ('{ctx.author.id}'); INSERT INTO Totals(DiscordID) VALUES ('{ctx.author.id}');"""
+		# cursor.execute(sql)
+		# db.commit()
+		db.close()
 
-			ch = self.bot.get_channel(705118255161016431)
-			await ch.send(f"{ctx.author.name}#{ctx.author.discriminator} has registered.")
-		else:
-			await ctx.send("You are already registered, silly")
+		embed.add_field(name="Welcome!", value="You are now successfully registered. Enjoy The Casino.")
+		await ctx.send(embed=embed)
+
+		ch = self.bot.get_channel(705118255161016431)
+		await ch.send(f"{user} has registered.")
+
+	async def GetBetAmount(self, ctx, amntBet):
+		if amntBet.isdigit():
+			return amntBet
+		if amntBet == "all" or amntBet == "allin" or amntBet == "everything":
+			return await self.getBalance(ctx.author)
+		if amntBet == "half":
+			return math.floor(await self.getBalance(ctx.author) / 2)
+		if amntBet == "third":
+			return math.floor(await self.getBalance(ctx.author) / 3)
+		if amntBet == "fourth":
+			return math.floor(await self.getBalance(ctx.author) / 4)
+		if "%" == amntBet[-1]:
+			return math.floor(await self.getBalance(ctx.author) * (int(amntBet.replace('%','')) / 100))
+		if "." in amntBet and amntBet[0] == "0":
+			return math.floor(await self.getBalance(ctx.author) * float(amntBet))
+		if "/" in amntBet:
+			pos = amntBet.find("/")
+			return math.floor(await self.getBalance(ctx.author) * float(int(amntBet[:pos]) / int(amntBet[pos+1:])))
+		raise commands.BadArgument(f'You entered {amntBet} for the amount you want to bet. Please enter a number instead.')
 
 	@commands.command(aliases=['reward'])
 	@commands.cooldown(1, 5, commands.BucketType.user)
@@ -52,7 +85,7 @@ class Economy(commands.Cog):
 		dailyReward = await self.bot.get_cog("Daily").getDailyReward(ctx)
 		multiplier = self.getMultiplier(ctx.author)
 
-		embed = discord.Embed(color=1768431)
+		embed = discord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name = "Daily", value = f"{dailyReward}{self.coin}", inline=True)
 		embed.add_field(name = "Multiplier", value = f"{multiplier}x", inline=True)
 		embed.add_field(name = "Weekly", value = f"12500{self.coin}", inline=False)
@@ -72,57 +105,62 @@ class Economy(commands.Cog):
 		if not await self.accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
 
+		prefix = ctx.prefix
+
 		balance = await self.getBalance(ctx.author)
 		crates, keys = await self.getInventory(ctx.author)
 		embed = discord.Embed(color=1768431)
 		embed.add_field(name = "Credits", value = f"You have **{balance}**{self.coin}", inline=False)
 		embed.add_field(name = "_ _\nCrates", value = f"You have **{crates}** crates", inline=True)
 		embed.add_field(name = "_ _\nKeys", value = f"You have **{keys}** keys", inline=True)
-		embed.set_footer(text="Use .search, .daily, .weekly, and .monthly to get credits")
+		embed.set_footer(text=f"Use {prefix}vote, {prefix}search, {prefix}daily, {prefix}weekly, and {prefix}monthly to get credits")
 		await ctx.send(embed=embed)
 		
 	@commands.command()
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def search(self, ctx):
-		if await self.accCheck(ctx.author):
+		if not await self.accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
-		if await self.getBalance(ctx.author) < 100:
+		embed = discord.Embed(color=1768431)
+		if await self.getBalance(ctx.author) < 300:
 			amnt = random.randint(50, 250)
 			await self.addWinnings(ctx.author.id, amnt)
 			balance = await self.getBalance(ctx.author)
 			
-			embed = discord.Embed(color=1768431)
 			embed.add_field(name = f"You found {amnt}{self.coin}", value = f"You have {balance}{self.coin}", inline=False)
-			await ctx.send(embed=embed)
 		else:
-			await ctx.send(ctx.author.mention + f", you can't use this if you have over 100{self.coin}.")
+			embed.add_field(name = f"Error", value = f"{ctx.author.mention}, you can only use this if you have less than 300{self.coin}.", inline=False)
+
+		await ctx.send(embed=embed)
 		
 	@commands.command(aliases=['earn', 'free'])
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def freemoney(self, ctx):
-		await ctx.send("Here are all the commands you can type for free money:\n\t\t`.search`\n\t\t`.daily`\n\t\t`.weekly`\n\t\t`.monthly`")
+		prefix = ctx.prefix
+		embed = discord.Embed(color=1768431, title=self.bot.user.name)
+		embed.add_field(name="Free Money Commands", value=f"`{prefix}vote`\n`{prefix}search`\n`{prefix}daily`\n`{prefix}weekly`\n`{prefix}monthly`")
+		await ctx.send(embed=embed)
 
 	@commands.command(aliases=['donate'])
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def donator(self, ctx):
-		if self.isDonator(ctx.author.id):
-			donatorReward = self.getDonatorReward(ctx.author.id)
-			multiplier = self.getMultiplier(ctx.author)
-			extraMoney = int(donatorReward * (multiplier - 1))
-			await self.addWinnings(ctx.author.id, donatorReward + extraMoney)
-
-			balance = await self.getBalance(ctx.author)
-			embed = discord.Embed(color=1768431)
-			embed.add_field(name = f"You got {donatorReward} {self.coin}", 
-							value = f"You have {balance} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney}", inline=False)
+		if not self.isDonator(ctx.author.id):
+			embed = discord.Embed(color=1768431, title=self.bot.user.name)
+			embed.add_field(name = f"Donator Reward", value = "To be able to claim the Donator Reward, you first need to donate!\n" +
+																f"Join the server shown in the {ctx.prefix}help menu to learn how!", inline=False)
 			await ctx.send(embed=embed)
 			return
 
-		embed = discord.Embed(color=1768431)
-		embed.add_field(name = f"Donator Reward", value = f"To be able to claim the Donator Reward, you first need to donate!\n" +
-															"Join the server shown in the .help menu to learn how!", inline=False)
-		await ctx.send(embed=embed)
+		donatorReward = self.getDonatorReward(ctx.author.id)
+		multiplier = self.getMultiplier(ctx.author)
+		extraMoney = int(donatorReward * (multiplier - 1))
+		await self.addWinnings(ctx.author.id, donatorReward + extraMoney)
 
+		balance = await self.getBalance(ctx.author)
+		embed = discord.Embed(color=1768431, title=self.bot.user.name)
+		embed.add_field(name = f"You got {donatorReward} {self.coin}", 
+						value = f"You have {balance} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney}", inline=False)
+		await ctx.send(embed=embed)
 
 
 	def isDonator(self, discordID):
@@ -170,23 +208,21 @@ class Economy(commands.Cog):
 
 
 	async def subtractBet(self, user, amntBet): # subtracts the bet users place when they play games
-		if await self.accCheck(user) == True:
-			balance = await self.getBalance(user)
-			if amntBet <= balance and amntBet > 0:
-				db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-				cursor = db.cursor()
-				sql = f"""UPDATE Economy
-						  SET Credits = Credits - {amntBet}
-						  WHERE DiscordID = '{user.id}';"""
-				cursor.execute(sql)
-				# db.commit()
-				db.close()
-				return True # return 1 if user has enough $$$ to bet their amount entered
-			else:
-				return False # return 0 if user trying to bet more $$$ than they have
-		else:
+		if not await self.accCheck(user):
 			return False
-
+		balance = await self.getBalance(user)
+		if amntBet <= balance and amntBet > 0:
+			db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
+			cursor = db.cursor()
+			sql = f"""UPDATE Economy
+					  SET Credits = Credits - {amntBet}
+					  WHERE DiscordID = '{user.id}';"""
+			cursor.execute(sql)
+			# db.commit()
+			db.close()
+			return True # return 1 if user has enough $$$ to bet their amount entered
+		else:
+			return False # return 0 if user trying to bet more $$$ than they have
 
 
 	async def addWinnings(self, discordId, winnings): # add the amount won 
