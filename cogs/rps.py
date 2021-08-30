@@ -13,7 +13,7 @@ class rps(commands.Cog):
 	@commands.command(pass_context=True)
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
 	@commands.cooldown(1, 5, commands.BucketType.user)
-	async def rps(self, ctx, userChoice: str, amntBet: int):
+	async def rps(self, ctx, userChoice: str, amntBet):
 		coin = "<:coins:585233801320333313>"
 		userChoice = userChoice.lower()
 
@@ -24,14 +24,10 @@ class rps(commands.Cog):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
 
+		amntBet = await self.bot.get_cog("Economy").GetBetAmount(ctx, amntBet)
+
 		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
-			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | RPS")
-			embed.set_thumbnail(url=ctx.author.avatar_url)
-			embed.add_field(name="ERROR", value="You do not have enough to do that.")
-
-			embed.set_footer(text=ctx.author)
-
-			await ctx.send(embed=embed)
+			await self.bot.get_cog("Economy").notEnoughMoney(ctx)
 			return
 			
 		botChoice = random.choice(['rock', 'paper', 'scissors'])
@@ -104,7 +100,7 @@ class rps(commands.Cog):
 			embed.set_footer(text=f"Earned {xp} XP! {amntBet} {minBet}")
 			await self.bot.get_cog("XP").addXP(ctx, xp)
 		else:
-			embed.set_footer(text=f"You have to bet your minimum to earn xp. {amntBet} {minBet}")
+			embed.set_footer(text=f"You have to bet your minimum to earn xp.")
 
 		await ctx.send(content=f"{ctx.message.author.mention}", file=file, embed=embed)
 		await self.bot.get_cog("Totals").addTotals(ctx, amntBet, moneyToAdd, 5)
