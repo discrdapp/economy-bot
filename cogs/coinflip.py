@@ -42,13 +42,7 @@ class Coinflip(commands.Cog):
 				return
 
 			if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
-				embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Coinflip")
-				embed.set_thumbnail(url=ctx.author.avatar_url)
-				embed.add_field(name="ERROR", value="You do not have enough to do that.")
-
-				embed.set_footer(text=ctx.author)
-
-				await ctx.send(embed=embed)
+				await self.bot.get_cog("Economy").notEnoughMoney(ctx)
 				return
 
 			if not await self.bot.get_cog("Economy").subtractBet(user, amntBet):
@@ -87,13 +81,7 @@ class Coinflip(commands.Cog):
 		###################
 
 		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
-			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Coinflip")
-			embed.set_thumbnail(url=ctx.author.avatar_url)
-			embed.add_field(name="ERROR", value="You do not have enough to do that.")
-
-			embed.set_footer(text=ctx.author)
-
-			await ctx.send(embed=embed)
+			await self.bot.get_cog("Economy").notEnoughMoney(ctx)
 			return
 
 

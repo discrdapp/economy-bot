@@ -25,18 +25,14 @@ class bj(commands.Cog):
 	@commands.command(description="Play BlackJack!", aliases=['blackjack'])
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
 	@commands.cooldown(1, 5, commands.BucketType.user)	
-	async def bj(self, ctx, amntBet: int):
+	async def bj(self, ctx, amntBet):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
 
+		amntBet = await self.bot.get_cog("Economy").GetBetAmount(ctx, amntBet)
+		
 		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
-			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | BlackJack")
-			embed.set_thumbnail(url=ctx.author.avatar_url)
-			embed.add_field(name="ERROR", value="You do not have enough to do that.")
-
-			embed.set_footer(text=ctx.author)
-
-			await ctx.send(embed=embed)
+			await self.bot.get_cog("Economy").notEnoughMoney(ctx)
 			return
 		# generate the starting cards
 		dFirstHand, dFirstNum = await self.dealer_first_turn(ctx)
