@@ -115,10 +115,7 @@ class ErrorHandling(commands.Cog):
 		try:
 			await ctx.send(embed=embed)
 		except Exception as e:
-			try:
-				await ctx.author.send(str(e))
-			except:
-				pass
+			pass
 			
 			
 		if ctx.command is not None and not isinstance(error, commands.CommandOnCooldown):
