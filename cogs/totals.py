@@ -33,6 +33,9 @@ class Totals(commands.Cog):
 		self.balBadge = 10000
 		self.profitBadge = 1000
 		self.lvlBadge = 5
+		self.XPtoLevelUp = []
+		for x in range(0,101):
+			self.XPtoLevelUp.append(5000 + (x * 500)) 
 		self.colors = {
 			"white": 0xFFFFFF,
 			"silver": 0xC0C0C0,
@@ -153,8 +156,8 @@ class Totals(commands.Cog):
 		balance = getRow[0]
 		level = getRow[1]
 		xp = getRow[2]
-		XPtoLevelUp = [5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000]
-		requiredXP = XPtoLevelUp[level]
+ 
+		requiredXP = self.XPtoLevelUp[level]
 
 		crates, keys = await self.bot.get_cog("Economy").getInventory(ctx.author)
 
@@ -334,12 +337,15 @@ class Totals(commands.Cog):
 			with open(r"profiles.json", 'r') as f:
 				profileFile = json.load(f)
 
-			if choice == "1":
+			if choice == "1" or "scroll" in choice.lower():
 				background = "scroll.png"
-			elif choice == "2":
+			elif choice == "2" or "ink" in choice.lower():
 				background = "inkpaper.png"
-			elif choice == "3":
+			elif choice == "3" or "spiral" in choice.lower():
 				background = "spiralnotebook.png"
+			else:
+				await ctx.send("Invalid choice for background.")
+				return
 
 			profileFile[f"{ctx.author.id}"]["background"] = background
 			with open(r"profiles.json", 'w') as f:
