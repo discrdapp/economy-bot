@@ -9,6 +9,8 @@ import json
 
 import ztoken
 
+from discord_components import DiscordComponents
+
 async def get_prefix(bot, message):
 	with open(r"prefix.json", 'r') as f:
 		prefixFile = json.load(f)
@@ -24,8 +26,9 @@ bot = commands.Bot(command_prefix = get_prefix, case_insensitive=True)
 bot.remove_command('help')
 
 extensions = ["cogs.admin", "cogs.bank", "cogs.bj", "cogs.coinflip", "cogs.color_guesser", "cogs.crash",
-			  "cogs.daily", "cogs.economy", "cogs.error_handling", "cogs.miner", "cogs.others", "cogs.roulette", "cogs.rps", 
-			  "cogs.scratch", "cogs.shop", "cogs.slots", "cogs.totals", "cogs.ttt", "cogs.user_settings", "cogs.utilities", "cogs.vote", "cogs.xp"] # list of cogs to call
+			  "cogs.daily", "cogs.economy", "cogs.error_handling", "cogs.lottery", "cogs.miner", "cogs.others", "cogs.roulette", "cogs.rps", 
+			  "cogs.scratch", "cogs.shop", "cogs.slots", "cogs.totals", "cogs.ttt", "cogs.user_settings", "cogs.util", "cogs.vote", "cogs.weeklymonthly",
+			   "cogs.xp"] # list of cogs to call
 # took out "cogs.minesweeper"
 
 # async def background_loop():
@@ -60,6 +63,26 @@ async def on_ready():
 	print("Ready...")
 
 	await bot.change_presence(activity=discord.Game(name="Do .help for help!"))
+
+	DiscordComponents(bot)
+
+# @bot.command()
+# async def button(ctx):
+# 	await ctx.send(
+# 		"gg no ree",
+# 		components = [
+# 			Button(label = "click me!");
+# 			Button(label = "Yeet");
+# 		]
+# 	)
+
+# 	interaction = await bot.wait_for("button_click")
+# 	await interaction.respond(content="YEET BITCH");
+
+# 	if interaction.component.label == "click me!":
+# 		pass
+# 	elif interaction.component.label == "Yeet":
+# 		pass
 
 # COMMAND LOGGER
 
