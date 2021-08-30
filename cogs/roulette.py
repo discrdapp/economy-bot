@@ -81,7 +81,7 @@ class Roulette(commands.Cog):
 
 			try:
 				reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=30)
-			except:
+			except asyncio.TimeoutError:
 				embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 				await msg.edit(embed=embedError)
 				await msg.clear_reactions()
