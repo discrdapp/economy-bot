@@ -58,7 +58,7 @@ class Economy(commands.Cog):
 
 	async def GetBetAmount(self, ctx, amntBet):
 		if amntBet.isdigit():
-			return amntBet
+			return int(amntBet)
 		if amntBet == "all" or amntBet == "allin" or amntBet == "everything":
 			return await self.getBalance(ctx.author)
 		if amntBet == "half":
@@ -88,8 +88,8 @@ class Economy(commands.Cog):
 		embed = discord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name = "Daily", value = f"{dailyReward}{self.coin}", inline=True)
 		embed.add_field(name = "Multiplier", value = f"{multiplier}x", inline=True)
-		embed.add_field(name = "Weekly", value = f"12500{self.coin}", inline=False)
-		embed.add_field(name = "Monthly", value = f"36000{self.coin}", inline=True)
+		# embed.add_field(name = "Weekly", value = f"12500{self.coin}", inline=False)
+		# embed.add_field(name = "Monthly", value = f"36000{self.coin}", inline=True)
 
 		if self.isDonator(ctx.author.id):
 			embed.add_field(name = "_ _\nDonator Reward", value = f"{self.getDonatorReward(ctx.author.id)}{self.coin}", inline=False)
@@ -113,7 +113,7 @@ class Economy(commands.Cog):
 		embed.add_field(name = "Credits", value = f"You have **{balance}**{self.coin}", inline=False)
 		embed.add_field(name = "_ _\nCrates", value = f"You have **{crates}** crates", inline=True)
 		embed.add_field(name = "_ _\nKeys", value = f"You have **{keys}** keys", inline=True)
-		embed.set_footer(text=f"Use {prefix}vote, {prefix}search, {prefix}daily, {prefix}weekly, and {prefix}monthly to get credits")
+		embed.set_footer(text=f"Use {prefix}vote, {prefix}search, {prefix}daily, and {prefix}work to get credits")
 		await ctx.send(embed=embed)
 		
 	@commands.command()
@@ -138,7 +138,7 @@ class Economy(commands.Cog):
 	async def freemoney(self, ctx):
 		prefix = ctx.prefix
 		embed = discord.Embed(color=1768431, title=self.bot.user.name)
-		embed.add_field(name="Free Money Commands", value=f"`{prefix}vote`\n`{prefix}search`\n`{prefix}daily`\n`{prefix}weekly`\n`{prefix}monthly`")
+		embed.add_field(name="Free Money Commands", value=f"`{prefix}vote`\n`{prefix}search`\n`{prefix}daily`\n`{prefix}work`")
 		await ctx.send(embed=embed)
 
 	@commands.command(aliases=['donate'])
@@ -370,6 +370,15 @@ class Economy(commands.Cog):
 			return True
 		
 		return False
+
+	async def notEnoughMoney(self, ctx):
+		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | {str(ctx.command).title()}")
+		embed.set_thumbnail(url=ctx.author.avatar_url)
+		embed.add_field(name="ERROR", value="You do not have enough credits to do that.")
+
+		embed.set_footer(text=ctx.author)
+
+		await ctx.send(embed=embed)
 
 
 
