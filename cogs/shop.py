@@ -4,12 +4,12 @@ import pymysql
 import asyncio
 import config
 
-import random
+from random import randint
 
 class Shop(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		self.items = [1000, 5000, 25000, 100000, 150000, 250000, 20000]
+		self.items = [1000, 5000, 75000, 100000, 150000, 250000, 40000]
 		self.coin = "<:coins:585233801320333313>"
 
 
@@ -23,11 +23,11 @@ class Shop(commands.Cog):
 								+ "----------------------------------------\n"
 								+ "1            1 crate               1,000\n"
 								+ "2             1 key                5,000\n"
-								+ "3      +1,000 to daily reward     25,000\n\n"
+								+ "3      +1,000 to daily reward     75,000\n\n"
 								# + "4       +500 to lvl reward       100,000\n"
 								# + "5      ---------------------     150,000\n"
 								# + "6   +1.5x Profit on Future Games 250,000\n"
-								+ "7     +1,500 to donator reward    20,000\n"
+								+ "7     +1,500 to donator reward    40,000\n"
 								+ "----------------------------------------\n"
 								+ "Use .shop buy <id> <amount>\n\n\tSHOP IS A WORK IN PROGRESS!```")
 
@@ -157,6 +157,9 @@ class Shop(commands.Cog):
 
 	@crate.command()
 	async def open(self, ctx, amnt=1):
+		if amnt > 125:
+			await ctx.send("Max crates you can open is 125.")
+			return
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
 
@@ -167,53 +170,66 @@ class Shop(commands.Cog):
 		if crates < amnt:
 			embed.add_field(name="Invalid Amount", value=f"{ctx.author.mention}, you only have {crates} crates. You cannot open {amnt} crate(s).")
 			embed.set_footer(text="Buy more crates from the shop!")
+			await ctx.send(embed=embed)
+			return
 		elif keys < amnt:
 			embed.add_field(name="Invalid Amount", value=f"{ctx.author.mention}, you only have {keys} keys. You cannot use {amnt} key(s).")
 			embed.set_footer(text="Buy more keys from the shop!")
-		elif amnt > 0:
-			await self.bot.get_cog("Economy").subtractInv(ctx.author.id, amnt)
-			
-			crates = crates - amnt
-			keys = keys - amnt
-			for x in range(0, amnt):
-				choice = random.randint(1, 10)
-				if choice <= 3:
-					amnt = random.randint(0, 3)
-					embed.add_field(name="Crate opened...", value=f"You found {amnt} crates!")
-					crates += amnt
+			await ctx.send(embed=embed)
+			return
+		elif amnt <= 0:
+			embed.add_field(name="Invalid Amount", value=f"{ctx.author.mention}, you cannot open a negative amount of crates.")
+			await ctx.send(embed=embed)
+			return
 
-				elif choice <= 6:
-					amnt = random.randint(1, 3)
-					embed.add_field(name="Crate opened...", value=f"You found {amnt} keys!")
-					keys += amnt
+		await self.bot.get_cog("Economy").subtractInv(ctx.author.id, amnt)
+		
+		crates = crates - amnt
+		keys = keys - amnt
+		moneyToAdd = 0
+		for x in range(1, amnt+1):
+			choice = randint(1, 10)
+			if choice <= 3:
+				amntToAdd = randint(0, 3)
+				embed.add_field(name="Crate opened...", value=f"You found {amntToAdd} crates!")
+				crates += amntToAdd
 
-				elif choice <= 8:
-					bal = random.randint(5000, 12500)
-					embed.add_field(name="Crate opened...", value=f"You found {bal}{self.coin}!")
-					await self.bot.get_cog("Economy").addWinnings(ctx.author.id, bal)
-					
-				elif choice <= 10:
-					bal = random.randint(0, 500)
-					embed.add_field(name="Crate opened...", value=f"You found {bal}{self.coin}!")
-					await self.bot.get_cog("Economy").addWinnings(ctx.author.id, bal)
+			elif choice <= 6:
+				amntToAdd = randint(1, 3)
+				embed.add_field(name="Crate opened...", value=f"You found {amntToAdd} keys!")
+				keys += amntToAdd
+
+			elif choice <= 8:
+				bal = randint(5000, 12500)
+				embed.add_field(name="Crate opened...", value=f"You found {bal}{self.coin}!")
+				moneyToAdd += bal
+				
+			elif choice <= 10:
+				bal = randint(0, 500)
+				embed.add_field(name="Crate opened...", value=f"You found {bal}{self.coin}!")
+				moneyToAdd += bal
+
+			if x >= 25 and x % 25 == 0:
+				await ctx.send(embed=embed)
+				embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Shop")
+				embed.set_thumbnail(url=ctx.author.avatar_url)
+
+		if not x % 25 == 0:
 			await ctx.send(embed=embed)
 
-			db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-			cursor = db.cursor()
-			sql = f"""UPDATE Inventory
-					  SET Crates = {crates}, Keyss = {keys}
-					  WHERE DiscordID = '{ctx.author.id}';"""
-			cursor.execute(sql)
-			db.commit()
+		await self.bot.get_cog("Economy").addWinnings(ctx.author.id, moneyToAdd)
 
-			db.close()
+		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
+		cursor = db.cursor()
+		sql = f"""UPDATE Inventory
+				  SET Crates = {crates}, Keyss = {keys}
+				  WHERE DiscordID = '{ctx.author.id}';"""
+		cursor.execute(sql)
+		db.commit()
 
-			await ctx.invoke(self.bot.get_command('balance'))
-			return
-		else:
-			embed.add_field(name="Invalid Amount", value=f"{ctx.author.mention}, you cannot open a negative amount of crates.")
+		db.close()
 
-		await ctx.send(embed=embed)
+		await ctx.invoke(self.bot.get_command('balance'))
 
 
 
