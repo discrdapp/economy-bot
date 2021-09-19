@@ -100,19 +100,25 @@ class Economy(commands.Cog):
 
 	@commands.command(aliases=['bal', 'credits'])
 	@commands.cooldown(1, 5, commands.BucketType.user)
-	async def balance(self, ctx):
+	async def balance(self, ctx, user:discord.Member=None):
 		""" Show your balance """
-		if not await self.accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+		if not user:
+			user = ctx.author
+			pronouns = "You"
+		else:
+			pronouns = "They"
+
+		if not await self.bot.get_cog("Economy").accCheck(user):
+			await ctx.invoke(self.bot.get_command('start'), user)
 
 		prefix = ctx.prefix
 
-		balance = await self.getBalance(ctx.author)
-		crates, keys = await self.getInventory(ctx.author)
+		balance = await self.getBalance(user)
+		crates, keys = await self.getInventory(user)
 		embed = discord.Embed(color=1768431)
-		embed.add_field(name = "Credits", value = f"You have **{balance}**{self.coin}", inline=False)
-		embed.add_field(name = "_ _\nCrates", value = f"You have **{crates}** crates", inline=True)
-		embed.add_field(name = "_ _\nKeys", value = f"You have **{keys}** keys", inline=True)
+		embed.add_field(name = "Credits", value = f"{pronouns} have **{balance}**{self.coin}", inline=False)
+		embed.add_field(name = "_ _\nCrates", value = f"{pronouns} have **{crates}** crates", inline=True)
+		embed.add_field(name = "_ _\nKeys", value = f"{pronouns} have **{keys}** keys", inline=True)
 		embed.set_footer(text=f"Use {prefix}vote, {prefix}search, {prefix}daily, and {prefix}work to get credits")
 		await ctx.send(embed=embed)
 		
@@ -313,6 +319,10 @@ class Economy(commands.Cog):
 		if not await self.accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
 
+		if await self.getBalance(usr) < 1000:
+			await ctx.send("You need at least 1000 credits to use this command.")
+			return
+
 		name = usr.name
 
 		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
@@ -379,6 +389,17 @@ class Economy(commands.Cog):
 		embed.set_footer(text=ctx.author)
 
 		await ctx.send(embed=embed)
+
+
+	async def getInput(self, ctx, user, timeout):
+		def is_me(m):
+			return m.author == user
+		try:
+			msg = await self.bot.wait_for('message', check=is_me, timeout=timeout)
+		except asyncio.TimeoutError:
+			raise Exception("timeoutError")
+		return msg
+
 
 
 
