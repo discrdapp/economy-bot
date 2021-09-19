@@ -21,19 +21,18 @@ class Coinflip(commands.Cog):
 		amntBet = await self.bot.get_cog("Economy").GetBetAmount(ctx, amntBet)
 
 		sideBet = sideBet.lower()
-		if sideBet.find("heads") != -1:
+		if sideBet.find("head") != -1:
 			sideBet = "heads"
-		elif sideBet.find("tails") != -1:
+		elif sideBet.find("tail") != -1:
 			sideBet = "tails"
 		else:
-			await ctx.send("You need to specify `heads` or `tails` for your bet.\nExample: `.coinflip heads 100`")
-			return
+			raise commands.BadArgument("You need to specify `heads` or `tails` for your bet.\nExample: `.coinflip heads 100`")
 
 		if user:
 			def is_me(m):
-				return m.channel.id == ctx.channel.id and m.author.id == user.id and m.content == "go"
+				return m.channel.id == ctx.channel.id and m.author.id == user.id and m.content == "accept"
 
-			msg = await ctx.send(f"{user.mention}, type: go")
+			msg = await ctx.send(f"{user.mention}, type: `accept`")
 			try:
 				await self.bot.wait_for('message', check=is_me, timeout=45)
 			except:
@@ -46,23 +45,23 @@ class Coinflip(commands.Cog):
 				return
 
 			if not await self.bot.get_cog("Economy").subtractBet(user, amntBet):
-				await ctx.send("They either have not typed .start yet or do not have enough money for this.")
+				await ctx.send(f"{user.mention} has either not typed .start yet or does not have enough money for this.")
 				return
 
-			side = random.choice(["Heads", "Tails"]).lower()
+			side = random.choice(["Heads", "Tails"]).lower() # computer picks result
 
 			file = None
 			if side == "Heads":
 				file = discord.File("./images/coinheads.png", filename="image.png")
 			else:
 				file = discord.File("./images/cointails.png", filename="image.png")
-			if sideBet == side:
+			if sideBet == side: # if author bets on correct side
 				winner = ctx.author
-			else:
+			else: # else, user bet on correct side
 				winner = user
 			embed = discord.Embed(color=0x23f518)
 			embed.set_thumbnail(url="attachment://image.png")
-			embed.add_field(name=f"{self.bot.user.name}' Casino | Coinflip", value=f"The coin landed on {side}\n_ _{winner.mention} wins!", inline=False)
+			embed.add_field(name=f"{self.bot.user.name} | Coinflip", value=f"The coin landed on {side}\n_ _{winner.mention} wins!", inline=False)
 
 			await ctx.send(file=file, embed=embed)
 			await self.bot.get_cog("Economy").addWinnings(winner.id, amntBet*2)
