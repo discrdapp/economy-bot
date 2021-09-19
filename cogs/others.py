@@ -16,28 +16,30 @@ class Others(commands.Cog):
 		ch = self.bot.get_channel(790282431860047882)
 		await ch.send(f"Added to {guild.name}")
 		general = find(lambda x: 'general' in x.name.lower(), guild.text_channels)
-		if not general: general = find(lambda x: 'chat' in x.name.lower(), guild.text_channels)
-		if not general: general = find(lambda x: 'chit' in x.name.lower(), guild.text_channels)
-		if not general: general = find(lambda x: 'lobby' in x.name.lower(), guild.text_channels)
-		if not general: general = find(lambda x: 'talk' in x.name.lower(), guild.text_channels)
-		if not general: general = find(lambda x: 'commands' in x.name.lower(), guild.text_channels)
-		if not general: general = find(lambda x: 'cmd' in x.name.lower(), guild.text_channels)
-		if not general: general = find(lambda x: 'bot' in x.name.lower(), guild.text_channels)
+		if general and not general.permissions_for(guild.me).send_messages:
+			general = None
+		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'chat' in x.name.lower(), guild.text_channels)
+		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'chit' in x.name.lower(), guild.text_channels)
+		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'lobby' in x.name.lower(), guild.text_channels)
+		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'talk' in x.name.lower(), guild.text_channels)
+		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'commands' in x.name.lower(), guild.text_channels)
+		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'cmd' in x.name.lower(), guild.text_channels)
+		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'bot' in x.name.lower(), guild.text_channels)
 
-		if general and general.permissions_for(guild.me).send_messages:
+		if general:
 			embed.add_field(name="Greetings!", value="Type .help to see a list of my commands."
 				+ "\n[Click here](https://discord.gg/ggUksVN) to join the support server.")
 			await general.send(embed=embed)
 
-	@commands.command()
-	async def yeet(self, ctx):
-		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name}")
-		embed.add_field(name="Greetings!", value="Error: I either do not have permissions to send messages or there is not a general " + 
-				"channel for me to send my welcome message, but hello and thanks for adding me!\nType .help in the server for my commands.")
+	# @commands.command()
+	# async def yeet(self, ctx):
+	# 	embed = discord.Embed(color=1768431, title=f"{self.bot.user.name}")
+	# 	embed.add_field(name="Greetings!", value="Error: I either do not have permissions to send messages or there is not a general " + 
+	# 			"channel for me to send my welcome message, but hello and thanks for adding me!\nType .help in the server for my commands.")
 	
-		owner = ctx.guild.get_member(ctx.guild.owner_id)
-		await ctx.send(f"Owner is: {owner}")
-		await owner.send(embed=embed)
+	# 	owner = ctx.guild.get_member(ctx.guild.owner_id)
+	# 	await ctx.send(f"Owner is: {owner}")
+	# 	await owner.send(embed=embed)
 
 	@commands.Cog.listener()
 	async def on_guild_remove(self, guild):
@@ -52,6 +54,16 @@ class Others(commands.Cog):
 	# 	ch = self.bot.get_channel(791002207138742292)
 	# 	await ch.send(f"*{member.name} has left*")
 
+	@commands.command(aliases=['policy', 'tos', 'termsofservice', 'privacypolicy', 'policyprivacy'])
+	async def privacy(self, ctx):
+		msg = "This bot only keeps track of your Discord ID once you type the `.start` command."
+		msg += f"\nThis is used to associate your Discord account to everything in your `{ctx.prefix}profile`, `{ctx.prefix}totals`, and `{ctx.prefix}xp`."
+		msg += "\nThis data is stored on a secured Database server."
+		msg += "\n\nDiscord IDs are publically available for anyone to retrieve by turning on Discord's Developer Mode."
+		msg += "\n\nServer-wise, if you use our `.prefix` command, we will store your Server ID with your preferred prefix. This data is stored in a file on a secured server."
+		msg += "\n\nNo one gets access to this data. The only one who has access to it is PyCord#3494. But again, no personal data is stored."
+		msg += f"\n\nIf you have any concerns or want your data removed, feel free to contact PyCord#3494 or join the support server in the `{ctx.prefix}help` menu."
+		await ctx.send(msg)
 
 	@commands.command()
 	@has_permissions(administrator=True)
@@ -65,7 +77,6 @@ class Others(commands.Cog):
 		with open(r"prefix.json", 'w') as f:
 			json.dump(config, f, indent=4)
 
-		await self.bot.change_presence(activity=discord.Game(name=f"Do {newprefix}help for help!"))
 		embed = discord.Embed(title=f"{self.bot.user.name}: ADMIN", color=0xdfe324, description=f"Successfully changed prefix to **{newprefix}**")	
 		await ctx.send(embed=embed)
 
@@ -96,13 +107,16 @@ class Others(commands.Cog):
 
 		embed = discord.Embed(color=1768431, title="Thanks for taking an interest in me!")
 		embed.set_footer(text="And that's all for now folks!")
-		embed.add_field(name = ":game_die: Game commands", 
+		embed.add_field(name = ":game_die: Game Commands", 
 						 value="`roulette`, `crash`, `blackjack`, " 
-							 + "`slots`, `coinflip`, `rps`, `colorguesser`")
+							 + "`slots`, `coinflip`, `rps`, `colorguesser`, `lottery`, `rob`")
 
-		embed.add_field(name = ":gear: Other commands",
+		embed.add_field(name = ":gear: Other Commands",
 					   value = "`credits`, `top`, `position`, `shop`, `stats`, `bank`, `claim`, `vote`, "
-							 + "`profile`, `level`, `freemoney`, `rewards`, `crate`", inline=False)
+							 + "`profile`, `level`, `rewards`, `crate`", inline=False)
+
+		embed.add_field(name = ":money_with_wings: Earn Money",
+					   value = "`work`, `daily`, `search`, and more coming soon...", inline=False)
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `.claim` for free 7,500{self.coin}")
