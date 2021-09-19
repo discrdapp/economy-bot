@@ -93,6 +93,9 @@ class ErrorHandling(commands.Cog):
 
 			exc = ''.join(traceback.format_exception(type(error), error, error.__traceback__, chain=False))
 			exc = exc.split("kwargs)", 1)[1]
+
+			if "MySQL server" in exc:
+				embed.description = "We're having difficulties connecting to the database... Apologies for the inconvenience... Please try again later!"
 			
 			ch = self.bot.get_channel(790282020009148446)
 			if len(exc) > 1999:
