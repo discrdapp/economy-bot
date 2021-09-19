@@ -13,35 +13,32 @@ class Bank(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 	@commands.command(aliases=['dep', 'd'])
-	async def deposit(self, ctx):
-		await ctx.invoke(self.bot.get_command('help bank'))
+	async def deposit(self, ctx, amnt=None):
+		if not amnt:
+			await ctx.invoke(self.bot.get_command('help bank'))
+			return
+		await ctx.invoke(self.bot.get_command('bank deposit'), amnt)
 
 	@commands.command(aliases=['w'])
-	async def withdraw(self, ctx):
-		await ctx.invoke(self.bot.get_command('help bank'))
+	async def withdraw(self, ctx, amnt=None):
+		if not amnt:
+			await ctx.invoke(self.bot.get_command('help bank'))
+			return
+		await ctx.invoke(self.bot.get_command('bank withdraw'), amnt)
 
 	@commands.group(invoke_without_command=True)
 	async def bank(self, ctx):
 		if ctx.invoked_subcommand is None:
-			# await ctx.send("`bank <deposit/withdraw> amount`")
 			await ctx.invoke(self.bot.get_command('help bank'))
 
 	@bank.command(name='deposit', aliases=['dep', 'd'])
 	@commands.cooldown(1, 3, commands.BucketType.user)
 	async def _deposit(self, ctx, amnt):
-		try:
-			amnt = int(amnt)
-		except:
-			if amnt == "all" or amnt == "max":
-				amnt = await self.bot.get_cog("Economy").getBalance(ctx.author)
-			elif amnt == "half":
-				amnt = floor(await self.bot.get_cog("Economy").getBalance(ctx.author)/2)
-			else:
-				await ctx.send("Incorrect withdrawal amount.")
-				return
 
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
+
+		amnt = await self.bot.get_cog("Economy").GetBetAmount(ctx, amnt)
 
 		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amnt):
 			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
