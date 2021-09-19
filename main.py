@@ -142,7 +142,7 @@ async def reload(ctx, extension):
 		lst = bot.extensions.copy()
 		for ext in lst:
 			try:
-				if ext == "cogs.daily" or ext == "cogs.vote":
+				if ext == "cogs.vote":
 					continue
 				bot.reload_extension(ext)
 				print(f"Reloaded {ext}.")
