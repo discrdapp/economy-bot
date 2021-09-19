@@ -4,9 +4,10 @@ import discord
 from discord.ext import commands
 import pymysql
 import asyncio
-import random
 import config
 import math
+
+from random import randint
 
 class XP(commands.Cog):
 	def __init__(self, bot):
@@ -29,13 +30,14 @@ class XP(commands.Cog):
 		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
 		cursor = db.cursor()
 
-		sql = f"""SELECT XP, TotalXP, Level
+		sql = f"""SELECT XP, TotalXP, Level, Multiplier
 				  FROM Economy
 				  WHERE DiscordID = '{ctx.author.id}';""" # LevelReward
 		cursor.execute(sql)
 		db.commit()
 		getRow = cursor.fetchone()
 
+		multiplier = getRow[3]
 		level = getRow[2]
 		xp = getRow[0]
 		requiredXP = self.XPtoLevelUp[level]
@@ -54,10 +56,9 @@ class XP(commands.Cog):
 		embed.add_field(name = "Level", value = f"You are level **{level}**", inline=True)
 		embed.add_field(name = "XP / Next Level", value = f"**{xp}** / **{requiredXP}**", inline=True)
 		embed.add_field(name = "Minimum Bet", value = f"**{minBet}**{coin}", inline=True)
-		#embed.add_field(name = "Level Reward", value = f"**{levelReward}**", inline=True)
 		embed.add_field(name = "Total XP", value = f"**{totalXP}**", inline=True)
 		embed.add_field(name = "XP Until Level Up", value = f"**{requiredXP - xp}**", inline=True)
-		# embed.add_field(name = "Progress", value = f"**{progress}%**", inline=True)
+		embed.add_field(name = "Multiplier", value = f"**{multiplier}x**", inline=False)
 		await ctx.send(embed=embed)
 
 
@@ -92,18 +93,43 @@ class XP(commands.Cog):
 		xp = getRow[0]
 		level = getRow[1]
 
-		if xp > self.XPtoLevelUp[level]:
-			sql = f"""Update Economy
-				  SET XP = XP - {self.XPtoLevelUp[level]}, Level = Level + 1, Credits = Credits + {(level+1)*5000}
-				  WHERE DiscordID = '{discordId}';""" # LevelReward = {self.levelReward[level + 1]},
-			cursor.execute(sql)
-			db.commit()
+		if xp >= self.XPtoLevelUp[level]:
+			count = 0
+
 			embed = discord.Embed(color=1768431, title="Level Up!")
 			file = discord.File("./images/levelup.png", filename="image.png")
+			multiplier = self.bot.get_cog("Economy").getMultiplier(ctx.author)
+
+			credits = (level+1)*5000
+
+			if multiplier == 1:
+				choiceMult = randint(1, 10)
+
+				if choiceMult <= 7:
+					newMultiplier = 1.25
+				elif choiceMult <= 9:
+					newMultiplier = 1.5
+				else:
+					newMultiplier = 2
+				sql = f"""Update Economy
+						  SET XP = XP - {self.XPtoLevelUp[level]}, Level = Level + 1, Credits = Credits + {credits}, Multiplier = {newMultiplier}
+						  WHERE DiscordID = '{discordId}';""" 
+				cursor.execute(sql)
+				sql = f"""CREATE EVENT IF NOT EXISTS event{str(ctx.author.id)}
+						  ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 2 HOUR
+						  DO UPDATE justingraham_db.Economy SET Multiplier = 1;"""
+				cursor.execute(sql)
+				embed.add_field(name = f"{ctx.author.name}, you Leveled Up!", value = f"You received a {newMultiplier}x multiplier for 2 hours!", inline=False)
+			else:
+				sql = f"""Update Economy
+						  SET XP = XP - {self.XPtoLevelUp[level]}, Level = Level + 1, Credits = Credits + {credits}
+						  WHERE DiscordID = '{discordId}';""" 
+				cursor.execute(sql)
+				embed.add_field(name = f"{ctx.author.name}, you Leveled Up!", value = "_ _", inline=False)
+
+			db.commit()
 			embed.set_thumbnail(url="attachment://image.png")
-			embed.add_field(name = f"{ctx.author.name}, you Leveled Up!", value = "_ _", inline=False)
-			# embed.add_field(name = f"Level Reward", value = f"**{self.levelReward[level]} ---> {self.levelReward[level + 1]}**:confetti_ball::confetti_ball: (WIP)", inline=False)
-			embed.add_field(name = f"Credits Bonus!", value = f"**{(level+1)*5000}**{self.coin}")
+			embed.add_field(name = f"Credits Bonus!", value = f"**{credits}**{self.coin}")
 			await ctx.send(file=file, embed=embed)
 
 
