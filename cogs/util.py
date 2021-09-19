@@ -10,9 +10,28 @@ class Util(commands.Cog):
 		self.bot = bot
 		self.jobs = ["Administrative Assistant", "Executive Assistant", "Marketing Manager", "Customer Service Representative", "Nurse Practitioner", "Software Engineer", "Sales Manager", "Data Entry Clerk", "Office Assistant", "Accounting Specialist", "Payroll Specialist", "Dentist", "Registered Nurse", "Pharmacist", "Computer Systems Analyst", "Physician", "Database Administrator", "Software Developer", "Physical Therapist", "Web Developer", "Dental Hygienist", "Occupational Therapist", "Veterinarian", "Computer Programmer", "School Psychologist", "Physical Therapist Assistant", "Interpreter & Translator", "Mechanical Engineer", "Veterinary Technologist & Technician", "Epidemiologist", "IT Manager", "Market Research Analyst", "Diagnostic Medical Sonographer", "Computer Systems Administrator", "Respiratory Therapist", "Medical Secretary", "Civil Engineer", "Substance Abuse Counselor", "Speech-Language Pathologist", "Landscaper & Groundskeeper", "Radiologic Technologist", "Cost Estimator", "Financial Advisor", "Marriage & Family Therapist", "Medical Assistant", "Lawyer", "Accountant", "Compliance Officer", "High School Teacher", "Clinical Laboratory Technician", "Maintenance & Repair Worker", "Bookkeeping, Accounting, & Audit Clerk", "Financial Manager", "Recreation & Fitness Worker", "Insurance Agent", "Elementary School Teacher", "Dental Assistant", "Management Analyst", "Home Health Aide", "Pharmacy Technician", "Construction Manager", "Public Relations Specialist", "Middle School Teacher", "Massage Therapist", "Paramedic", "Preschool Teacher", "Hairdresser", "Marketing Manager", "Patrol Officer", "School Counselor", "Executive Assistant", "Financial Analyst", "Personal Care Aide", "Clinical Social Worker", "Business Operations Manager", "Loan Officer", "Meeting, Convention & Event Planner", "Mental Health Counselor", "Nursing Aide", "Sales Representative", "Architect", "Sales Manager", "HR Specialist", "Plumber", "Real Estate Agent", "Glazier", "Art Director", "Customer Service Representative", "Logistician", "Auto Mechanic", "Bus Driver", "Restaurant Cook", "Child & Family Social Worker", "Administrative Assistant", "Receptionist", "Paralegal", "Cement Mason & Concrete Finisher", "Painter", "Sports Coach", "Teacher Assistant", "Brickmason & Blockmason", "Cashier", "Janitor", "Electrician", "Delivery Truck Driver", "Maid & Housekeeper", "Carpenter", "Security Guard", "Construction Worker", "Fabricator", "Telemarketer"]
 
+
+	async def getChoice(self, ctx):
+		await ctx.send("Type something...")
+		def is_me(m):
+			return m.author == ctx.author
+		try:
+			msg = await self.bot.wait_for('message', check=is_me, timeout=10)
+		except asyncio.TimeoutError:
+			raise Exception("timeoutError")
+		return msg
+	
+	@commands.command()
+	async def test(self, ctx):
+		getInput = await self.getChoice(ctx)
+		await ctx.send(f"User chose {getInput.content}")
+
 	@commands.command()
 	@commands.cooldown(1, 3600, commands.BucketType.user)
 	async def work(self, ctx):
+		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
+			await ctx.invoke(self.bot.get_command('start'))
+
 		job = random.choice(self.jobs)
 		pay = random.randrange(6000, 20001)
 
@@ -68,9 +87,9 @@ class Util(commands.Cog):
 			# bal is person getting robbed 
 			if robbedBal <= 100000:
 				thebal = int(robbedBal/4)
-				if thebal < 500:
+				if thebal <= 500:
 					thebal = 501
-				amnt = random.randrange(500,thebal)
+				amnt = random.randrange(500, thebal)
 			else:
 				amnt = random.randrange(500, 25001)
 
