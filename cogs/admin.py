@@ -103,37 +103,22 @@ class Admin(commands.Cog):
 	@commands.command()
 	@commands.is_owner()
 	async def servers(self, ctx):
-		msgNum = 0
 		count = 1
-		message1 = ""
-		message2 = ""
-		message3 = ""
+		msg = ""
 		for guild in self.bot.guilds:
-			invites = ""
-			inviteCount = 0
 			if guild.owner:
 				if 'pycord' in guild.name.lower() or 'pycord' in guild.owner.name.lower():
 					continue
 			
-			if msgNum == 0:	
-				message1 += f"{count}) {guild.name}\n"
-				if 2000 - len(message1) <= 100:
-					msgNum = 1
-			elif msgNum == 1:	
-				message2 += f"{count}) {guild.name}\n"
-				if 2000 - len(message2) <= 100:
-					msgNum = 2
-			elif msgNum == 2:	
-				message3 += f"{count}) {guild.name}\n"
+			msg += f"{count}) {guild.name}\n"
+			if len(msg) >= 1900:
+				await ctx.send(msg)
+				msg = ""
 			
 			count += 1
-
-		if message1:
-			await ctx.send(f"{message1}")
-		if message2:
-			await ctx.send(f"{message2}")
-		if message3:
-			await ctx.send(f"{message3}")
+			
+		if len(msg) < 1900:
+			await ctx.send(msg)
 
 
 	@commands.command()
