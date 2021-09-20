@@ -70,6 +70,11 @@ class Shop(commands.Cog):
 			await ctx.send(embed=embed)
 			return
 
+		if ID == 3:
+			dailyReward = await self.bot.get_cog("Daily").getDailyReward(ctx)
+			if dailyReward >= 250000:
+				await ctx.send(f"Sorry, but the max Daily Reward allowed is 250,000{self.coin}.")
+				return
 		await self.bot.get_cog("Economy").addWinnings(discordId, -(cost))
 		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
 		cursor = db.cursor()
@@ -91,6 +96,7 @@ class Shop(commands.Cog):
 			await ctx.invoke(self.bot.get_command('balance'))
 
 		elif ID == 3:
+
 			sql = f"""UPDATE Economy
 				  SET DailyReward = DailyReward + {amnt * 1000}
 				  WHERE DiscordID = '{discordId}';"""
