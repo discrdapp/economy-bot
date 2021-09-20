@@ -319,8 +319,8 @@ class Economy(commands.Cog):
 		if not await self.accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
 
-		if await self.getBalance(usr) < 1000:
-			await ctx.send("You need at least 1000 credits to use this command.")
+		if await self.getBalance(usr) < 1025:
+			await ctx.send("You need at least 1025 credits to use this command.")
 			return
 
 		name = usr.name
