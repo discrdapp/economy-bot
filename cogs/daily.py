@@ -51,15 +51,13 @@ class Daily(commands.Cog):
 
 
 	async def getDailyReward(self, ctx):
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 		sql = f"""SELECT DailyReward
 				  FROM Economy
 				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor.execute(sql)
-		db.commit()
+		cursor = conn.execute(sql)
 		getRow = cursor.fetchone()
-		db.close()
+		conn.close()
 		dailyReward = getRow[0]
 		return dailyReward
 

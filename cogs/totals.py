@@ -128,31 +128,30 @@ class Totals(commands.Cog):
 		if ctx.invoked_subcommand is not None:
 			return
 
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 
 		sql = f"""SELECT Profit, Games
 				  FROM Totals
 				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor.execute(sql)
-		# db.commit()
+		cursor = conn.execute(sql)
+		# conn.commit()
 		getRow = cursor.fetchone()
 
 		profit = getRow[0]
 		games = getRow[1]
 
-		# db.close()
+		# conn.close()
 
-		# db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		# cursor = db.cursor()
+		# conn = pymysql.connect(config.db)
+		# cursor = conn.cursor()
 
 		sql = f"""SELECT Credits, Level, XP
 				  FROM Economy
 				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor.execute(sql)
-		# db.commit()
+		cursor = conn.execute(sql)
+		# conn.commit()
 		getRow = cursor.fetchone()
-		db.close()
+		conn.close()
 		balance = getRow[0]
 		level = getRow[1]
 		xp = getRow[2]
@@ -372,8 +371,7 @@ class Totals(commands.Cog):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
 			
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 
 		sql = f"""SELECT E.Credits, E.Level, T.Profit, T.Games
 				  FROM Economy E
@@ -381,9 +379,9 @@ class Totals(commands.Cog):
 				  ON E.DiscordID = T.DiscordID
 				  WHERE E.DiscordID = '{ctx.author.id}';"""
 
-		cursor.execute(sql)
+		cursor = conn.execute(sql)
 		getRow = cursor.fetchone()
-		db.close()
+		conn.close()
 		games = getRow[3]
 		balance = getRow[0]
 		profit = getRow[2]
@@ -433,14 +431,13 @@ class Totals(commands.Cog):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
 			
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 
 		sql = f"""SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS
 				  FROM Totals
 				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor.execute(sql)
-		db.commit()
+		cursor = conn.execute(sql)
+		conn.commit()
 		getRow = cursor.fetchone()
 
 		creditsSpent = getRow[0]
@@ -454,7 +451,7 @@ class Totals(commands.Cog):
 		coinflip = getRow[8]
 		rps = getRow[9]
 
-		db.close()
+		conn.close()
 
 		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Stats")
 		embed.add_field(name = "Total Spent", value = f"{creditsSpent}", inline=True)
@@ -475,32 +472,26 @@ class Totals(commands.Cog):
 	async def addTotals(self, ctx, spent, won, game):
 		discordID = ctx.author.id
 		profit = won - spent
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 
-		try:
-			if game == 0: gameName = "Slots"		  
-			elif game == 1: gameName = "Blackjack"
-			elif game == 2: gameName = "Crash"
-			elif game == 3: gameName = "Roulette"
-			elif game == 4: gameName = "Coinflip"
-			elif game == 5: gameName = "RPS"
+		if game == 0: gameName = "Slots"		  
+		elif game == 1: gameName = "Blackjack"
+		elif game == 2: gameName = "Crash"
+		elif game == 3: gameName = "Roulette"
+		elif game == 4: gameName = "Coinflip"
+		elif game == 5: gameName = "RPS"
 
-			sql = f"""UPDATE Totals
-					  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, {gameName} = {gameName} + {profit}
-					  WHERE DiscordID = '{ctx.author.id}';"""
+		sql = f"""UPDATE Totals
+				  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, {gameName} = {gameName} + {profit}
+				  WHERE DiscordID = '{ctx.author.id}';"""
 
-
-			cursor.execute(sql)
-			db.commit()
-
-		except Exception as e:
-			print(e)
+		cursor = conn.execute(sql)
+		conn.commit()
 
 		bal = await self.bot.get_cog("Economy").getBalance(ctx.author)
 		log(discordID, spent, won, game, bal)
 
-		db.close()
+		conn.close()
 
 def setup(bot):
 	bot.add_cog(Totals(bot))

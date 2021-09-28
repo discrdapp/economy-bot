@@ -50,14 +50,13 @@ class Bank(commands.Cog):
 			await ctx.send(embed=embed)
 			return
 
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 		sql = f"""UPDATE Economy
 				  SET Bank = Bank + {amnt}
 				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor.execute(sql)
-		db.commit()
-		db.close()
+		conn.execute(sql)
+		conn.commit()
+		conn.close()
 
 		await ctx.send(f"Successfully deposited {amnt}{self.coin}!")
 
@@ -82,14 +81,13 @@ class Bank(commands.Cog):
 			await ctx.send("You must withdraw an amount greater than 0.")
 			return
 
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 		sql = f"""UPDATE Economy
 				  SET Bank = Bank - {amnt}
 				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor.execute(sql)
-		db.commit()
-		db.close()
+		conn.execute(sql)
+		conn.commit()
+		conn.close()
 
 		await self.bot.get_cog("Economy").addWinnings(ctx.author.id, amnt)
 
@@ -103,16 +101,15 @@ class Bank(commands.Cog):
 		await ctx.send(f"You have {self.getBankBal(ctx.author.id)}{self.coin} in your bank.")
 
 	def getBankBal(self, discordID):
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 		sql = f"""SELECT Bank
 				  FROM Economy
 				  WHERE DiscordID = '{discordID}'
 				  LIMIT 1;"""
-		cursor.execute(sql)
+		cursor = conn.execute(sql)
 		getRow = cursor.fetchone()
 		bal = getRow[0]
-		db.close()
+		conn.close()
 
 		return bal
 

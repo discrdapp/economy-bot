@@ -89,20 +89,20 @@ class Rewards(commands.Cog):
 
 	# @commands.command(pass_context=True)
 	# async def claimall(self, ctx):
-	# 	db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-	# 	cursor = db.cursor()
+	# 	conn = pymysql.connect(config.db)
+	# 	cursor = conn.cursor()
 
 	# 	sql = f"""SELECT Level
 	# 			  FROM Economy
 	# 			  WHERE DiscordID = '{ctx.author.id}';"""
 	# 	cursor.execute(sql)
-	# 	db.commit()
+	# 	conn.commit()
 	# 	getRow = cursor.fetchone()
 
 
 	# 	level = int(getRow[0])
 
-	# 	db.close()
+	# 	conn.close()
 
 	# 	totalMoney = self.levelReward[level] + 1000
 
@@ -127,42 +127,40 @@ class Rewards(commands.Cog):
 	# 		await ctx.send("Hello! Please type .start to create your wallet. :smiley:")
 
 	# async def getDailyReward(self, ctx):
-	# 	db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-	# 	cursor = db.cursor()
+	# 	conn = pymysql.connect(config.db)
+	# 	cursor = conn.cursor()
 	# 	sql = f"""SELECT DailyReward
 	# 			  FROM Economy
 	# 			  WHERE DiscordID = '{ctx.author.id}';"""
 	# 	cursor.execute(sql)
-	# 	db.commit()
+	# 	conn.commit()
 	# 	getRow = cursor.fetchone()
-	# 	db.close()
+	# 	conn.close()
 	# 	dailyReward = getRow[0]
 	# 	return dailyReward
 
 	async def getLevel(self, ctx):
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 		sql = f"""SELECT Level
 				  FROM Economy
 				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor.execute(sql)
-		db.commit()
+		cursor = conn.execute(sql)
+		conn.commit()
 		getRow = cursor.fetchone()
-		db.close()
+		conn.close()
 		level = getRow[0]
 		return level
 
 	async def getDonatorReward(self, ctx):
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 
 		sql = f"""SELECT DonatorReward
 				  FROM Economy
 				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor.execute(sql)
-		db.commit()
+		cursor = conn.execute(sql)
+		conn.commit()
 		getRow = cursor.fetchone()
-		db.close()
+		conn.close()
 		donatorReward = getRow[0]
 
 		if donatorReward == None:

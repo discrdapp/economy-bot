@@ -27,14 +27,12 @@ class XP(commands.Cog):
 	async def level(self, ctx):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = sqlite3.connect(config.conn)
 
 		sql = f"""SELECT XP, TotalXP, Level, Multiplier
 				  FROM Economy
 				  WHERE DiscordID = '{ctx.author.id}';""" # LevelReward
-		cursor.execute(sql)
-		db.commit()
+		cursor = conn.execute(sql)
 		getRow = cursor.fetchone()
 
 		multiplier = getRow[3]
@@ -45,7 +43,7 @@ class XP(commands.Cog):
 		progress = round((xp / requiredXP) * 100)
 		totalXP = getRow[1]
 
-		db.close()
+		conn.close()
 
 		coin = "<:coins:585233801320333313>"
 		balance = await self.bot.get_cog("Economy").getBalance(ctx.author)
@@ -63,32 +61,27 @@ class XP(commands.Cog):
 
 
 	async def addXP(self, ctx, xp):
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 
 		sql = f"""Update Economy
 				  SET XP = XP + {xp}
 				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor.execute(sql)
-		db.commit()
+		conn.execute(sql)
 
-		await self.levelUp(ctx, db, ctx.author.id)
+		await self.levelUp(ctx, conn, ctx.author.id)
 
 		sql = f"""Update Economy
 				  SET totalXP = totalXP + {xp}
 				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor.execute(sql)
-		db.commit()
-		db.close()
+		conn.execute(sql)
+		conn.close()
 
 
-	async def levelUp(self, ctx, db, discordId):
-		cursor = db.cursor()
+	async def levelUp(self, ctx, conn, discordId):
 		sql_check = f"""SELECT XP, Level
 						FROM Economy
 						WHERE DiscordID = '{discordId}';"""
-		cursor.execute(sql_check)
-		db.commit()
+		cursor = conn.execute(sql_check)
 		getRow = cursor.fetchone()
 		xp = getRow[0]
 		level = getRow[1]
@@ -114,36 +107,34 @@ class XP(commands.Cog):
 				sql = f"""Update Economy
 						  SET XP = XP - {self.XPtoLevelUp[level]}, Level = Level + 1, Credits = Credits + {credits}, Multiplier = {newMultiplier}
 						  WHERE DiscordID = '{discordId}';""" 
-				cursor.execute(sql)
+				conn.execute(sql)
 				sql = f"""CREATE EVENT IF NOT EXISTS event{str(ctx.author.id)}
 						  ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 2 HOUR
-						  DO UPDATE justingraham_db.Economy SET Multiplier = 1;"""
-				cursor.execute(sql)
+						  DO UPDATE justingraham_conn.Economy SET Multiplier = 1;"""
+				conn.execute(sql)
 				embed.add_field(name = f"{ctx.author.name}, you Leveled Up!", value = f"You received a {newMultiplier}x multiplier for 2 hours!", inline=False)
 			else:
 				sql = f"""Update Economy
 						  SET XP = XP - {self.XPtoLevelUp[level]}, Level = Level + 1, Credits = Credits + {credits}
 						  WHERE DiscordID = '{discordId}';""" 
-				cursor.execute(sql)
+				conn.execute(sql)
 				embed.add_field(name = f"{ctx.author.name}, you Leveled Up!", value = "_ _", inline=False)
 
-			db.commit()
+			conn.commit()
 			embed.set_thumbnail(url="attachment://image.png")
 			embed.add_field(name = f"Credits Bonus!", value = f"**{credits}**{self.coin}")
 			await ctx.send(file=file, embed=embed)
 
 
 	async def getLevel(self, discordId):
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 
 		sql = f"""SELECT Level
 				  FROM Economy
 				  WHERE DiscordID = '{discordId}';"""
-		cursor.execute(sql)
-		db.commit()
+		cursor = conn.execute(sql)
 		getRow = cursor.fetchone()
-		db.close()
+		conn.close()
 		level = getRow[0]
 		return level
 

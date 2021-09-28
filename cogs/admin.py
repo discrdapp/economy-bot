@@ -87,16 +87,15 @@ class Admin(commands.Cog):
 		if not await self.bot.get_cog("Economy").accCheck(user):
 			await ctx.send("User not registered in system...")
 			return
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 		sql = f"DELETE FROM Economy WHERE DiscordID={user.id};"
-		cursor.execute(sql)
+		conn.execute(sql)
 		sql = f"DELETE FROM Inventory WHERE DiscordID={user.id};"
-		cursor.execute(sql)
+		conn.execute(sql)
 		sql = f"DELETE FROM Totals WHERE DiscordID={user.id};"
-		cursor.execute(sql)
-		db.commit()
-		db.close()
+		conn.execute(sql)
+		conn.commit()
+		conn.close()
 
 		await ctx.send("Deleted user.")
 
@@ -127,15 +126,14 @@ class Admin(commands.Cog):
 	@commands.command()
 	@commands.is_owner()
 	async def givexp(self, ctx, discordId: str, xp: int):
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 		sql = f"""Update Economy
 				  SET XP = XP + {xp}, TotalXP = TotalXP + {xp}
 				  WHERE DiscordID = '{discordId}';"""
-		cursor.execute(sql)
-		db.commit()
-		await self.bot.get_cog("XP").levelUp(ctx, db, discordId) # checks if they lvl up
-		db.close()
+		conn.execute(sql)
+		conn.commit()
+		await self.bot.get_cog("XP").levelUp(ctx, conn, discordId) # checks if they lvl up
+		conn.close()
 
 
 	@commands.command()
@@ -146,22 +144,21 @@ class Admin(commands.Cog):
 		await member.add_roles(donatorRole)
 		await self.bot.get_cog("Economy").addWinnings(member.id, 10000)
 
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 
 		sql = f"""UPDATE Economy
 				  SET DonatorCheck = 1
 				  WHERE DiscordID = '{member.id}';"""
-		cursor.execute(sql)
-		db.commit()
+		conn.execute(sql)
+		conn.commit()
 
 		sql = f"""UPDATE Economy
 		  SET DonatorReward = DonatorReward + 5000
 		  WHERE DiscordID = '{member.id}';"""
-		cursor.execute(sql)
-		db.commit()
+		conn.execute(sql)
+		conn.commit()
 
-		db.close()
+		conn.close()
 
 		await ctx.send(f"Donator role added.\n10000 credits added.\n5000 credits added to your Donator Reward")
 

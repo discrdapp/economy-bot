@@ -80,23 +80,22 @@ class Shop(commands.Cog):
 				await ctx.send(f"Sorry, but the max Daily Reward allowed is 250,000{self.coin}.")
 				return
 		await self.bot.get_cog("Economy").addWinnings(discordId, -(cost))
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 		
 		if ID == 1:
 			sql = f"""UPDATE Inventory
 				  SET Crates = Crates + {amnt}
 				  WHERE DiscordID = '{discordId}';"""
-			cursor.execute(sql)
-			db.commit()
+			conn.execute(sql)
+			conn.commit()
 			await ctx.invoke(self.bot.get_command('balance'))
 
 		elif ID == 2:
 			sql = f"""UPDATE Inventory
 				  SET Keyss = Keyss + {amnt}
 				  WHERE DiscordID = '{discordId}';"""
-			cursor.execute(sql)
-			db.commit()
+			conn.execute(sql)
+			conn.commit()
 			await ctx.invoke(self.bot.get_command('balance'))
 
 		elif ID == 3:
@@ -104,8 +103,8 @@ class Shop(commands.Cog):
 			sql = f"""UPDATE Economy
 				  SET DailyReward = DailyReward + {amnt * 1000}
 				  WHERE DiscordID = '{discordId}';"""
-			cursor.execute(sql)
-			db.commit()	
+			conn.execute(sql)
+			conn.commit()	
 
 			embed = discord.Embed(color=1768431)
 			embed.set_thumbnail(url=ctx.author.avatar_url)
@@ -118,8 +117,8 @@ class Shop(commands.Cog):
 		# 	sql = f"""UPDATE Economy
 		# 		  SET LevelReward = LevelReward + 500
 		# 		  WHERE DiscordID = '{discordId}';"""
-		# 	cursor.execute(sql)
-		# 	db.commit()	
+		# 	conn.execute(sql)
+		# 	conn.commit()	
 
 		# elif ID == 5:
 		# 	pass
@@ -128,15 +127,15 @@ class Shop(commands.Cog):
 		# 	sql = f"""UPDATE Economy
 		# 		  SET Multiplier = Multiplier + 0.5
 		# 		  WHERE DiscordID = '{discordId}';"""
-		# 	cursor.execute(sql)
-		# 	db.commit()	
+		# 	conn.execute(sql)
+		# 	conn.commit()	
 
 		elif ID == 7:
 			sql = f"""UPDATE Economy
 				  SET DonatorReward = DonatorReward + {amnt * 1500}
 				  WHERE DiscordID = '{discordId}';"""
-			cursor.execute(sql)
-			db.commit()	
+			conn.execute(sql)
+			conn.commit()	
 
 			embed = discord.Embed(color=1768431)
 			embed.add_field(name = f"Shop", 
@@ -146,7 +145,7 @@ class Shop(commands.Cog):
 			await ctx.send(embed=embed)
 
 
-		db.close()
+		conn.close()
 
 
 	@shop.command()
@@ -229,15 +228,14 @@ class Shop(commands.Cog):
 
 		await self.bot.get_cog("Economy").addWinnings(ctx.author.id, moneyToAdd)
 
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = pymysql.connect(config.db)
 		sql = f"""UPDATE Inventory
 				  SET Crates = {crates}, Keyss = {keys}
 				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor.execute(sql)
-		db.commit()
+		conn.execute(sql)
+		conn.commit()
 
-		db.close()
+		conn.close()
 
 		await ctx.invoke(self.bot.get_command('balance'))
 
