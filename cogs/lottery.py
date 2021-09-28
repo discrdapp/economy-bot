@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands, tasks
+from discord.ext.commands import has_permissions
 import asyncio
 
 import time
@@ -8,6 +9,8 @@ import random
 import datetime
 import numpy as np
 import math
+
+import json
 
 
 class Lottery(commands.Cog):
@@ -20,15 +23,28 @@ class Lottery(commands.Cog):
 		self.userTickets = list()
 		self.coin = "<:coins:585233801320333313>"
 		self.lotteryTask.start()
-		self.emptyRoundCount = 0
+		self.sendToChannels = []
 
-	@commands.command(aliases=['ticket'])
+		
+
+	@commands.group(aliases=['ticket'], invoke_without_command=True)
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def lottery(self, ctx, amnt:str=""):
-		COMMANDS_ID = self.bot.get_channel(self.COMMANDS_ID)
-		if ctx.guild.id != self.SERVER_ID: # if not correct channel
-			await ctx.send(f"This command can only be played in the support server. Feel free to join the server in the {ctx.prefix}help menu")
+		if ctx.invoked_subcommand is not None:
 			return
+		# COMMANDS_ID = self.bot.get_channel(self.COMMANDS_ID)
+		# if ctx.guild.id != self.SERVER_ID: # if not correct channel
+		# 	await ctx.send(f"This command can only be played in the support server. Feel free to join the server in the {ctx.prefix}help menu")
+		# 	return
+
+		with open(r"lotteryChannels.json", 'r') as f:
+			channels = json.load(f)
+
+		if str(ctx.guild.id) not in channels:
+			await ctx.send("An Administrator must set the channel for the lottery announcements. This can be ANY TEXT channel.\n" + 
+				f"Please type `{ctx.prefix}lottery channel #channel`")
+			return
+
 
 		if not amnt:
 			try:
@@ -66,25 +82,55 @@ class Lottery(commands.Cog):
 
 		await ctx.send(f"Purchased {newAmnt} tickets successfully for {cost}{self.coin}! Good luck!!!")
 
+		if channels[f"{ctx.guild.id}"] not in self.sendToChannels:
+			self.sendToChannels.append(channels[f"{ctx.guild.id}"])
+
+
+	@lottery.command()
+	@has_permissions(administrator=True)
+	async def channel(self, ctx, chnl):
+		with open(r"lotteryChannels.json", 'r') as f:
+			channels = json.load(f)
+		if "<#" != chnl[0:2]:
+			if chnl == 'remove' or chnl == 'stop':
+				del channels[f"{ctx.guild.id}"]
+				await ctx.send("Removed your server from the list. This will go into effect after the current lottery ends.")
+			else:
+				await ctx.send(f"I don't know what {chnl} is. Please #mention a channel instead.")
+				return
+		else:
+			channels[f"{ctx.guild.id}"] = int(chnl[2:-1])
+			await ctx.send("Channel set successfully.\nYou can type `.lottery channel remove` to stop receiving the messages whenever you'd like.")
+
+		with open(r"lotteryChannels.json", 'w') as f:
+			json.dump(channels, f, indent=4)
+
 
 	@tasks.loop(hours=4)
 	async def lotteryTask(self):
-		CHANNEL = self.bot.get_channel(self.CHANNEL_ID)
 		if not self.userTickets:
 			return
+
+		with open(r"lotteryChannels.json", 'r') as f:
+			channels = json.load(f)
 
 		prizeAmount = len(self.userTickets) * 1000
 
 		uniqueList = np.array([x.id for x in self.userTickets])
 		if len(np.unique(uniqueList)) == 1:
 			prizeAmount = int(prizeAmount * 1.05)
-			await CHANNEL.send(f"{self.userTickets[0].mention}, you were the only one who entered the lottery.\nAs a reward, here's your money back + 5%!" + 
-				f"\nTotal received: {prizeAmount}{self.coin}")
 			winner = self.userTickets[0]
+			msg = f"{winner.mention} was the only one who entered the lottery.\nAs a reward, they got their money back + 5%!\nTotal received: {prizeAmount}{self.coin}"
 		else:
 			winner = random.choice(self.userTickets)
-			await CHANNEL.send(f"CONGRATULATIONS TO {winner.mention}.\nThey won {prizeAmount}{self.coin}")
-		
+			msg = f"CONGRATULATIONS TO {winner.mention}.\nThey won {prizeAmount}{self.coin}"
+
+		for chnlId in self.sendToChannels: # get each channel id to send lottery results to
+			chnl = self.bot.get_channel(chnlId) # convert to channel
+			try: await chnl.send(msg) # send winning message
+			except: pass
+		self.sendToChannels.clear()
+		self.sendToChannels.append(585226670361804827)
 		self.userTickets.clear()
 
 		try:
@@ -110,7 +156,7 @@ class Lottery(commands.Cog):
 			return
 		# await ctx.message.delete()
 		if self.lotteryTask.is_running():
-			await ctx.send("Lottery stopped", delete_after=3)
+			await ctx.send("Lottery stopped")
 			self.lotteryTask.cancel()
 			await self.refundTickets(ctx)
 		else:

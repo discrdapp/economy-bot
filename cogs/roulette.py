@@ -15,10 +15,18 @@ class Roulette(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 
+	async def sendError(self, ctx):
+		await ctx.send("Unknown betting choices...\n" +
+					   "Proper use: `.roulette <choice> <bet>`\n" +
+					   "Advaced use: `.roulette <choice1> <bet1> <choice2> <bet2> <choice3> <bet3> <choice4> <bet4>`\n" + 
+					   "Possible choices:\n`red`, `black`, `green`\n`odd`, `even`\n`high`, `low`\nNumber `1 - 36`")
+
+
+
 	@commands.command(description="Play Roulette!", aliases=['russianroulette', 'r', 'rr', 'roulete', 'roullette', 'roullete'], pass_context=True)
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
 	@commands.cooldown(1, 1, commands.BucketType.user)
-	async def roulette(self, ctx):
+	async def roulette(self, ctx, choice1=None, bet1=None, choice2=None, bet2=None, choice3=None, bet3=None, choice4=None, bet4=None):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
 
@@ -56,12 +64,75 @@ class Roulette(commands.Cog):
 			elif numCount % 2 == 0:
 				nums += f"{x}"
 
-			numCount += 1	
+			numCount += 1
+
+
+		if choice1:
+			if not bet1:
+				await self.sendError(ctx)
+				return
+			totalBet = 0
+			for choice, bet in zip([choice1, choice2, choice3, choice4], [bet1, bet2, bet3, bet4]):
+				if choice == None or bet == None:
+					break
+				if choice.isdigit() and not bet.isdigit():
+					bffr = bet
+					bet = choice
+					choice = bffr
+				choice = choice.lower()
+				bet = int(bet)
+
+				if choice in ["red", "black", "green"]:
+					if choice == "red":
+						colorBet = "❤"
+					elif choice == "black":
+						colorBet = "🖤"
+					else:
+						colorBet = "💚"
+					displayColorBet = f"{colorBet}  {bet}{self.coin}"
+					amntColorBet = bet
+				elif choice in ["odd", "even"]:
+					if choice == "odd":
+						parityBet = "1⃣"
+					else:
+						parityBet = "2⃣"
+					displayParityBet = f"{parityBet}  {bet}{self.coin}"
+					amntParityBet = bet
+				elif choice in ["high", "low", "up", "down", "higher", "lower", "upper"]:
+					if choice in ["high", "up", "higher", "upper"]:
+						rangeBet = "⬆"
+					else:
+						rangeBet = "⬇"
+					displayRangeBet = f"{rangeBet}  {bet}{self.coin}"
+					amntRangeBet = bet
+				elif choice.isdigit():
+					if int(choice) < 0 or int(choice) > 36:
+						await ctx.send("Proper automatic number betting format:\n`.roulette <number> <bet>`\nExample: .roulette 35 500")
+						return
+					emojiNum = await self.getNumEmoji(ctx, int(choice))
+					numberBet = int(choice)
+					displayNumberBet = f"{emojiNum}  {bet}{self.coin}"
+					amntNumberBet = bet
+				else:
+					await self.sendError(ctx)
+					return
+
+				totalBet += bet
+
+			if not await self.bot.get_cog("Economy").subtractBet(ctx.author, totalBet):
+				await ctx.send("You do not have enough money for that... Cancelling roulette game...")
+				return
+
+
+
+
+
 
 		emojiNum = await self.getNumEmoji(ctx, numberBet)
 		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Roulette")
 		embed.add_field(name = "Welcome to roulette, choose an option to bet on or choose start", value = "_ _", inline=True)
-		embed.add_field(name = "Current picks:", value = f"Number bet: \nHigh/low bet: \nColor bet: \nParity bet: ", inline=True)
+		# embed.add_field(name = "Current picks:", value = f"Number bet: \nHigh/low bet: \nColor bet: \nParity bet: ", inline=True)
+		embed.add_field(name = "Current picks:", value = f"Number bet: {displayNumberBet}\nHigh/low bet: {displayRangeBet}\nColor bet: {displayColorBet}\nParity bet: {displayParityBet}", inline=True)
 		embed.add_field(name = "Previous Numbers:", value = f"{nums}_ _", inline=True)
 		#embed.add_field(name = "", value = "", inline=False)
 		msg = await ctx.send(file=discord.File('images/roulette.png'), embed=embed)
@@ -242,7 +313,7 @@ class Roulette(commands.Cog):
 
 			elif str(reaction) == "🏁":
 #					if ready == 1:
-				n = random.randrange(0, 36)
+				n = random.randrange(0, 37)
 				#n = 0
 
 				if n >= 18: rangeResult = "⬆"

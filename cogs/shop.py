@@ -31,6 +31,10 @@ class Shop(commands.Cog):
 								+ "----------------------------------------\n"
 								+ "Use .shop buy <id> <amount>\n\n\tSHOP IS A WORK IN PROGRESS!```")
 
+	@commands.command(name='buy')
+	async def _buy(self, ctx, ID, amnt: int=1):
+		await ctx.invoke(self.bot.get_command('shop buy'), ID, amnt)
+
 	@shop.command()
 	async def buy(self, ctx, ID, amnt: int=1):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):

@@ -17,7 +17,6 @@ async def get_prefix(bot, message):
 
 	try:
 		prefix = prefixFile[f"{message.guild.id}"]
-		await bot.change_presence(activity=discord.Game(name=f"Do {prefix}help for help!"))
 	except:
 		prefix = "."
 	return prefix
@@ -63,8 +62,6 @@ async def on_ready():
 	print("Ready...")
 
 	await bot.change_presence(activity=discord.Game(name="Do .help for help!"))
-
-	DiscordComponents(bot)
 
 # @bot.command()
 # async def button(ctx):

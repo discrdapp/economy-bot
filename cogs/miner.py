@@ -31,7 +31,7 @@ class Miner(commands.Cog):
 	@commands.cooldown(1, 3, commands.BucketType.user)
 	async def mine(self, ctx):
 
-		with open(r"inventory.json", 'r') as f:
+		with open(r"miner.json", 'r') as f:
 			invFile = json.load(f)
 
 		try:
@@ -39,15 +39,13 @@ class Miner(commands.Cog):
 		except:
 			inv = [32, 0, 0, 0, 0, 0]
 
-		space = 0
-		# for block in inventory
-		for x in inv[1:]:
-			# count # of blocks
-			space += x 
-		# space left is inventory size - the count
-		space = inv[0] - space
+		spaceUsed = 0
+		for item in inv[1:]:
+			spaceUsed += item
+		# spaceLeft left is inventory size - the count
+		spaceLeft = inv[0] - spaceUsed
 
-		if space <= 0:
+		if spaceLeft <= 0:
 			await ctx.send("You need to sell your blocks before you can mine some more.\nType `.miner sell`")
 			return
 
@@ -60,48 +58,58 @@ class Miner(commands.Cog):
 
 		await ctx.send(f"Mined {amnt} {self.blocks[block]}!")
 
-		if amnt < space: 
+		if amnt < spaceLeft: 
 			inv[block+1] += amnt
 		else: 
-			inv[block+1] += space
+			inv[block+1] += spaceLeft
 			await ctx.send("Your backpack is now full!")
 
 		invFile[f"{ctx.author.id}"] = inv
-		with open(r"inventory.json", 'w') as f:
+		with open(r"miner.json", 'w') as f:
 			json.dump(invFile, f, indent=4)
 
 	@miner.command()
 	@commands.cooldown(1, 10, commands.BucketType.user)
 	async def sell(self, ctx):
-		with open(r"inventory.json", 'r') as f:
+		with open(r"miner.json", 'r') as f:
 			invFile = json.load(f)
 		try:
 			inv = invFile[f"{ctx.author.id}"]
 		except:
 			await ctx.send("You haven't mined yet. Type `miner mine` to start")
 
-		sellMsg = ""
+		dirtMoney = inv[1] * self.dirtValue
+		stoneMoney = inv[2] * self.stoneValue
+		coalMoney = inv[3] * self.coalValue
+		ironMoney = inv[4] * self.ironValue
+		goldMoney = inv[5] * self.goldValue
 
-		if inv[1]: sellMsg += f"Sold {inv[1]} dirt for {inv[1]*self.dirtValue} {self.coin}"
-		if inv[2]: sellMsg += f"Sold {inv[2]} stone for {inv[2]*self.stoneValue} {self.coin}"
-		if inv[3]: sellMsg += f"Sold {inv[3]} coal for {inv[3]*self.coalValue} {self.coin}"
-		if inv[4]: sellMsg += f"Sold {inv[4]} iron for {inv[4]*self.ironValue} {self.coin}"
-		if inv[5]: sellMsg += f"Sold {inv[5]} gold for {inv[5]*self.goldValue} {self.coin}"
+		totalMoney = dirtMoney + stoneMoney + coalMoney + ironMoney + goldMoney
+
+		sellMsg = ""
+		if inv[1]: sellMsg += f"Sold {inv[1]} dirt for {dirtMoney}{self.coin}\n"
+		if inv[2]: sellMsg += f"Sold {inv[2]} stone for {stoneMoney}{self.coin}\n"
+		if inv[3]: sellMsg += f"Sold {inv[3]} coal for {coalMoney}{self.coin}\n"
+		if inv[4]: sellMsg += f"Sold {inv[4]} iron for {ironMoney}{self.coin}\n"
+		if inv[5]: sellMsg += f"Sold {inv[5]} gold for {goldMoney}{self.coin}\n"
 		
 		if sellMsg:
+			multiplier = self.bot.get_cog("Economy").getMultiplier(ctx.author)
+			await self.bot.get_cog("Economy").addWinnings(ctx.author.id, totalMoney * multiplier)
+			sellMsg += f"Total profit: {totalMoney} (+{int(totalMoney * (1 - multiplier))}){self.coin}"
 			await ctx.send(sellMsg)
 		else:
 			await ctx.send("Your inventory is empty.")
 
 		invFile[f"{ctx.author.id}"] = [32, 0, 0, 0, 0, 0]
-		with open(r"inventory.json", 'w') as f:
+		with open(r"miner.json", 'w') as f:
 			json.dump(invFile, f, indent=4)
 
 
-	@miner.command()
+	@miner.command(aliases=['inventory'])
 	@commands.cooldown(1, 3, commands.BucketType.user)
 	async def backpack(self, ctx, what:str=None):
-		with open(r"inventory.json", 'r') as f:
+		with open(r"miner.json", 'r') as f:
 			invFile = json.load(f)
 
 		try:

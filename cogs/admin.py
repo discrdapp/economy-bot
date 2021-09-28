@@ -103,23 +103,7 @@ class Admin(commands.Cog):
 	@commands.command()
 	@commands.is_owner()
 	async def servers(self, ctx):
-		count = 1
-		msg = ""
-		for guild in self.bot.guilds:
-			if guild.owner:
-				if 'pycord' in guild.name.lower() or 'pycord' in guild.owner.name.lower():
-					continue
-			
-			msg += f"{count}) {guild.name}\n"
-			if len(msg) >= 1900:
-				await ctx.send(msg)
-				msg = ""
-			
-			count += 1
-			
-		if len(msg) < 1900:
-			await ctx.send(msg)
-
+		await ctx.send(f"I am currently in {len(self.bot.guilds)} servers")
 
 	@commands.command()
 	@commands.is_owner()

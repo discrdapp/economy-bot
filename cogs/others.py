@@ -18,15 +18,15 @@ class Others(commands.Cog):
 		general = find(lambda x: 'general' in x.name.lower(), guild.text_channels)
 		if general and not general.permissions_for(guild.me).send_messages:
 			general = None
-		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'chat' in x.name.lower(), guild.text_channels)
-		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'chit' in x.name.lower(), guild.text_channels)
-		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'lobby' in x.name.lower(), guild.text_channels)
-		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'talk' in x.name.lower(), guild.text_channels)
-		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'commands' in x.name.lower(), guild.text_channels)
-		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'cmd' in x.name.lower(), guild.text_channels)
-		if not general or not general.permissions_for(guild.me).send_messages: general = find(lambda x: 'bot' in x.name.lower(), guild.text_channels)
+		if not general: general = find(lambda x: 'chat' in x.name.lower(), guild.text_channels)
+		if not general: general = find(lambda x: 'chit' in x.name.lower(), guild.text_channels)
+		if not general: general = find(lambda x: 'lobby' in x.name.lower(), guild.text_channels)
+		if not general: general = find(lambda x: 'talk' in x.name.lower(), guild.text_channels)
+		if not general: general = find(lambda x: 'commands' in x.name.lower(), guild.text_channels)
+		if not general: general = find(lambda x: 'cmd' in x.name.lower(), guild.text_channels)
+		if not general: general = find(lambda x: 'bot' in x.name.lower(), guild.text_channels)
 
-		if general:
+		if general and general.permissions_for(guild.me).send_messages and general.permissions_for(guild.me).embed_links:
 			embed.add_field(name="Greetings!", value="Type .help to see a list of my commands."
 				+ "\n[Click here](https://discord.gg/ggUksVN) to join the support server.")
 			await general.send(embed=embed)
@@ -122,7 +122,7 @@ class Others(commands.Cog):
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `.claim` for free 7,500{self.coin}")
 						# value = "\n[Support](https://www.paypal.me/AutopilotJustin) gambling bot's development or [join support server](https://discord.gg/ggUksVN).")
 		embed.add_field(name = "_ _",
-						value = f"Your prefix is **{prefix}**\n\n***\*\*NEW\*\**** [Join official server](https://discord.gg/ggUksVN) and use `.claim` for free 7,500{self.coin}", inline=False)
+						value = f"Your prefix is **{prefix}**\n\n***\*\*NEW\*\**** [Join official server](https://discord.gg/ggUksVN) and use `.claim` for free 7,500{self.coin}\nAdd this bot to your server - [Click Here](https://discord.com/api/oauth2/authorize?client_id=585235000459264005&permissions=387136&scope=bot)", inline=False)
 		await ctx.send(embed=embed)
 
 	@help.command()

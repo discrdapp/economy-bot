@@ -7,6 +7,7 @@ import random
 class CG(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
+		self.coin = "<:coins:585233801320333313>"
 
 
 	@commands.command(description="Play Color Guesser!", aliases=['cg', 'colorguess', 'guesscolor', 'guessercolor'], pass_context=True)
@@ -20,11 +21,11 @@ class CG(commands.Cog):
 		await ctx.send(f"This is meant to be a multiplayer game.\nFor all those who want to join in and bet {amntBet} coins, type JOIN\n{ctx.author.mention}, type START when everyone has joined in.")
 
 		def is_me(m):
-			if m.channel.id != ctx.channel.id or (m.content != "JOIN" and m.content != "START"):
+			if m.channel.id != ctx.channel.id or (m.content.lower() != "join" and m.content.lower() != "start"):
 				return False
 			if m.author not in users:
 				users.append(m.author)
-			return m.channel.id == ctx.channel.id and m.content == "START" and m.author.id == ctx.author.id
+			return m.channel.id == ctx.channel.id and m.content.lower() == "start" and m.author.id == ctx.author.id
 
 		try:
 			await self.bot.wait_for('message', check=is_me, timeout=45)
@@ -85,15 +86,21 @@ class CG(commands.Cog):
 		timesAmnt = len(colorList)
 		congrats = ""
 		for winner in winners:
+			print(winner)
+			print(winners[-1])
+			print(winner == winners[-1])
 			await self.bot.get_cog("Economy").addWinnings(winner.id, amntBet * timesAmnt)
-			if winners[-1] != winner:
-				congrats += f"{winner.mention}, "
-			else:
-				congrats += f"and {winner.mention}"
+			if len(winners) == 1: # if only one person
+				congrats = winner.mention
+			else: # if more than one person
+				if winners[-1] != winner: # if not last person in list
+					congrats += f"{winner.mention}, "
+				else: # if last person in list
+					congrats += f"and {winner.mention}"
 
 		msg = f"The color was {color}\n"
 		if winners:
-			msg += f"Congratulations to {congrats}, since there are {timesAmnt} colors, you win {timesAmnt}x ({timesAmnt * amntBet}) your bet!"
+			msg += f"Congratulations to {congrats}, since there are {timesAmnt} colors, you win {timesAmnt}x ({timesAmnt * amntBet}{self.coin}) your bet!"
 		else:
 			msg += "Unfortunately, no one picked that color. Try again next time!"
 

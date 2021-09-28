@@ -17,10 +17,10 @@ import math
 class bj(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		self.cards = ["♣ 1","♣ 2","♣ 3","♣ 4","♣ 5","♣ 6","♣ 7","♣ 8","♣ 9","♣ 10","♣ Jack","♣ Queen","♣ King",
-					  "♦ 1","♦ 2","♦ 3","♦ 4","♦ 5","♦ 6","♦ 7","♦ 8","♦ 9","♦ 10","♦ Jack","♦ Queen","♦ King",
-					  "♥ 1","♥ 2","♥ 3","♥ 4","♥ 5","♥ 6","♥ 7","♥ 8","♥ 9","♥ 10","♥ Jack","♥ Queen","♥ King",
-					  "♠ 1","♠ 2","♠ 3","♠ 4","♠ 5","♠ 6","♠ 7","♠ 8","♠ 9","♠ 10","♠ Jack","♠ Queen","♠ King"]
+		self.cards = ["♣ A", "♣ 2", "♣ 3", "♣ 4", "♣ 5", "♣ 6", "♣ 7", "♣ 8", "♣ 9", "♣ 10", "♣ Jack", "♣ Queen", "♣ King",
+					  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
+					  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
+					  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
 
 	@commands.command(description="Play BlackJack!", aliases=['blackjack'])
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
@@ -63,6 +63,8 @@ class bj(commands.Cog):
 		# assigns number value
 		if pDrawnCard[1] == "Jack" or pDrawnCard[1] == "Queen" or pDrawnCard[1] == "King":
 			pDrawnCard[1] = "10"
+		elif pDrawnCard[1] == "A":
+			pDrawnCard[1] = "11"
 		pCardNum.append(int(pDrawnCard[1]))
 
 		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack")
@@ -82,6 +84,8 @@ class bj(commands.Cog):
 			# converts to number
 			if pDrawnCard[1] == "Jack" or pDrawnCard[1] == "Queen" or pDrawnCard[1] == "King":
 				pDrawnCard[1] = "10"
+			elif pDrawnCard[1] == "A":
+				pDrawnCard[1] = "11"
 
 			# adds the card to the player's hand
 			pCardNum.append(int(pDrawnCard[1]))
@@ -123,7 +127,7 @@ class bj(commands.Cog):
 				await botMsg.add_reaction("1⃣") 
 				await botMsg.add_reaction("2⃣")
 				try:
-					reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=15)
+					reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=45)
 					#return reaction, user
 				except asyncio.TimeoutError:
 					await botMsg.delete()
@@ -158,10 +162,10 @@ class bj(commands.Cog):
 
 		# if all 52 cards have been used, reset the deck
 		if len(self.cards) == 0:
-			self.cards = ["♣ 1","♣ 2","♣ 3","♣ 4","♣ 5","♣ 6","♣ 7","♣ 8","♣ 9","♣ 10","♣ Jack","♣ Queen","♣ King",
-						  "♦ 1","♦ 2","♦ 3","♦ 4","♦ 5","♦ 6","♦ 7","♦ 8","♦ 9","♦ 10","♦ Jack","♦ Queen","♦ King",
-						  "♥ 1","♥ 2","♥ 3","♥ 4","♥ 5","♥ 6","♥ 7","♥ 8","♥ 9","♥ 10","♥ Jack","♥ Queen","♥ King",
-						  "♠ 1","♠ 2","♠ 3","♠ 4","♠ 5","♠ 6","♠ 7","♠ 8","♠ 9","♠ 10","♠ Jack","♠ Queen","♠ King"]
+			self.cards = ["♣ A", "♣ 2", "♣ 3", "♣ 4", "♣ 5", "♣ 6", "♣ 7", "♣ 8", "♣ 9", "♣ 10", "♣ Jack", "♣ Queen", "♣ King",
+						  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
+						  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
+						  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
 		return drawnCard
 
 
@@ -202,6 +206,8 @@ class bj(commands.Cog):
 
 		if dDrawnCard[1] == "Jack" or dDrawnCard[1] == "Queen" or dDrawnCard[1] == "King":
 			dDrawnCard[1] = "10"
+		elif dDrawnCard[1] == "A":
+			dDrawnCard[1] = "11"
 
 		dCardNum.append(int(dDrawnCard[1]))
 
@@ -222,6 +228,8 @@ class bj(commands.Cog):
 
 			if dDrawnCard[1] == "Jack" or dDrawnCard[1] == "Queen" or dDrawnCard[1] == "King":
 				dDrawnCard[1] = "10"
+			elif dDrawnCard[1] == "A":
+				dDrawnCard[1] = "11"
 
 			dCardNum.append(int(dDrawnCard[1]))
 
