@@ -9,8 +9,6 @@ import json
 
 import ztoken
 
-from discord_components import DiscordComponents
-
 async def get_prefix(bot, message):
 	with open(r"prefix.json", 'r') as f:
 		prefixFile = json.load(f)
