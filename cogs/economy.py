@@ -2,12 +2,13 @@
 
 import discord
 from discord.ext import commands
-import pymysql
+import sqlite3
 import asyncio
 import random
-import config
-
 import math
+
+import config
+import db
 
 class Economy(commands.Cog):
 	def __init__(self, bot):
@@ -28,27 +29,23 @@ class Economy(commands.Cog):
 			await ctx.send(embed=embed)
 			return
 
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = sqlite3.connect(config.db)
 		sql = f"""INSERT INTO Economy(DiscordID)
 				  VALUES ('{user.id}');"""
-		cursor.execute(sql)
-		db.commit()
+		conn.execute(sql)
 
 		sql = f"""INSERT INTO Inventory(DiscordID)
 				  VALUES ('{user.id}');"""
-		cursor.execute(sql)
-		db.commit()
+		conn.execute(sql)
 
 		sql = f"""INSERT INTO Totals(DiscordID)
 				  VALUES ('{user.id}');"""
-		cursor.execute(sql)
-		db.commit()
+		conn.execute(sql)
 
 		# sql = f"""INSERT INTO Economy(DiscordID) VALUES ('{ctx.author.id}'); INSERT INTO Inventory(DiscordID) VALUES ('{ctx.author.id}'); INSERT INTO Totals(DiscordID) VALUES ('{ctx.author.id}');"""
-		# cursor.execute(sql)
-		# db.commit()
-		db.close()
+		# conn.execute(sql)
+		# conn.commit()
+		conn.close()
 
 		embed.add_field(name="Welcome!", value="You are now successfully registered. Enjoy The Casino.")
 		await ctx.send(embed=embed)
@@ -170,46 +167,16 @@ class Economy(commands.Cog):
 
 
 	def isDonator(self, discordID):
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor() # DonatorCheck is either 0 or 1 (0 for not donator, 1 for donator)
-		sql = f"""SELECT DonatorCheck 
-				  FROM Economy
-				  WHERE DiscordID = '{discordID}';"""
-		cursor.execute(sql)
-		# db.commit()
-		getRow = cursor.fetchone()
-		donatorCheck = getRow[0] # assign donatorCheck to grabbed column DonatorCheck for the row that has {discordID}
-		db.close()
-
+		donatorCheck = db.fetchOne(f"SELECT DonatorCheck FROM Economy WHERE DiscordID = {discordID};")[0]
 		return donatorCheck
 
 	def getDonatorReward(self, discordID):
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
-		sql = f"""SELECT DonatorReward 
-				  FROM Economy
-				  WHERE DiscordID = '{discordID}';"""
-		cursor.execute(sql)
-		# db.commit()
-		getRow = cursor.fetchone()
-		donatorReward = getRow[0] # assign donatorReward to grabbed column DonatorCheck for the row that has {discordID}
-		db.close()
-
+		donatorReward = db.fetchOne(f"SELECT DonatorReward FROM Economy WHERE DiscordID = {discordID};")[0]
 		return donatorReward
 
 
 	def getMultiplier(self, user):
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
-		sql = f"""SELECT Multiplier
-				  FROM Economy
-				  WHERE DiscordID = '{user.id}';"""
-		cursor.execute(sql)
-		# db.commit()
-		getRow = cursor.fetchone()
-		multiplier = getRow[0]
-		db.close()
-
+		multiplier = db.fetchOne(f"SELECT Multiplier FROM Economy WHERE DiscordID = {user.id};")[0]
 		return multiplier
 
 
@@ -218,90 +185,64 @@ class Economy(commands.Cog):
 			return False
 		balance = await self.getBalance(user)
 		if amntBet <= balance and amntBet > 0:
-			db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-			cursor = db.cursor()
+			conn = sqlite3.connect(config.db)
 			sql = f"""UPDATE Economy
 					  SET Credits = Credits - {amntBet}
 					  WHERE DiscordID = '{user.id}';"""
-			cursor.execute(sql)
-			# db.commit()
-			db.close()
+			conn.execute(sql)
+			# conn.commit()
+			conn.close()
 			return True # return 1 if user has enough $$$ to bet their amount entered
 		else:
 			return False # return 0 if user trying to bet more $$$ than they have
 
 
 	async def addWinnings(self, discordId, winnings): # add the amount won 
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
-		
+		conn = sqlite3.connect(config.db)
 		sql = f"""UPDATE Economy
 				  SET Credits = Credits + {winnings}
 				  WHERE DiscordID = '{discordId}';"""
-		cursor.execute(sql)
-		db.commit()
-		db.close()
+		conn.execute(sql)
+		conn.commit()
+		conn.close()
 
 
 	async def getBalance(self, user):
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
-
-		sql = f"""SELECT Credits
-				  FROM Economy
-				  WHERE DiscordID = '{user.id}';"""
-		cursor.execute(sql)
-		# db.commit()
-		getRow = cursor.fetchone()
-		db.close()
-		balance = getRow[0]
+		balance = db.fetchOne(f"SELECT Credits FROM Economy WHERE DiscordID = {user.id};")[0]
 		return balance
 	
 
 	async def getInventory(self, user): # grabs all the crates and keys from database
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor() 
-		# "Keys" is a special word and can't be used in SQL statements for some reason
-		sql = f"""SELECT Crates, Keyss
-				  FROM Inventory
-				  WHERE DiscordID = {user.id};"""
-
-		cursor.execute(sql)
-		# db.commit()
-		getRow = cursor.fetchone()
-		db.close()
-		crates = getRow[0]
-		keys = getRow[1]
+		inv = db.fetchOne(f"SELECT Crates, Keyss FROM Inventory WHERE DiscordID = {user.id};")
+		crates = inv[0]
+		keys = inv[1]
 		return crates, keys
 
 
 	async def subtractInv(self, discordId, amnt): # called when people open crates (subtracts them from inv.)
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = sqlite3.connect(config.db)
 		sql = f"""UPDATE Inventory
 				  SET Crates = Crates - {amnt}, Keyss = Keyss - {amnt}
 				  WHERE DiscordID = '{discordId}';"""
-		cursor.execute(sql)
-		db.commit()
-		db.close()
+		conn.execute(sql)
+		conn.commit()
+		conn.close()
 
 
 	@commands.command()
 	async def top(self, ctx): # scoreboard to display top 10 richest individuals
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = sqlite3.connect(config.db)
 		sql = f"""SELECT DiscordID, Credits
 				  FROM Economy"""
-		cursor.execute(sql) 
-		# db.commit()
-		records = cursor.fetchall() 
-		db.close()
+		# conn.commit()
+		cursor = conn.fetchall() 
+		conn.close()
 
-		records = sorted(records, key = lambda x: x[1], reverse=True) # sort rows by credits  
+		cursor = sorted(cursor, key = lambda x: x[1], reverse=True) # sort rows by credits  
 
 		topUsers = ""
 		count = 1
-		for x in records: 
+		for x in cursor: 
 			user = await self.bot.fetch_user(x[0]) # grab the user from the current record
 			topUsers += f"{count}. < {user.name} > - " + "{:,}".format(x[1]) + "\n"
 			if count == 10:
@@ -325,14 +266,13 @@ class Economy(commands.Cog):
 
 		name = usr.name
 
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
+		conn = sqlite3.connect(config.db)
 		sql = f"""SELECT DiscordID, Credits
 				  FROM Economy"""
-		cursor.execute(sql) 
-		# db.commit()
+		cursor = conn.execute(sql) 
+		# conn.commit()
 		records = cursor.fetchall() 
-		db.close()
+		conn.close()
 
 		records = sorted(records, key = lambda x: x[1], reverse=True) # sort rows by credits  
 
@@ -363,20 +303,8 @@ class Economy(commands.Cog):
 
 	async def accCheck(self, user):
 		# checks if they already have a wallet in database
-		db = pymysql.connect(host=config.host, port=3306, user=config.user, passwd=config.passwd, db=config.db, autocommit=True)
-		cursor = db.cursor()
-
-		sql = f"""SELECT DiscordID
-				  FROM Economy
-				  WHERE DiscordID = '{user.id}';"""
-
-		cursor.execute(sql) 
-		# db.commit()
-
-		getRow = cursor.fetchone()
-		db.close()
-
-		if getRow != None: # getRow will not be None if account is found, therefor return True
+		userAcc = db.fetchOne(f"SELECT DiscordID FROM Economy WHERE DiscordID = {user.id};")
+		if userAcc: # getRow will not be None if account is found, therefor return True
 			return True
 		
 		return False
