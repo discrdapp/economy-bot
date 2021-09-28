@@ -1,5 +1,7 @@
 discord.py
 asyncio
-pymysql
+sqlite3
+numpy
 datetime
 Pillow
+topggpy
