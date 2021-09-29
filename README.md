@@ -13,10 +13,10 @@ Roulette:
 Slots:  
 ![](https://i.imgur.com/ndujf3c.png)
 
-Coinflip:
+Coinflip:  
 ![](https://i.imgur.com/kZVHD30.png)
 
-Crash:
+Crash:  
 ![](https://i.imgur.com/NxM6bbm.png)
   
 Profile:  
@@ -28,5 +28,5 @@ Badges:
 Stats:  
 ![](https://i.imgur.com/IB7kCRo.png)
 
-Bank: 
+Bank:  
 ![](https://i.imgur.com/dbjG4hz.png)
