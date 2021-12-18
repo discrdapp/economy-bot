@@ -22,31 +22,11 @@ async def get_prefix(bot, message):
 bot = commands.Bot(command_prefix = get_prefix, case_insensitive=True)
 bot.remove_command('help')
 
-extensions = ["cogs.admin", "cogs.bank", "cogs.bj", "cogs.coinflip", "cogs.color_guesser", "cogs.crash",
-			  "cogs.daily", "cogs.economy", "cogs.error_handling", "cogs.lottery", "cogs.miner", "cogs.others", "cogs.roulette", "cogs.rps", 
+extensions = ["db", "cogs.admin", "cogs.bank", "cogs.bj", "cogs.coinflip", "cogs.color_guesser", "cogs.crash",
+			  "cogs.daily", "cogs.economy", "cogs.error_handling", "cogs.lottery", "cogs.miner", "cogs.others", "cogs.quests", "cogs.roulette", "cogs.rps", 
 			  "cogs.scratch", "cogs.shop", "cogs.slots", "cogs.totals", "cogs.ttt", "cogs.user_settings", "cogs.util", "cogs.vote", "cogs.weeklymonthly",
 			   "cogs.xp"] # list of cogs to call
-# took out "cogs.minesweeper"
 
-# async def background_loop():
-#     await bot.wait_until_ready()
-#     while not bot.is_closed():
-#         channels = [585234678106030083, 585234706568708106]
-#         amnts = [10, 15, 20, 25, 30, 35, 50, 75, 100]
-#         #time = [60, 120, 150, 180]
-#         time = 10
-#         channel = bot.get_channel(random.choice(channels))
-#         amnt = random.choice(amnts)
-#         coin = "<:coins:585233801320333313>"
-#         await channel.send(f"A random treasure chest appears with {amnt}{coin}\nType $claim to grab it!", file=discord.File('crate.gif'))
-#         def is_me(m):
-#             return m.content == "claim" and m.channel == channel
-#         crateClaim = await bot.wait_for('message', check=is_me, timeout=40)
-#         await bot.get_cog("Economy").addWinnings(crateClaim.author.id, amnt)
-#         balance = bot.get_cog("Economy").getBalance(crateClaim.author.id)
-#         await channel.send(f"Congrats {crateClaim.author.mention}, you won {amnt}{coin}!\n**Credits:** {balance}{coin}")
-#         # Type !claim to random.choice(messages))
-#         await asyncio.sleep(100000)
 
 
 @bot.event
@@ -61,48 +41,19 @@ async def on_ready():
 
 	await bot.change_presence(activity=discord.Game(name="Do .help for help!"))
 
-# @bot.command()
-# async def button(ctx):
-# 	await ctx.send(
-# 		"gg no ree",
-# 		components = [
-# 			Button(label = "click me!");
-# 			Button(label = "Yeet");
-# 		]
-# 	)
 
-# 	interaction = await bot.wait_for("button_click")
-# 	await interaction.respond(content="YEET BITCH");
-
-# 	if interaction.component.label == "click me!":
-# 		pass
-# 	elif interaction.component.label == "Yeet":
-# 		pass
-
-# COMMAND LOGGER
-
-# @bot.event 
+# stop user input
+# @bot.event
 # async def on_message(message):
-# 	if message.author.id != "585227426615787540" and message.content.startswith("$"):
-# 		localTime = time.asctime(time.localtime(time.time()))
-# 		LogFile.write(f"\n{message.author}:{message.guild}:{localTime}:{message.content}")
-# 		LogFile.flush()
+# 	if message.author.bot:
+# 		return
+# 	if message.content[0] != '.':
+# 		return
+# 	if not await bot.is_owner(message.author):
+# 		await message.channel.send("Improving bot... Please check back in 1 hour!")
+# 		return
+# 	await bot.process_commands(message)
 
-# @bot.event
-# async def on_guild_join(guild):
-# 	ch = bot.get_channel(790282431860047882)
-# 	await ch.send(f"Added to {guild.name}")
-# 	general = find(lambda x: 'general' in x.name.lower(), guild.text_channels)
-# 	if general and general.permissions_for(guild.me).send_messages:
-# 		await general.send(f'Hello {guild.name}, and thanks for adding me!\nType `.help` for my commands.\nEveryone will need to type `.start` in order to register!')
-# 	else:
-# 		await guild.owner.send('Error: I either do not have permissions to send messages or there is not a `general` channel for me to send my welcome message.')
-
-# @bot.event
-# async def on_guild_remove(guild):
-# 	ch = bot.get_channel(790282431860047882)
-# 	await ch.send(f"Removed from {guild.name}")
-	
 # manually load a cog
 @bot.command()
 @commands.is_owner()
