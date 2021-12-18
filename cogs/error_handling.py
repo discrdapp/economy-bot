@@ -14,13 +14,15 @@ class ErrorHandling(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_command_error(self, ctx, error):
-		embed = discord.Embed(title=f"{self.bot.user.name} | ERROR", color=0xff0000)
+		embed = discord.Embed(title=f"{self.bot.user.name} | ERROR", color=0xFF0000)
 		error = getattr(error, 'original', error)
 
 		if "missing permissions" in str(error).lower() or "send message" in str(error).lower():
 			return
 
 		elif isinstance(error, commands.CommandNotFound):
+			if "Discord" in ctx.guild.name or "Discords.com" in ctx.guild.name:
+				return
 			lst = [	"background", "bal", "balance", "bank", "blackjack", "bg",
 					"coinflip", "claim", "colorguesser", "credits", "crash", "crate", "earn", "free", "freemoney", 
 					"level", "monthly", "position", "profile", "rewards", "roulette", "rps", 
