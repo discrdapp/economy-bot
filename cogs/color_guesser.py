@@ -86,9 +86,6 @@ class CG(commands.Cog):
 		timesAmnt = len(colorList)
 		congrats = ""
 		for winner in winners:
-			print(winner)
-			print(winners[-1])
-			print(winner == winners[-1])
 			await self.bot.get_cog("Economy").addWinnings(winner.id, amntBet * timesAmnt)
 			if len(winners) == 1: # if only one person
 				congrats = winner.mention

@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-import pymysql
+import sqlite3
 import asyncio
 import config
 

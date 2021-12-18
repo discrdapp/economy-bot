@@ -8,7 +8,7 @@ import random
 import math
 
 import config
-import db
+from db import DB
 
 class Economy(commands.Cog):
 	def __init__(self, bot):
@@ -30,21 +30,15 @@ class Economy(commands.Cog):
 			return
 
 		conn = sqlite3.connect(config.db)
-		sql = f"""INSERT INTO Economy(DiscordID)
-				  VALUES ('{user.id}');"""
-		conn.execute(sql)
+		sql = "INSERT INTO Economy(DiscordID) VALUES (?);"
+		conn.execute(sql, [user.id])
 
-		sql = f"""INSERT INTO Inventory(DiscordID)
-				  VALUES ('{user.id}');"""
-		conn.execute(sql)
+		sql = "INSERT INTO Inventory(DiscordID) VALUES (?);"
+		conn.execute(sql, [user.id])
 
-		sql = f"""INSERT INTO Totals(DiscordID)
-				  VALUES ('{user.id}');"""
-		conn.execute(sql)
-
-		# sql = f"""INSERT INTO Economy(DiscordID) VALUES ('{ctx.author.id}'); INSERT INTO Inventory(DiscordID) VALUES ('{ctx.author.id}'); INSERT INTO Totals(DiscordID) VALUES ('{ctx.author.id}');"""
-		# conn.execute(sql)
-		# conn.commit()
+		sql = "INSERT INTO Totals(DiscordID) VALUES (?);"
+		conn.execute(sql, [user.id])
+		conn.commit()
 		conn.close()
 
 		embed.add_field(name="Welcome!", value="You are now successfully registered. Enjoy The Casino.")
@@ -141,7 +135,7 @@ class Economy(commands.Cog):
 	async def freemoney(self, ctx):
 		prefix = ctx.prefix
 		embed = discord.Embed(color=1768431, title=self.bot.user.name)
-		embed.add_field(name="Free Money Commands", value=f"`{prefix}vote`\n`{prefix}search`\n`{prefix}daily`\n`{prefix}work`")
+		embed.add_field(name="Free Money Commands", value=f"`{prefix}vote`\n`{prefix}search`\n`{prefix}daily`\n`{prefix}weekly`\n`{prefix}monthly`\n`{prefix}work`")
 		await ctx.send(embed=embed)
 
 	@commands.command(aliases=['donate'])
@@ -167,16 +161,16 @@ class Economy(commands.Cog):
 
 
 	def isDonator(self, discordID):
-		donatorCheck = db.fetchOne(f"SELECT DonatorCheck FROM Economy WHERE DiscordID = {discordID};")[0]
+		donatorCheck = DB.fetchOne("SELECT DonatorCheck FROM Economy WHERE DiscordID = ?;", [discordID])[0]
 		return donatorCheck
 
 	def getDonatorReward(self, discordID):
-		donatorReward = db.fetchOne(f"SELECT DonatorReward FROM Economy WHERE DiscordID = {discordID};")[0]
+		donatorReward = DB.fetchOne("SELECT DonatorReward FROM Economy WHERE DiscordID = ?;", [discordID])[0]
 		return donatorReward
 
 
 	def getMultiplier(self, user):
-		multiplier = db.fetchOne(f"SELECT Multiplier FROM Economy WHERE DiscordID = {user.id};")[0]
+		multiplier = DB.fetchOne("SELECT Multiplier FROM Economy WHERE DiscordID = ?;", [user.id])[0]
 		return multiplier
 
 
@@ -185,48 +179,30 @@ class Economy(commands.Cog):
 			return False
 		balance = await self.getBalance(user)
 		if amntBet <= balance and amntBet > 0:
-			conn = sqlite3.connect(config.db)
-			sql = f"""UPDATE Economy
-					  SET Credits = Credits - {amntBet}
-					  WHERE DiscordID = '{user.id}';"""
-			conn.execute(sql)
-			# conn.commit()
-			conn.close()
+			DB.update("UPDATE Economy SET Credits = Credits - ? WHERE DiscordID = ?;", [amntBet, user.id])
 			return True # return 1 if user has enough $$$ to bet their amount entered
 		else:
 			return False # return 0 if user trying to bet more $$$ than they have
 
 
-	async def addWinnings(self, discordId, winnings): # add the amount won 
-		conn = sqlite3.connect(config.db)
-		sql = f"""UPDATE Economy
-				  SET Credits = Credits + {winnings}
-				  WHERE DiscordID = '{discordId}';"""
-		conn.execute(sql)
-		conn.commit()
-		conn.close()
+	async def addWinnings(self, discordID, winnings): # add the amount won 
+		DB.update("UPDATE Economy SET Credits = Credits + ? WHERE DiscordID = ?;", [math.ceil(winnings), discordID])
 
 
 	async def getBalance(self, user):
-		balance = db.fetchOne(f"SELECT Credits FROM Economy WHERE DiscordID = {user.id};")[0]
+		balance = DB.fetchOne("SELECT Credits FROM Economy WHERE DiscordID = ?;", [user.id])[0]
 		return balance
 	
 
 	async def getInventory(self, user): # grabs all the crates and keys from database
-		inv = db.fetchOne(f"SELECT Crates, Keyss FROM Inventory WHERE DiscordID = {user.id};")
+		inv = DB.fetchOne("SELECT Crates, Keyss FROM Inventory WHERE DiscordID = ?;", [user.id])
 		crates = inv[0]
 		keys = inv[1]
 		return crates, keys
 
 
 	async def subtractInv(self, discordId, amnt): # called when people open crates (subtracts them from inv.)
-		conn = sqlite3.connect(config.db)
-		sql = f"""UPDATE Inventory
-				  SET Crates = Crates - {amnt}, Keyss = Keyss - {amnt}
-				  WHERE DiscordID = '{discordId}';"""
-		conn.execute(sql)
-		conn.commit()
-		conn.close()
+		DB.update("UPDATE Inventory SET Crates = Crates - ?, Keyss = Keyss - ? WHERE DiscordID = ?;", [amnt, amnt, discordId])
 
 
 	@commands.command()
@@ -234,15 +210,15 @@ class Economy(commands.Cog):
 		conn = sqlite3.connect(config.db)
 		sql = f"""SELECT DiscordID, Credits
 				  FROM Economy"""
-		# conn.commit()
-		cursor = conn.fetchall() 
+		cursor = conn.execute(sql)
+		data = cursor.fetchall() 
 		conn.close()
 
-		cursor = sorted(cursor, key = lambda x: x[1], reverse=True) # sort rows by credits  
+		data = sorted(data, key = lambda x: x[1], reverse=True) # sort rows by credits  
 
 		topUsers = ""
 		count = 1
-		for x in cursor: 
+		for x in data: 
 			user = await self.bot.fetch_user(x[0]) # grab the user from the current record
 			topUsers += f"{count}. < {user.name} > - " + "{:,}".format(x[1]) + "\n"
 			if count == 10:
@@ -303,7 +279,7 @@ class Economy(commands.Cog):
 
 	async def accCheck(self, user):
 		# checks if they already have a wallet in database
-		userAcc = db.fetchOne(f"SELECT DiscordID FROM Economy WHERE DiscordID = {user.id};")
+		userAcc = DB.fetchOne("SELECT 1 FROM Economy WHERE DiscordID = ?;", [user.id])
 		if userAcc: # getRow will not be None if account is found, therefor return True
 			return True
 		

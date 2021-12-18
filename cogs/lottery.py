@@ -16,19 +16,18 @@ import json
 class Lottery(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		# self.CHANNEL_ID = 881421294866927686
 		self.CHANNEL_ID = 881421294866927686
 		self.COMMANDS_ID = 790041597235822592
 		self.SERVER_ID = 585226670361804827
 		self.userTickets = list()
 		self.coin = "<:coins:585233801320333313>"
 		self.lotteryTask.start()
-		self.sendToChannels = []
+		self.sendToChannels = [self.CHANNEL_ID]
 
 		
 
 	@commands.group(aliases=['ticket'], invoke_without_command=True)
-	@commands.cooldown(1, 5, commands.BucketType.user)
+	@commands.cooldown(1, 3, commands.BucketType.user)
 	async def lottery(self, ctx, amnt:str=""):
 		if ctx.invoked_subcommand is not None:
 			return
@@ -47,14 +46,21 @@ class Lottery(commands.Cog):
 
 
 		if not amnt:
+			msg = ""
 			try:
 				timeRemaining = await self.getTime()
+				msg += "Welcome to the lottery!\nEach lottery lasts for 4 hours." 
+				msg += f"\nEach ticket is 1000{self.coin}."
+				msg += "\n\nProper command use: .lottery <amnt>\nExample: .lottery 3"
+				msg += f"\n\nCurrent lottery ends in **{timeRemaining}**"
+				if len(self.userTickets):
+					msg += f"\nThere are currently {len(self.userTickets)} tickets purchased."
+				else:
+					msg += "\nNo tickets have been purchased yet!"
 			except:
-				timeRemaining = "N/A; no lottery is running..."
-			await ctx.send("Welcome to the lottery!\nEach lottery lasts for 4 hours." +
-				f"\nEach ticket is 1000{self.coin}." +
-				"\n\nProper command use: .lottery <amnt>\nExample: .lottery 3" +
-				f"\n\nCurrent lottery ends in **{timeRemaining}**")
+				msg += "The lottery is currently closed. Please check back soon..."
+
+			await ctx.send(msg)
 			return
 
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
@@ -130,14 +136,10 @@ class Lottery(commands.Cog):
 			try: await chnl.send(msg) # send winning message
 			except: pass
 		self.sendToChannels.clear()
-		self.sendToChannels.append(585226670361804827)
+		self.sendToChannels.append(self.CHANNEL_ID)
 		self.userTickets.clear()
 
-		try:
-			await self.bot.get_cog("Economy").addWinnings(winner.id, prizeAmount)
-		except Exception as e:
-			errorChannel = self.bot.get_channel(790282020009148446)
-			await errorChannel.send(f"<@547475078082985990> {str(e)}\nNeed to give {winner.mention} ({winner.id}) {prizeAmount}{self.coin} ")
+		await self.bot.get_cog("Economy").addWinnings(winner.id, prizeAmount)
 
 	@lotteryTask.before_loop
 	async def before_lotteryTask(self):	
@@ -231,6 +233,12 @@ class Lottery(commands.Cog):
 		for _ in range(amnt):
 			self.userTickets.append(user)
 
+	@commands.command()
+	async def sendChannelList(self, ctx):
+		if self.sendToChannels:
+			await ctx.send(self.sendToChannels)
+		else:
+			await ctx.send("List is empty.")
 
 
 def setup(bot):

@@ -15,7 +15,7 @@ class Vote(commands.Cog):
 
 	@commands.command(description="Vote")
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
-	@commands.cooldown(1, 60, commands.BucketType.user)
+	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def vote(self, ctx):
 		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Vote")
 		embed.set_thumbnail(url=ctx.author.avatar_url)

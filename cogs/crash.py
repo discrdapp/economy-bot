@@ -2,7 +2,7 @@
 
 import discord
 from discord.ext import commands
-import pymysql
+import sqlite3
 import asyncio
 import random
 
@@ -121,6 +121,8 @@ class Crash(commands.Cog):
 			await botMsg.edit(embed=embed)
 
 			await self.bot.get_cog("Totals").addTotals(ctx, self.amntBet, moneyToAdd, 2)
+
+			await self.bot.get_cog("Quests").AddQuestProgress(ctx, ctx.author, "Crsh", profitInt)
 
 		finally:
 			# resets all the variables 

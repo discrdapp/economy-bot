@@ -4,13 +4,16 @@
 
 import discord
 from discord.ext import commands
-import pymysql
+import sqlite3
 import asyncio
 import random
+
+from db import DB
 
 class Slots(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
+		self.coin = "<:coins:585233801320333313>"
 
 	@commands.command(pass_context=True)
 	async def memes(self, ctx, stuff: int):
@@ -19,11 +22,13 @@ class Slots(commands.Cog):
 	@commands.command(description="Pay to play the slots!", aliases=['slotmachine', 'slot', 'gamble'], pass_context=True)
 	@commands.cooldown(1, 9, commands.BucketType.user)
 	@commands.bot_has_guild_permissions(send_messages=True, use_external_emojis=True)
-	async def slots(self, ctx, amntBet: int):
+	async def slots(self, ctx, amntBet):
 		coin = "<:coins:585233801320333313>"
 		
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
+
+		amntBet = await self.bot.get_cog("Economy").GetBetAmount(ctx, amntBet)
 
 		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
 			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Slots")
@@ -87,24 +92,18 @@ class Slots(commands.Cog):
 																			# we don't want it subtracting anything, only adding
 																			
 		await self.bot.get_cog("Economy").addWinnings(ctx.author.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
-		balance = await self.bot.get_cog("Economy").getBalance(ctx.author)
-		embed.add_field(name=f"**--- {result} ---**", value="_ _", inline=False)	
-		embed.add_field(name="Profit", value=f"{profit}{coin}", inline=True)
-		embed.add_field(name="Credits", value=f"**{balance}**{coin}", inline=True)
+		embed.add_field(name=f"**--- {result} ---**", value="_ _", inline=False)
+		embed = await DB.addProfitAndBalFields(self, ctx, profit, embed)
 
-		xp = random.randint(45, 475)
-		embed.set_footer(text=f"Earned {xp} XP!")
+		balance = await self.bot.get_cog("Economy").getBalance(ctx.author)
+		priorBal = balance - profitInt + (giveZeroIfNeg * (multiplier - 1))
+		embed = await DB.calculateXP(self, ctx, priorBal, amntBet, embed)
+
 		await botMsg.edit(embed=embed)
 		await self.bot.get_cog("Totals").addTotals(ctx, amntBet, moneyToAdd, 0)
-		await self.bot.get_cog("XP").addXP(ctx, xp)
 
-	# @slots.error
-	# async def slots_handler(self, ctx, error):
-	# 	embed = discord.Embed(color=0xff2020, title=f"{self.bot.user.name} Help Menu")
-	# 	embed.add_field(name = "`Syntax: /slots <bet>`", value = "_ _", inline=False)
-	# 	embed.add_field(name = "__Play slots for a chance to double your money!__", value = "_ _", inline=False)
-	# 	await ctx.send(embed=embed)
-	# 	print(error)
+		await self.bot.get_cog("Quests").AddQuestProgress(ctx, ctx.author, "Slts", profitInt)
+
 
 def setup(bot):
 	bot.add_cog(Slots(bot))

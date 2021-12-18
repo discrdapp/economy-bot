@@ -1,14 +1,16 @@
 import discord
 from discord.ext import commands
-import pymysql
+import sqlite3
 import asyncio
 import random
-
 import math
+
+from db import DB
 
 class rps(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
+		self.coin = "<:coins:585233801320333313>"
 
 	@commands.command(pass_context=True)
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
@@ -97,7 +99,7 @@ class rps(commands.Cog):
 		minBet = int(math.ceil(minBet / 10.0) * 10.0)
 		if amntBet >= minBet:	
 			xp = random.randint(50, 500)
-			embed.set_footer(text=f"Earned {xp} XP! {amntBet} {minBet}")
+			embed.set_footer(text=f"Earned {xp} XP!")
 			await self.bot.get_cog("XP").addXP(ctx, xp)
 		else:
 			embed.set_footer(text=f"You have to bet your minimum to earn xp.")
@@ -105,14 +107,7 @@ class rps(commands.Cog):
 		await ctx.send(content=f"{ctx.message.author.mention}", file=file, embed=embed)
 		await self.bot.get_cog("Totals").addTotals(ctx, amntBet, moneyToAdd, 5)
 
-
-	# @rps.error
-	# async def rps_handler(self, ctx, error):
-	# 	embed = discord.Embed(color=0xff2020, title=f"{self.bot.user.name} Help Menu")
-	# 	embed.add_field(name = "`Syntax: .rps <choice> <bet>`", value = "_ _", inline=False)
-	# 	embed.add_field(name = "__Verse the bot against some rock, paper, scissors__", value="_ _", inline=False)
-	# 	await ctx.send(embed=embed)
-	# 	print(error)
+		await self.bot.get_cog("Quests").AddQuestProgress(ctx, ctx.author, "RPS", profitInt)
 
 
 def setup(bot):

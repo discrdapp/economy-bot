@@ -14,6 +14,8 @@ from random import randrange
 from random import randint
 import math
 
+from db import DB
+
 class bj(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
@@ -21,6 +23,7 @@ class bj(commands.Cog):
 					  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
 					  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
 					  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
+		self.coin = "<:coins:585233801320333313>"
 
 	@commands.command(description="Play BlackJack!", aliases=['blackjack'])
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
@@ -144,7 +147,7 @@ class bj(commands.Cog):
 
 			else:
 				def is_me(m):
-					return (m.author.id == author.id) and (m.content.lower() in ["hit", "stay", "h", "s"])
+					return (m.author.id == author.id) and (m.content.lower() in ["hit", "stay", "h", "s", "stand"])
 				try:
 					# waits for user action; while loop repeated
 					ans = await self.bot.wait_for('message', check=is_me, timeout=45)
@@ -340,28 +343,13 @@ class bj(commands.Cog):
 		embed.add_field(name="Credits", value=f"**{balance}**{coin}", inline=True)
 
 		priorBal = balance - profitInt + (giveZeroIfNeg * (multiplier - 1))
-		minBet = priorBal * 0.05
-		minBet = int(math.ceil(minBet / 10.0) * 10.0)
-		if amntBet >= minBet:
-			xp = randint(50, 500)
-			embed.set_footer(text=f"Earned {xp} XP!")
-			await self.bot.get_cog("XP").addXP(ctx, xp)
-		else:
-			embed.set_footer(text="You have to bet your minimum to earn xp.")
+		embed = await DB.calculateXP(self, ctx, priorBal, amntBet, embed)
+
 		await ctx.send(content=f"{ctx.author.mention}", file=file, embed=embed)
 
-		await self.bot.get_cog("Totals").addTotals(ctx, amntBet, moneyToAdd, 1)		
+		await self.bot.get_cog("Totals").addTotals(ctx, amntBet, moneyToAdd, 1)	
 
-	# @bj.error
-	# async def bj_handler(self, ctx, error):
-	# 	embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} Help Menu")
-	# 	embed.add_field(name = "`Syntax: $blackjack <bet>`", value = "_ _", inline=False)
-	# 	embed.add_field(name="__Play a game of blackjack and try to get to 21 first.__", value = "_ _", inline=False)
-	# 	await ctx.send(embed=embed)
-	# 	self.embed = discord.Embed(color=1768431, title=f"{self.bot.user.name}' Casino | Blackjack")
-	# 	print(error)
-
-
+		await self.bot.get_cog("Quests").AddQuestProgress(ctx, ctx.author, "BJ", profitInt)
 
 def setup(bot):
 	bot.add_cog(bj(bot))

@@ -2,7 +2,7 @@
 
 import discord
 from discord.ext import commands
-import pymysql
+import sqlite3
 import asyncio
 import random
 
@@ -19,7 +19,8 @@ class Roulette(commands.Cog):
 		await ctx.send("Unknown betting choices...\n" +
 					   "Proper use: `.roulette <choice> <bet>`\n" +
 					   "Advaced use: `.roulette <choice1> <bet1> <choice2> <bet2> <choice3> <bet3> <choice4> <bet4>`\n" + 
-					   "Possible choices:\n`red`, `black`, `green`\n`odd`, `even`\n`high`, `low`\nNumber `1 - 36`")
+					   "Possible choices:\n`red`, `black`, `green`\n`odd`, `even`\n`high`, `low`\nNumber `1 - 36`\n\n" + 
+					   "**Example:** .roulette red 500")
 
 
 
@@ -80,7 +81,7 @@ class Roulette(commands.Cog):
 					bet = choice
 					choice = bffr
 				choice = choice.lower()
-				bet = int(bet)
+				bet = await self.bot.get_cog("Economy").GetBetAmount(ctx, bet)
 
 				if choice in ["red", "black", "green"]:
 					if choice == "red":
@@ -386,6 +387,7 @@ class Roulette(commands.Cog):
 								value = f"{winnings}\n{result}\n**Credits:** {balance}{self.coin}", inline=False)
 				await msg.edit(embed=embed)
 				await self.bot.get_cog("Totals").addTotals(ctx, amntLost, moneyToAdd + (moneyToAdd * (multiplier-1)), 3)
+				await self.bot.get_cog("Quests").AddQuestProgress(ctx, ctx.author, "Rltte", moneyToAdd-amntLost)
 				if len(self.previousNums) == 8: # display only 8 previous numbers
 					self.previousNums.pop()
 				self.previousNums.insert(0, f"{colorResult} {str(n)}") # insert the resulting color and number

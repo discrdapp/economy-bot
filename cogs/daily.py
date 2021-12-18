@@ -1,12 +1,14 @@
 import discord
 from discord.ext import commands
-import pymysql
+import sqlite3
 import asyncio
-import config
 
 import json
 import time
 import math
+
+import config
+from db import DB
 
 class Daily(commands.Cog):
 	def __init__(self, bot):
@@ -51,14 +53,7 @@ class Daily(commands.Cog):
 
 
 	async def getDailyReward(self, ctx):
-		conn = pymysql.connect(config.db)
-		sql = f"""SELECT DailyReward
-				  FROM Economy
-				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor = conn.execute(sql)
-		getRow = cursor.fetchone()
-		conn.close()
-		dailyReward = getRow[0]
+		dailyReward = DB.fetchOne("SELECT DailyReward FROM Economy WHERE DiscordID = ?;", [ctx.author.id])[0]
 		return dailyReward
 
 def setup(bot):

@@ -102,6 +102,7 @@ class Others(commands.Cog):
 
 	@commands.group(invoke_without_command=True, case_insensitive=True)
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
+	@commands.cooldown(1, 5, commands.BucketType.user)
 	async def help(self, ctx):
 		prefix = ctx.prefix
 
@@ -116,7 +117,9 @@ class Others(commands.Cog):
 							 + "`profile`, `level`, `rewards`, `crate`", inline=False)
 
 		embed.add_field(name = ":money_with_wings: Earn Money",
-					   value = "`work`, `daily`, `search`, and more coming soon...", inline=False)
+					   value = "`work`, `daily`, `weekly`, `monthly`, `search`, and more coming soon...", inline=False)
+
+		embed.add_field(name=":grey_question: ***NEW***  Quests", value=f"`quests` <-- IN BETA! REPORT ANY BUGS.")
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `.claim` for free 7,500{self.coin}")

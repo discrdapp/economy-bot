@@ -4,8 +4,9 @@ import discord
 from discord.ext import commands
 import asyncio
 import random
-
 import math
+
+from db import DB
 
 class Coinflip(commands.Cog):
 	def __init__(self, bot):
@@ -117,26 +118,12 @@ class Coinflip(commands.Cog):
 		embed.add_field(name="Credits", value=f"**{balance}**{coin}", inline=True)
 
 
-		priorBal = balance - profitInt
-		minBet = priorBal * 0.05
-		minBet = int(math.ceil(minBet / 10.0) * 10.0)
-		if amntBet >= minBet:
-			xp = random.randint(45, 475)
-			embed.set_footer(text=f"Earned {xp} XP!")
-			await self.bot.get_cog("XP").addXP(ctx, xp)
-		else:
-			embed.set_footer(text=f"You have to bet your minimum to earn xp.")
+		embed = await DB.calculateXP(self, ctx, balance - profitInt, amntBet, embed)
 
 		await ctx.send(file=file, embed=embed)
 		await self.bot.get_cog("Totals").addTotals(ctx, amntBet, moneyToAdd, 4)
 
-	# @coinflip.error
-	# async def coinflip_handler(self, ctx, error):
-	# 	embed = discord.Embed(color=0xff2020, title=f"{self.bot.user.name} Help Menu")
-	# 	embed.add_field(name = "`Syntax:` .coin <choice> <betAmount>", value = "_ _", inline=False)
-	# 	embed.add_field(name = "__Bet either heads or tails on a quick game of coinflip__", value = "_ _", inline=False)
-	# 	await ctx.send(embed=embed)
-	# 	print(error)
+		await self.bot.get_cog("Quests").AddQuestProgress(ctx, ctx.author, "CF", profitInt)
 
 def setup(bot):
 	bot.add_cog(Coinflip(bot))

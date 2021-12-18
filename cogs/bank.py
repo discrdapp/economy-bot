@@ -1,10 +1,10 @@
 import discord
 from discord.ext import commands
-import pymysql
 import asyncio
-import config
 
 from math import floor
+
+from db import DB
 
 class Bank(commands.Cog):
 	def __init__(self, bot):
@@ -12,14 +12,14 @@ class Bank(commands.Cog):
 		self.items = [1000, 5000, 25000, 100000, 150000, 250000, 20000]
 		self.coin = "<:coins:585233801320333313>"
 
-	@commands.command(aliases=['dep', 'd'])
+	@commands.command(aliases=['dep', 'd', 'depo'])
 	async def deposit(self, ctx, amnt=None):
 		if not amnt:
 			await ctx.invoke(self.bot.get_command('help bank'))
 			return
 		await ctx.invoke(self.bot.get_command('bank deposit'), amnt)
 
-	@commands.command(aliases=['w'])
+	@commands.command(aliases=['w', 'with', 'withd'])
 	async def withdraw(self, ctx, amnt=None):
 		if not amnt:
 			await ctx.invoke(self.bot.get_command('help bank'))
@@ -31,7 +31,7 @@ class Bank(commands.Cog):
 		if ctx.invoked_subcommand is None:
 			await ctx.invoke(self.bot.get_command('help bank'))
 
-	@bank.command(name='deposit', aliases=['dep', 'd'])
+	@bank.command(name='deposit', aliases=['dep', 'd', 'depo'])
 	@commands.cooldown(1, 3, commands.BucketType.user)
 	async def _deposit(self, ctx, amnt):
 
@@ -50,18 +50,12 @@ class Bank(commands.Cog):
 			await ctx.send(embed=embed)
 			return
 
-		conn = pymysql.connect(config.db)
-		sql = f"""UPDATE Economy
-				  SET Bank = Bank + {amnt}
-				  WHERE DiscordID = '{ctx.author.id}';"""
-		conn.execute(sql)
-		conn.commit()
-		conn.close()
+		DB.update("UPDATE Economy SET Bank = Bank + ? WHERE DiscordID = ?;", [amnt, ctx.author.id])
 
 		await ctx.send(f"Successfully deposited {amnt}{self.coin}!")
 
 
-	@bank.command(name='withdraw', aliases=['w'])
+	@bank.command(name='withdraw', aliases=['w', 'with', 'withd'])
 	@commands.cooldown(1, 3, commands.BucketType.user)
 	async def _withdraw(self, ctx, amnt):
 		try:
@@ -81,13 +75,7 @@ class Bank(commands.Cog):
 			await ctx.send("You must withdraw an amount greater than 0.")
 			return
 
-		conn = pymysql.connect(config.db)
-		sql = f"""UPDATE Economy
-				  SET Bank = Bank - {amnt}
-				  WHERE DiscordID = '{ctx.author.id}';"""
-		conn.execute(sql)
-		conn.commit()
-		conn.close()
+		DB.update("UPDATE Economy SET Bank = Bank - ? WHERE DiscordID = ?;", [amnt, ctx.author.id])
 
 		await self.bot.get_cog("Economy").addWinnings(ctx.author.id, amnt)
 
@@ -95,22 +83,18 @@ class Bank(commands.Cog):
 
 
 	@bank.command(aliases=['status', 'stat', 'stats', 'bal'])
-	async def balance(self, ctx):
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
-		await ctx.send(f"You have {self.getBankBal(ctx.author.id)}{self.coin} in your bank.")
+	async def balance(self, ctx, user:discord.Member=None):
+		if user:
+			if not await self.bot.get_cog("Economy").accCheck(user):
+				await ctx.send(f"{user.name} has not registered yet.")
+			await ctx.send(f"{user.name} has {self.getBankBal(user.id)}{self.coin} in their bank.")
+		else:
+			if not await self.bot.get_cog("Economy").accCheck(ctx.author):
+				await ctx.invoke(self.bot.get_command('start'))
+			await ctx.send(f"You have {self.getBankBal(ctx.author.id)}{self.coin} in your bank.")
 
 	def getBankBal(self, discordID):
-		conn = pymysql.connect(config.db)
-		sql = f"""SELECT Bank
-				  FROM Economy
-				  WHERE DiscordID = '{discordID}'
-				  LIMIT 1;"""
-		cursor = conn.execute(sql)
-		getRow = cursor.fetchone()
-		bal = getRow[0]
-		conn.close()
-
+		bal = DB.fetchOne("SELECT Bank FROM Economy WHERE DiscordID = ? LIMIT 1;", [discordID])[0]
 		return bal
 
 

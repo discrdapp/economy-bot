@@ -2,7 +2,7 @@
 
 import discord
 from discord.ext import commands
-import pymysql
+import sqlite3
 import asyncio
 import random
 import time
@@ -12,6 +12,8 @@ from PIL import Image, ImageDraw, ImageFont, ImageColor
 from math import floor
 
 import json
+
+from db import DB
 
 actualGame = ["Slt", "BJ", "Crsh", "RLTTE", "CF", "RPS"]
 
@@ -128,33 +130,15 @@ class Totals(commands.Cog):
 		if ctx.invoked_subcommand is not None:
 			return
 
-		conn = pymysql.connect(config.db)
 
-		sql = f"""SELECT Profit, Games
-				  FROM Totals
-				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor = conn.execute(sql)
-		# conn.commit()
-		getRow = cursor.fetchone()
+		totals = DB.fetchOne("SELECT Profit, Games FROM Totals WHERE DiscordID = ?;", [ctx.author.id])
+		profit = totals[0]
+		games = totals[1]
 
-		profit = getRow[0]
-		games = getRow[1]
-
-		# conn.close()
-
-		# conn = pymysql.connect(config.db)
-		# cursor = conn.cursor()
-
-		sql = f"""SELECT Credits, Level, XP
-				  FROM Economy
-				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor = conn.execute(sql)
-		# conn.commit()
-		getRow = cursor.fetchone()
-		conn.close()
-		balance = getRow[0]
-		level = getRow[1]
-		xp = getRow[2]
+		eco = DB.fetchOne("SELECT Credits, Level, XP FROM Economy WHERE DiscordID = ?;", [ctx.author.id])
+		balance = eco[0]
+		level = eco[1]
+		xp = eco[2]
  
 		requiredXP = self.XPtoLevelUp[level]
 
@@ -219,7 +203,7 @@ class Totals(commands.Cog):
 
 		font_type = ImageFont.truetype('arial.ttf',25)
 		draw = ImageDraw.Draw(img)
-		draw.text(xy=(100,100), text=f"{ctx.author.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript',55))
+		draw.text(xy=(100,100), text=f"{ctx.author.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript.ttf',55))
 		draw.text(xy=(420,160), text=f"Level {level}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,160), text=f"Balance: {balance}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,230), text=f"Badges", fill=tuple(textColor), font=font_type)
@@ -370,18 +354,9 @@ class Totals(commands.Cog):
 	async def badges(self, ctx):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
-			
-		conn = pymysql.connect(config.db)
 
-		sql = f"""SELECT E.Credits, E.Level, T.Profit, T.Games
-				  FROM Economy E
-				  INNER JOIN Totals T
-				  ON E.DiscordID = T.DiscordID
-				  WHERE E.DiscordID = '{ctx.author.id}';"""
-
-		cursor = conn.execute(sql)
-		getRow = cursor.fetchone()
-		conn.close()
+		getRow = DB.fetchOne("SELECT E.Credits, E.Level, T.Profit, T.Games FROM Economy E INNER JOIN Totals T ON E.DiscordID = T.DiscordID WHERE E.DiscordID = ?;", [ctx.author.id])
+		
 		games = getRow[3]
 		balance = getRow[0]
 		profit = getRow[2]
@@ -430,15 +405,8 @@ class Totals(commands.Cog):
 	async def stats(self, ctx):
 		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
 			await ctx.invoke(self.bot.get_command('start'))
-			
-		conn = pymysql.connect(config.db)
-
-		sql = f"""SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS
-				  FROM Totals
-				  WHERE DiscordID = '{ctx.author.id}';"""
-		cursor = conn.execute(sql)
-		conn.commit()
-		getRow = cursor.fetchone()
+		
+		getRow = DB.fetchOne("SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS FROM Totals WHERE DiscordID = ?;", [ctx.author.id])
 
 		creditsSpent = getRow[0]
 		creditsWon = getRow[1]
@@ -450,8 +418,6 @@ class Totals(commands.Cog):
 		roulette = getRow[7]
 		coinflip = getRow[8]
 		rps = getRow[9]
-
-		conn.close()
 
 		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Stats")
 		embed.add_field(name = "Total Spent", value = f"{creditsSpent}", inline=True)
@@ -472,7 +438,7 @@ class Totals(commands.Cog):
 	async def addTotals(self, ctx, spent, won, game):
 		discordID = ctx.author.id
 		profit = won - spent
-		conn = pymysql.connect(config.db)
+		conn = sqlite3.connect(config.db)
 
 		if game == 0: gameName = "Slots"		  
 		elif game == 1: gameName = "Blackjack"
