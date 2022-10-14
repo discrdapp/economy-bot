@@ -1,7 +1,10 @@
-# economy-related stuff like betting and gambling, etc.
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import discord
-from discord.ext import commands
 import sqlite3
 import asyncio
 import random
@@ -15,8 +18,8 @@ class Roulette(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 
-	async def sendError(self, ctx):
-		await ctx.send("Unknown betting choices...\n" +
+	async def sendError(self, interaction:Interaction):
+		await interaction.response.send_message("Unknown betting choices...\n" +
 					   "Proper use: `.roulette <choice> <bet>`\n" +
 					   "Advaced use: `.roulette <choice1> <bet1> <choice2> <bet2> <choice3> <bet3> <choice4> <bet4>`\n" + 
 					   "Possible choices:\n`red`, `black`, `green`\n`odd`, `even`\n`high`, `low`\nNumber `1 - 36`\n\n" + 
@@ -24,14 +27,14 @@ class Roulette(commands.Cog):
 
 
 
-	@commands.command(description="Play Roulette!", aliases=['russianroulette', 'r', 'rr', 'roulete', 'roullette', 'roullete'], pass_context=True)
+	@nextcord.slash_command(description="Play Roulette!")
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
 	@commands.cooldown(1, 1, commands.BucketType.user)
-	async def roulette(self, ctx, choice1=None, bet1=None, choice2=None, bet2=None, choice3=None, bet3=None, choice4=None, bet4=None):
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+	async def roulette(self, interaction:Interaction, choice1=None, bet1=None, choice2=None, bet2=None, choice3=None, bet3=None, choice4=None, bet4=None):
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 
-		msg = ctx.message
+		msg = interaction.message
 		channel = msg.channel
 		author = msg.author
 		mention = author.mention
@@ -70,7 +73,7 @@ class Roulette(commands.Cog):
 
 		if choice1:
 			if not bet1:
-				await self.sendError(ctx)
+				await self.sendError(interaction)
 				return
 			totalBet = 0
 			for choice, bet in zip([choice1, choice2, choice3, choice4], [bet1, bet2, bet3, bet4]):
@@ -81,7 +84,7 @@ class Roulette(commands.Cog):
 					bet = choice
 					choice = bffr
 				choice = choice.lower()
-				bet = await self.bot.get_cog("Economy").GetBetAmount(ctx, bet)
+				bet = await self.bot.get_cog("Economy").GetBetAmount(interaction, bet)
 
 				if choice in ["red", "black", "green"]:
 					if choice == "red":
@@ -108,20 +111,20 @@ class Roulette(commands.Cog):
 					amntRangeBet = bet
 				elif choice.isdigit():
 					if int(choice) < 0 or int(choice) > 36:
-						await ctx.send("Proper automatic number betting format:\n`.roulette <number> <bet>`\nExample: .roulette 35 500")
+						await interaction.response.send_message("Proper automatic number betting format:\n`.roulette <number> <bet>`\nExample: .roulette 35 500")
 						return
-					emojiNum = await self.getNumEmoji(ctx, int(choice))
+					emojiNum = await self.getNumEmoji(interaction, int(choice))
 					numberBet = int(choice)
 					displayNumberBet = f"{emojiNum}  {bet}{self.coin}"
 					amntNumberBet = bet
 				else:
-					await self.sendError(ctx)
+					await self.sendError(interaction)
 					return
 
 				totalBet += bet
 
-			if not await self.bot.get_cog("Economy").subtractBet(ctx.author, totalBet):
-				await ctx.send("You do not have enough money for that... Cancelling roulette game...")
+			if not await self.bot.get_cog("Economy").subtractBet(interaction.user, totalBet):
+				await interaction.response.send_message("You do not have enough money for that... Cancelling roulette game...")
 				return
 
 
@@ -129,18 +132,18 @@ class Roulette(commands.Cog):
 
 
 
-		emojiNum = await self.getNumEmoji(ctx, numberBet)
-		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Roulette")
+		emojiNum = await self.getNumEmoji(interaction, numberBet)
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Roulette")
 		embed.add_field(name = "Welcome to roulette, choose an option to bet on or choose start", value = "_ _", inline=True)
 		# embed.add_field(name = "Current picks:", value = f"Number bet: \nHigh/low bet: \nColor bet: \nParity bet: ", inline=True)
 		embed.add_field(name = "Current picks:", value = f"Number bet: {displayNumberBet}\nHigh/low bet: {displayRangeBet}\nColor bet: {displayColorBet}\nParity bet: {displayParityBet}", inline=True)
 		embed.add_field(name = "Previous Numbers:", value = f"{nums}_ _", inline=True)
 		#embed.add_field(name = "", value = "", inline=False)
-		msg = await ctx.send(file=discord.File('images/roulette.png'), embed=embed)
+		msg = await interaction.response.send_message(file=nextcord.File('images/roulette.png'), embed=embed)
 
-		#await ctx.send(f"```Welcome to roulette, choose an option to bet on or choose start```\n\tCurrent picks:\n\t\t\tNumber bet: {str(numberBet)}\n\t\t\tHigh/low bet: {rangeBet}\n\t\t\tColor bet: {colorBet}\n\t\t\tParity bet: {parityBet}\n_ _")
+		#await interaction.response.send_message(f"```Welcome to roulette, choose an option to bet on or choose start```\n\tCurrent picks:\n\t\t\tNumber bet: {str(numberBet)}\n\t\t\tHigh/low bet: {rangeBet}\n\t\t\tColor bet: {colorBet}\n\t\t\tParity bet: {parityBet}\n_ _")
 
-		embedSelection = discord.Embed(color=1768431)
+		embedSelection = nextcord.Embed(color=1768431)
 
 		while True:
 			await self.addReactions(msg)
@@ -151,7 +154,7 @@ class Roulette(commands.Cog):
 			def is_me_reaction(reaction, user):
 				return user == author
 
-			reaction, user = await self.getReactionAndUser(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+			reaction, user = await self.getReactionAndUser(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 
 			await msg.clear_reactions()
 			if str(reaction) == "🔢":
@@ -161,7 +164,7 @@ class Roulette(commands.Cog):
 				try:
 					numberBetMsg = await self.bot.wait_for('message', check=is_me, timeout=30)
 				except asyncio.TimeoutError:
-					embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+					embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 					await msg.edit(embed=embedError)
 					await msg.clear_reactions()
 					raise Exception("timeoutError")
@@ -171,14 +174,14 @@ class Roulette(commands.Cog):
 						numberBet = int(numberBets[0])
 						amntNumberBet = int(numberBets[1])
 					except:
-						await ctx.send("ERROR: Did not provide number.")
-						embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+						await interaction.response.send_message("ERROR: Did not provide number.")
+						embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 						await msg.edit(embed=embedError)
 						await msg.clear_reactions()
 						return
-					if await self.bot.get_cog("Economy").subtractBet(ctx.author, amntNumberBet):
+					if await self.bot.get_cog("Economy").subtractBet(interaction.user, amntNumberBet):
 						await numberBetMsg.delete()
-						emojiNum = await self.getNumEmoji(ctx, numberBet)
+						emojiNum = await self.getNumEmoji(interaction, numberBet)
 						displayNumberBet = f"{emojiNum}  {amntNumberBet}{self.coin}"
 						if not(isinstance(numberBet, int)) or not(numberBet >= 0) or not(numberBet <= 36):
 							embedSelection.clear_fields()
@@ -187,7 +190,7 @@ class Roulette(commands.Cog):
 							numberBet = ""
 							amntNumberBet = 0
 					else:
-						await ctx.send("You do not have enough credits to bet that amount")
+						await interaction.response.send_message("You do not have enough credits to bet that amount")
 						amntNumberBet = 0
 
 			if str(reaction) == "🔃":
@@ -195,7 +198,7 @@ class Roulette(commands.Cog):
 				embedSelection.add_field(name = f"{self.bot.user.name} | Roulette", value ="Which would you like to bet on: high or low?")
 				await msg.edit(embed=embedSelection)
 				await self.addRangeReactions(msg)
-				reaction, user = await self.getReactionAndUser(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+				reaction, user = await self.getReactionAndUser(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 
 				if str(reaction) != "↩":
 					await msg.clear_reactions()
@@ -205,7 +208,7 @@ class Roulette(commands.Cog):
 					try:
 						amntRangeBetMsg = await self.bot.wait_for('message', check=is_me, timeout=30)
 					except asyncio.TimeoutError:
-						embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+						embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 						await msg.edit(embed=embedError)
 						await msg.clear_reactions()
 						raise Exception("timeoutError")
@@ -213,17 +216,17 @@ class Roulette(commands.Cog):
 						try:
 							amntRangeBet = int(amntRangeBetMsg.content)
 						except:
-							await ctx.send("ERROR: Did not provide number.")
-							embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+							await interaction.response.send_message("ERROR: Did not provide number.")
+							embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 							await msg.edit(embed=embedError)
 							await msg.clear_reactions()
 							return
-						if await self.bot.get_cog("Economy").subtractBet(ctx.author, amntRangeBet):
+						if await self.bot.get_cog("Economy").subtractBet(interaction.user, amntRangeBet):
 							await amntRangeBetMsg.delete()
 							rangeBet = reaction
 							displayRangeBet = f"{reaction}  {amntRangeBet}{self.coin}"
 						else:
-							await ctx.send("You do not have enough credits to bet that amount")
+							await interaction.response.send_message("You do not have enough credits to bet that amount")
 							amntRangeBet = 0
 				else:
 					rangeBet = ""
@@ -236,7 +239,7 @@ class Roulette(commands.Cog):
 				await msg.edit(embed=embedSelection)
 				await self.addColorReactions(msg)
 
-				reaction, user = await self.getReactionAndUser(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+				reaction, user = await self.getReactionAndUser(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 
 				if str(reaction) != "↩":
 					await msg.clear_reactions()
@@ -246,7 +249,7 @@ class Roulette(commands.Cog):
 					try:
 						amntColorBetMsg = await self.bot.wait_for('message', check=is_me, timeout=30)
 					except asyncio.TimeoutError:
-						embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+						embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 						await msg.edit(embed=embedError)
 						await msg.clear_reactions()
 						raise Exception("timeoutError")
@@ -254,17 +257,17 @@ class Roulette(commands.Cog):
 						try:
 							amntColorBet = int(amntColorBetMsg.content)
 						except:
-							await ctx.send("ERROR: Did not provide number.")
-							embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+							await interaction.response.send_message("ERROR: Did not provide number.")
+							embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 							await msg.edit(embed=embedError)
 							await msg.clear_reactions()
 							return
-						if await self.bot.get_cog("Economy").subtractBet(ctx.author, amntColorBet):
+						if await self.bot.get_cog("Economy").subtractBet(interaction.user, amntColorBet):
 							await amntColorBetMsg.delete()
 							colorBet = reaction
 							displayColorBet = f"{reaction}  {amntColorBet}{self.coin}"
 						else:
-							await ctx.send("You do not have enough credits to bet that amount")
+							await interaction.response.send_message("You do not have enough credits to bet that amount")
 							amntColorBet = 0
 				else:
 					colorBet = ""
@@ -275,9 +278,9 @@ class Roulette(commands.Cog):
 				embedSelection.clear_fields()
 				embedSelection.add_field(name = f"{self.bot.user.name} | Roulette", value ="Which would you like to bet on odd or even?")
 				await msg.edit(embed=embedSelection)
-				await self.addParityReactions(ctx, msg)
+				await self.addParityReactions(interaction, msg)
 				
-				reaction, user = await self.getReactionAndUser(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+				reaction, user = await self.getReactionAndUser(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 
 				if str(reaction) != "↩":
 					await msg.clear_reactions()
@@ -287,7 +290,7 @@ class Roulette(commands.Cog):
 					try:
 						amntParityBetMsg = await self.bot.wait_for('message', check=is_me, timeout=30)
 					except asyncio.TimeoutError:
-						embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+						embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 						await msg.edit(embed=embedError)
 						await msg.clear_reactions()
 						raise Exception("timeoutError")
@@ -295,17 +298,17 @@ class Roulette(commands.Cog):
 						try:
 							amntParityBet = int(amntParityBetMsg.content)
 						except:
-							await ctx.send("ERROR: Did not provide number.")
-							embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+							await interaction.response.send_message("ERROR: Did not provide number.")
+							embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 							await msg.edit(embed=embedError)
 							await msg.clear_reactions()
 							return
-						if await self.bot.get_cog("Economy").subtractBet(ctx.author, amntParityBet):
+						if await self.bot.get_cog("Economy").subtractBet(interaction.user, amntParityBet):
 							await amntParityBetMsg.delete()
 							parityBet = reaction
 							displayParityBet = f"{reaction}  {amntParityBet}{self.coin}"
 						else:
-							await ctx.send("You do not have enough credits to bet that amount")
+							await interaction.response.send_message("You do not have enough credits to bet that amount")
 							amntParityBet = 0
 				else:
 					parityBet = ""
@@ -328,36 +331,36 @@ class Roulette(commands.Cog):
 				if n % 2 == 0: parityResult = "2⃣"
 				else: parityResult = "1⃣"
 
-				emojiNum = await self.getNumEmoji(ctx, n)
+				emojiNum = await self.getNumEmoji(interaction, n)
 				winnings = ""
 
 				if numberBet == n:
 					winnings += "\nYou guessed the number! You won 35x your bet!"
-					await self.bot.get_cog("Economy").addWinnings(ctx.author.id, amntNumberBet*35)
+					await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntNumberBet*35)
 					moneyToAdd += amntNumberBet*35
 
 				if str(rangeBet) == rangeResult:
 					winnings += "\nYou guessed the range! You won 2x your bet!"
-					await self.bot.get_cog("Economy").addWinnings(ctx.author.id, amntRangeBet*2)
+					await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntRangeBet*2)
 					moneyToAdd += amntRangeBet*2
 
 				if str(colorBet) == colorResult and str(colorBet) != "💚":
 					winnings += "\nYou guessed the color! You won 2x your bet!"
-					await self.bot.get_cog("Economy").addWinnings(ctx.author.id, amntColorBet*2)
+					await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntColorBet*2)
 					moneyToAdd += amntColorBet*2
 				elif str(colorBet) == colorResult:
 					winnings += "\nYou guessed the color green! You won 35x your bet!"
-					await self.bot.get_cog("Economy").addWinnings(ctx.author.id, amntColorBet*35)
+					await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntColorBet*35)
 					moneyToAdd += amntColorBet*35
 
 				if str(parityBet) == parityResult:
 					winnings += "\nYou guessed the parity! You won 2x your bet!"
-					await self.bot.get_cog("Economy").addWinnings(ctx.author.id, amntParityBet*2)
+					await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntParityBet*2)
 					moneyToAdd += amntParityBet*2
 
 				amntLost = amntNumberBet + amntRangeBet + amntColorBet + amntParityBet
 
-				multiplier = self.bot.get_cog("Economy").getMultiplier(ctx.author)
+				multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
 				if moneyToAdd > amntLost:
 					result = f"You won a grand total of {moneyToAdd} (+{moneyToAdd * (multiplier-1)}){self.coin} after betting {amntLost}{self.coin}\n**Profit:** {moneyToAdd-amntLost}{self.coin}"
 				elif moneyToAdd < amntLost:
@@ -368,7 +371,7 @@ class Roulette(commands.Cog):
 				else:
 					result = "You didn't lose or win anything!"
 
-				balance = await self.bot.get_cog("Economy").getBalance(ctx.author)
+				balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 				if numberBet or rangeBet or colorBet or parityBet:
 					priorBal = balance + amntLost - moneyToAdd
 					minBet = priorBal * 0.05
@@ -376,7 +379,7 @@ class Roulette(commands.Cog):
 					if amntLost >= minBet:	
 						xp = random.randint(50, 500)
 						embed.set_footer(text=f"Earned {xp} XP!")
-						await self.bot.get_cog("XP").addXP(ctx, xp)
+						await self.bot.get_cog("XP").addXP(interaction, xp)
 					else:
 						embed.set_footer(text=f"You have to bet your minimum to earn xp.")
 				else:
@@ -386,8 +389,8 @@ class Roulette(commands.Cog):
 				embed.add_field(name = "-----------------------------------------------------------------", 
 								value = f"{winnings}\n{result}\n**Credits:** {balance}{self.coin}", inline=False)
 				await msg.edit(embed=embed)
-				await self.bot.get_cog("Totals").addTotals(ctx, amntLost, moneyToAdd + (moneyToAdd * (multiplier-1)), 3)
-				await self.bot.get_cog("Quests").AddQuestProgress(ctx, ctx.author, "Rltte", moneyToAdd-amntLost)
+				await self.bot.get_cog("Totals").addTotals(interaction, amntLost, moneyToAdd + (moneyToAdd * (multiplier-1)), 3)
+				await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Rltte", moneyToAdd-amntLost)
 				if len(self.previousNums) == 8: # display only 8 previous numbers
 					self.previousNums.pop()
 				self.previousNums.insert(0, f"{colorResult} {str(n)}") # insert the resulting color and number
@@ -396,37 +399,37 @@ class Roulette(commands.Cog):
 #					await msg.edit(content="Roulette game ended; no bets were placed]")
 				break # end roulette while loop
 
-			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Roulette")
+			embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Roulette")
 			embed.add_field(name = "Welcome to roulette, choose an option to bet on or choose start by clicking the flag", value = "_ _", inline=True)
 			embed.add_field(name = "Current picks:", value = f"Number bet: {displayNumberBet}\nHigh/low bet: {displayRangeBet}\nColor bet: {displayColorBet}\nParity bet: {displayParityBet}", inline=True)
 			embed.add_field(name = "Previous Numbers:", value = f"{nums}_ _", inline=True)
 			await msg.edit(embed=embed)
 
 
-	async def getReactionAndUser(self, ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet):
+	async def getReactionAndUser(self, interaction:Interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet):
 		def is_me_reaction(reaction, user):
-			return user == ctx.author
+			return user == interaction.user
 		try:
 			reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=30)
 		except asyncio.TimeoutError:
-			embedError = await self.onTimeout(ctx, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
+			embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 			await msg.edit(embed=embedError)
 			await msg.clear_reactions()
 			raise Exception("timeoutError")
 		return reaction, user
 
 
-	async def onTimeout(self, ctx, msg, nBet, rBet, cBet, pBet):
-		embedError = discord.Embed(color=1768431)
+	async def onTimeout(self, interaction:Interaction, msg, nBet, rBet, cBet, pBet):
+		embedError = nextcord.Embed(color=1768431)
 		embedError.add_field(name = f"{self.bot.user.name} | Roulette", value = "Request timed out.", inline=False)
 		refund = nBet + rBet + cBet + pBet
 		if refund > 0:
-			await self.bot.get_cog("Economy").addWinnings(ctx.author.id, refund)
-			balance = await self.bot.get_cog("Economy").getBalance(ctx.author)
+			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, refund)
+			balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 			embedError.add_field(name = "-----------------------------------------------------------------",
 								 value = f"A refund has been issued!\nYou received your {refund}{self.coin}\n**Credits:** {balance}{self.coin}", inline=False)
 		else:
-			balance = await self.bot.get_cog("Economy").getBalance(ctx.author)
+			balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 			embedError.add_field(name = "-----------------------------------------------------------------",
 								 value = f"Your balance was not affected.\n**Credits:** {balance}{self.coin}", inline=False)
 
@@ -450,12 +453,12 @@ class Roulette(commands.Cog):
 		await msg.add_reaction("⬇")
 		await msg.add_reaction("↩")
 
-	async def addParityReactions(self, ctx, msg):
+	async def addParityReactions(self, interaction:Interaction, msg):
 		await msg.add_reaction("1⃣") 
 		await msg.add_reaction("2⃣")
 		await msg.add_reaction("↩") 
 
-	async def getNumEmoji(self, ctx, num):
+	async def getNumEmoji(self, interaction:Interaction, num):
 		if num == "":return ""
 		elif num == 0:return ":zero:"
 		elif num == 1:return ":one:"

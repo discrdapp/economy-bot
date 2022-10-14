@@ -1,5 +1,9 @@
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
 
 from random import randint
 
@@ -17,25 +21,29 @@ class Miner(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 
-	@commands.group()
+	@nextcord.slash_command()
 	# @commands.cooldown(1, 3, commands.BucketType.user)
-	async def miner(self, ctx):
-		if not ctx.invoked_subcommand:
-			embed = discord.Embed(color=1768431)
-			embed.add_field(name = "Gameplay", value="`mine`, `sell`, `upgrade`", inline=False)
-			embed.add_field(name = "Usage", value="**.miner mine**", inline=False)
-			embed.set_footer(text=f"Profile: {ctx.author.name}")
-			await ctx.send(embed=embed)
+	async def miner(self, interaction:Interaction):
+		pass
 
-	@miner.command()
+	# @miner.subcommand()
+	# @commands.cooldown(1, 3, commands.BucketType.user)
+	# async def info(self, interaction:Interaction):
+	# 	embed = nextcord.Embed(color=1768431)
+	# 	embed.add_field(name = "Gameplay", value="`mine`, `sell`, `upgrade`", inline=False)
+	# 	embed.add_field(name = "Usage", value="**.miner mine**", inline=False)
+	# 	embed.set_footer(text=f"Profile: {interaction.user.name}")
+	# 	await interaction.response.send_message(embed=embed)
+
+	@miner.subcommand()
 	@commands.cooldown(1, 3, commands.BucketType.user)
-	async def mine(self, ctx):
+	async def mine(self, interaction:Interaction):
 
 		with open(r"miner.json", 'r') as f:
 			invFile = json.load(f)
 
 		try:
-			inv = invFile[f"{ctx.author.id}"]
+			inv = invFile[f"{interaction.user.id}"]
 		except:
 			inv = [32, 0, 0, 0, 0, 0]
 
@@ -46,7 +54,7 @@ class Miner(commands.Cog):
 		spaceLeft = inv[0] - spaceUsed
 
 		if spaceLeft <= 0:
-			await ctx.send("You need to sell your blocks before you can mine some more.\nType `.miner sell`")
+			await interaction.response.send_message("You need to sell your blocks before you can mine some more.\nType `.miner sell`")
 			return
 
 		block = randint(0, 4)
@@ -56,27 +64,28 @@ class Miner(commands.Cog):
 		elif block == 3: amnt = randint(4, 8)
 		elif block == 4: amnt = randint(1, 4)
 
-		await ctx.send(f"Mined {amnt} {self.blocks[block]}!")
+		await interaction.response.send_message(f"Mined {amnt} {self.blocks[block]}!")
 
 		if amnt < spaceLeft: 
 			inv[block+1] += amnt
 		else: 
 			inv[block+1] += spaceLeft
-			await ctx.send("Your backpack is now full!")
+			await interaction.followup.send("Your backpack is now full!")
 
-		invFile[f"{ctx.author.id}"] = inv
+		invFile[f"{interaction.user.id}"] = inv
 		with open(r"miner.json", 'w') as f:
 			json.dump(invFile, f, indent=4)
 
-	@miner.command()
+	@miner.subcommand()
 	@commands.cooldown(1, 10, commands.BucketType.user)
-	async def sell(self, ctx):
+	async def sell(self, interaction:Interaction):
 		with open(r"miner.json", 'r') as f:
 			invFile = json.load(f)
 		try:
-			inv = invFile[f"{ctx.author.id}"]
+			inv = invFile[f"{interaction.user.id}"]
 		except:
-			await ctx.send("You haven't mined yet. Type `miner mine` to start")
+			await interaction.response.send_message("You haven't mined yet. Type `miner mine` to start")
+			return
 
 		dirtMoney = inv[1] * self.dirtValue
 		stoneMoney = inv[2] * self.stoneValue
@@ -94,48 +103,49 @@ class Miner(commands.Cog):
 		if inv[5]: sellMsg += f"Sold {inv[5]} gold for {goldMoney}{self.coin}\n"
 		
 		if sellMsg:
-			multiplier = self.bot.get_cog("Economy").getMultiplier(ctx.author)
-			await self.bot.get_cog("Economy").addWinnings(ctx.author.id, totalMoney * multiplier)
+			multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
+			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, totalMoney * multiplier)
 			sellMsg += f"Total profit: {totalMoney} (+{int(totalMoney * (1 - multiplier))}){self.coin}"
-			await ctx.send(sellMsg)
+			await interaction.response.send_message(sellMsg)
 		else:
-			await ctx.send("Your inventory is empty.")
+			await interaction.response.send_message("Your inventory is empty.")
 
-		invFile[f"{ctx.author.id}"] = [32, 0, 0, 0, 0, 0]
+		invFile[f"{interaction.user.id}"] = [32, 0, 0, 0, 0, 0]
 		with open(r"miner.json", 'w') as f:
 			json.dump(invFile, f, indent=4)
 
 
-	@miner.command(aliases=['inventory'])
+	@miner.subcommand()
 	@commands.cooldown(1, 3, commands.BucketType.user)
-	async def backpack(self, ctx, what:str=None):
+	async def backpack(self, interaction:Interaction, what:str=None):
 		with open(r"miner.json", 'r') as f:
 			invFile = json.load(f)
 
 		try:
-			inv = invFile[f"{ctx.author.id}"]
+			inv = invFile[f"{interaction.user.id}"]
 		except:
-			await ctx.send("You haven't mined yet. Type `miner mine` to start")
+			await interaction.response.send_message("You haven't mined yet. Type `miner mine` to start")
+			return
 
 		msg = ""
 		count = 0
 		for i in inv:
 			msg += f"{i} {self.blocks[count]}\n"
-		await ctx.send(msg)
+		await interaction.response.send_message(msg)
 
-	@miner.command()
+	@miner.subcommand()
 	@commands.cooldown(1, 3, commands.BucketType.user)
-	async def upgrade(self, ctx, what:str=None):
+	async def upgrade(self, interaction:Interaction, what:str=None):
 		if not what:
-			embed = discord.Embed(color=1768431)
+			embed = nextcord.Embed(color=1768431)
 			embed.add_field(name = "Pickaxe", value="Level 0 -> Level 1", inline=False)
 			embed.add_field(name = "Inventory Size", value="32 -> 64", inline=False)
 			embed.add_field(name = "Usage", value="**.miner upgrade <pickaxe/inventory>**", inline=False)
-			embed.set_footer(text=f"User: {ctx.author.name}")
-			await ctx.send(embed=embed)
+			embed.set_footer(text=f"User: {interaction.user.name}")
+			await interaction.response.send_message(embed=embed)
 			return
 
-		await ctx.send("Work in Progress")
+		await interaction.response.send_message("Work in Progress")
 
 
 

@@ -1,5 +1,12 @@
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
+
+from typing import Optional
+
 import sqlite3
 import asyncio
 
@@ -26,80 +33,76 @@ class Quests(commands.Cog):
 		self.goals = {"Games": 30, "Wins": 20, "Profit": 50000}
 		self.objectives = {"Games": "play 30 games", "Wins": "win 20 games", "Profit": f"earn a profit of 50,000{self.coin}"}
 
-	@commands.group(invoke_without_command=True, aliases=['q', 'quest', 'missions', 'mission', 'achievements', 'achievement'])
-	async def quests(self, ctx, gameSelection:int=None):
-		if ctx.invoked_subcommand is not None:
-			return
-		if gameSelection:
-			if gameSelection <= 0 or gameSelection > len(self.games) + 1:
-				embed = discord.Embed(color=0xFF0000, description="Invalid game ID")
-				await ctx.send(embed=embed)
-			else:
-				# embed = discord.Embed(color=0x109D00, title=f"{self.realGameNames[gameSelection-1]}")
-				# embed.description = f"{gameSelection}1. Play 30 games\n{gameSelection}2. Win 20 games\n{gameSelection}3. Earn a profit of $50,000"
-				# embed.set_footer(text=f"Type .quests start <num> to start a quest\nExample: .quests start {gameSelection}2")
-				embed=discord.Embed(color=0x109D00, title=f"{self.realGameNames[gameSelection-1]}",
-						description = f"{gameSelection}1. Play 30 games\n{gameSelection}2. Win 20 games\n{gameSelection}3. Earn a profit of 50,000{self.coin}")
-				embed.set_footer(text=f"Type {ctx.prefix}quests start <num> to start a quest\nExample: {ctx.prefix}quests start {gameSelection}2")
+	@nextcord.slash_command()
+	async def quests(self, interaction:Interaction):
+		pass
 
-				await ctx.send(embed=embed)
-			
-			return
+	@quests.subcommand()
+	async def info(self, interaction:Interaction, gameselection:Optional[int]=nextcord.SlashOption(name="game", required=False,
+																			choices={"Slots":1, "Blackjack":2, "Crash":3, 
+																			"Roulette":4, "Coinflip":5, "Rock-Paper-Scissors":6})):
+		if gameselection:
+			embed=nextcord.Embed(color=0x109D00, title=f"{self.realGameNames[gameselection-1]}",
+					description = f"{gameselection}1. Play 30 games\n{gameselection}2. Win 20 games\n{gameselection}3. Earn a profit of 50,000{self.coin}")
+			embed.set_footer(text=f"Type /quests start to start a quest")
 
-		currQuest = self.GetQuest(ctx.author)
-		if not self.InQuestsDB(ctx.author) or not currQuest:
-			embed=discord.Embed(color=0x109D00, title="Quests", description="1. Slots\n2. Blackjack\n3. Crash\n4. Roulette\n5. Coinflip\n6. Rock-Paper-Scissors")
-			embed.set_footer(text=f"Type {ctx.prefix}quests <num> to look at the quests for a specific game\nExample: {ctx.prefix}quests 2\nALL quests currently give 5000 credits and 200 XP!")
-			await ctx.send(embed=embed)
-			# embed = discord.Embed(color=0xFF0000, description="You do not have any active quests")
-			await ctx.send(embed=discord.Embed(color=0xFF0000, description="You do not have any active quests"))
+			await interaction.response.send_message(embed=embed)
+		
+			return
+		currQuest = self.GetQuest(interaction.user)
+		if not self.InQuestsDB(interaction.user) or not currQuest:
+			embed=nextcord.Embed(color=0x109D00, title="Quests", description="1. Slots\n2. Blackjack\n3. Crash\n4. Roulette\n5. Coinflip\n6. Rock-Paper-Scissors")
+			embed.set_footer(text=f"ALL quests give 5000 credits and 200 XP!")
+			await interaction.response.send_message(embed=embed)
+			# embed = nextcord.Embed(color=0xFF0000, description="You do not have any active quests")
+			await interaction.response.send_message(embed=nextcord.Embed(color=0xFF0000, description="You do not have any active quests"))
 		elif currQuest:
-			questStr = await self.Decode(ctx, currQuest)
-			await ctx.send(embed=discord.Embed(color=0x109D00, description=f"{questStr}\n"))
+			questStr = await self.Decode(interaction, currQuest)
+			await interaction.response.send_message(embed=nextcord.Embed(color=0x109D00, description=f"{questStr}\n"))
 
-	@quests.command(aliases=['select', 'activate'])
-	async def start(self, ctx, questSelection):
-		if len(questSelection) != 2:
-			await ctx.send(embed=discord.Embed(color = 0x109D00,
-					description=f"""You chose quest ID {questSelection}, which is invalid. All quest IDs are 2 digits long.
-									Their first digit is 1 - {len(self.games) + 1} and their second digit is 1 - 3."""))
-			return
+	@quests.subcommand()
+	async def start(self, interaction:Interaction, game=nextcord.SlashOption(name="gamechoice", required=True,
+																					choices={"Slots":"1", "Blackjack":"2", "Crash":"3", 
+																					"Roulette":"4", "Coinflip":"5", "Rock-Paper-Scissors":"6"}),
+													quest=nextcord.SlashOption(name="questchoice", required=True,
+																					choices={"Play 30 games": "1", "Win 20 games": "2", "Earn a profit of 50,000": "3"})):
+		questselection = game + quest
 
-		newQuest = str(self.games[int(questSelection[0])-1] + self.quests[int(questSelection[1])-1])
+		newQuest = str(self.games[int(questselection[0])-1] + self.quests[int(questselection[1])-1])
 
-		embed = discord.Embed(color = 0x109D00)
-		if not self.InQuestsDB(ctx.author): # user not in database
+		embed = nextcord.Embed(color = 0x109D00)
+		if not self.InQuestsDB(interaction.user): # user not in database
 			conn = sqlite3.connect(config.db)
 			sql = "INSERT INTO Quests(DiscordID, ActiveQuest) VALUES (?, ?);"
-			conn.execute(sql, (ctx.author.id, newQuest))
+			conn.execute(sql, (interaction.user.id, newQuest))
 			conn.commit()
 			embed.description = f"You have successfully started your first quest! Good luck."
 
-		elif not self.GetQuest(ctx.author): # user not currently have active quest
-			DB.update("UPDATE Quests SET ActiveQuest = ? WHERE DiscordID = ?;", [newQuest, ctx.author.id])
+		elif not self.GetQuest(interaction.user): # user not currently have active quest
+			DB.update("UPDATE Quests SET ActiveQuest = ? WHERE DiscordID = ?;", [newQuest, interaction.user.id])
 			embed.description = f"You have successfully started a new quest! Good luck."
 
 		else: # user has active quest
 			embed.color = 0xFF0000
 			embed.description = f"You must first complete your current quest before you can begin a new one."
-			embed.set_footer(text=f"Type `{ctx.prefix}quests cancel` to cancel your current quest")
+			embed.set_footer(text=f"Type `/quests cancel` to cancel your current quest")
 
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 
-	@quests.command(aliases=['stop', 'delete', 'remove', 'restart'])
-	async def cancel(self, ctx):
-		currQuest = self.GetQuest(ctx.author)
-		if not self.InQuestsDB(ctx.author) or not currQuest:
-			await ctx.send(embed=discord.Embed(color=0xFF0000, description="You do not have any active quests"))
+	@quests.subcommand()
+	async def cancel(self, interaction:Interaction):
+		currQuest = self.GetQuest(interaction.user)
+		if not self.InQuestsDB(interaction.user) or not currQuest:
+			await interaction.response.send_message(embed=nextcord.Embed(color=0xFF0000, description="You do not have any active quests"))
 			return
 
-		DB.update("UPDATE Quests SET ActiveQuest = NULL, Games = 0, Wins = 0, Profit = 0 WHERE DiscordID = ?;", [ctx.author.id])
-		await ctx.send(embed=discord.Embed(color=0x109D00, description=f"You have successfully canceled your current quest"))
+		DB.update("UPDATE Quests SET ActiveQuest = NULL, Games = 0, Wins = 0, Profit = 0 WHERE DiscordID = ?;", [interaction.user.id])
+		await interaction.response.send_message(embed=nextcord.Embed(color=0x109D00, description=f"You have successfully canceled your current quest"))
 
 
 
 
-	async def Decode(self, ctx, activeQuest:str):
+	async def Decode(self, interaction:Interaction, activeQuest:str):
 		pos = 0
 		for x in self.games:
 			if x in activeQuest:
@@ -114,13 +117,13 @@ class Quests(commands.Cog):
 
 		total = self.goals[rest]
 
-		amnt = DB.fetchOne("SELECT " + rest + " FROM Quests WHERE DiscordID = ? and ActiveQuest = ?;", [ctx.author.id, activeQuest])[0]
-		return f"Your current quest is to {goal} in {self.realGameNamesDict[game]}.\nProgress: {amnt}/{total} ({round((amnt/total)*100, 2)}%)\n{await self.PrintProgress(ctx, amnt/total)}"
+		amnt = DB.fetchOne("SELECT " + rest + " FROM Quests WHERE DiscordID = ? and ActiveQuest = ?;", [interaction.user.id, activeQuest])[0]
+		return f"Your current quest is to {goal} in {self.realGameNamesDict[game]}.\nProgress: {amnt}/{total} ({round((amnt/total)*100, 2)}%)\n{await self.PrintProgress(interaction, amnt/total)}"
 
 
 	# game must be "Slt", "BJ", "Crsh", "Rltte", "CF", "RPS"
 	# start of quest must also be one of those
-	async def AddQuestProgress(self, ctx, user: discord.Member, game, profit): 
+	async def AddQuestProgress(self, interaction:Interaction, user: nextcord.Member, game, profit): 
 		if not self.InQuestsDB(user):
 			return
 
@@ -151,15 +154,15 @@ class Quests(commands.Cog):
 			goal = self.GetGoal(questType)
 
 			await self.bot.get_cog("Economy").addWinnings(user.id, 5000)
-			await self.bot.get_cog("XP").addXP(ctx, 200)
+			await self.bot.get_cog("XP").addXP(interaction, 200)
 
-			await ctx.send(embed=discord.Embed(color=0x109D00, title="Quest Complete!", description=f"Your quest to {goal} in {self.realGameNamesDict[game]} is now complete!" +
+			await interaction.followup.send(embed=nextcord.Embed(color=0x109D00, title="Quest Complete!", description=f"Your quest to {goal} in {self.realGameNamesDict[game]} is now complete!" +
 				f"\n5000{self.coin} and 200 XP has been added to your account!\n"))
 			DB.update("UPDATE Quests SET ActiveQuest = NULL, " + questType + " = 0 WHERE DiscordID = ? and ActiveQuest = ?;", [user.id, activeQuest])
 
 
 
-	def InQuestsDB(self, user: discord.Member):
+	def InQuestsDB(self, user: nextcord.Member):
 		# checks if they already have a wallet in database
 		userAcc = DB.fetchOne("SELECT 1 FROM Quests WHERE DiscordID = ?;", [user.id])
 		if userAcc: # getRow will not be None if account is found, therefor return True
@@ -168,17 +171,17 @@ class Quests(commands.Cog):
 		return False
 
 
-	def GetQuest(self, user: discord.Member):
+	def GetQuest(self, user: nextcord.Member):
 		quest = DB.fetchOne("SELECT ActiveQuest FROM Quests WHERE DiscordID = ?;", [user.id])
 		if quest:
 			return quest[0]
 		return None
 
-	def GetQuestStatus(self, questType, user: discord.Member, activeQuest):
+	def GetQuestStatus(self, questType, user: nextcord.Member, activeQuest):
 		quest = DB.fetchOne("SELECT " + questType + " FROM Quests WHERE DiscordID = ? and ActiveQuest = ?;", [user.id, activeQuest])[0]
 		return quest
 
-	def IsQuestComplete(self, goal, questType, user: discord.Member, activeQuest):
+	def IsQuestComplete(self, goal, questType, user: nextcord.Member, activeQuest):
 		currProgress = DB.fetchOne("SELECT " + questType + " FROM Quests WHERE DiscordID = ? and ActiveQuest = ?;", [user.id, activeQuest])[0]
 
 		if currProgress >= goal:
@@ -193,7 +196,7 @@ class Quests(commands.Cog):
 		if questType == "Profit":
 			return f"earn a profit of 50,000{self.coin}"
 
-	async def PrintProgress(self, ctx, percentFilled):
+	async def PrintProgress(self, interaction:Interaction, percentFilled):
 		if percentFilled <= 0.03:
 			percentFilled = 0
 		elif percentFilled < 0.1:

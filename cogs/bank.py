@@ -1,5 +1,10 @@
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
+
 import asyncio
 
 from math import floor
@@ -12,86 +17,86 @@ class Bank(commands.Cog):
 		self.items = [1000, 5000, 25000, 100000, 150000, 250000, 20000]
 		self.coin = "<:coins:585233801320333313>"
 
-	@commands.command(aliases=['dep', 'd', 'depo'])
-	async def deposit(self, ctx, amnt=None):
+	@nextcord.slash_command()
+	async def deposit(self, interaction:Interaction, amnt=None):
 		if not amnt:
-			await ctx.invoke(self.bot.get_command('help bank'))
+			await interaction.invoke(self.bot.get_command('help bank'))
 			return
-		await ctx.invoke(self.bot.get_command('bank deposit'), amnt)
+		await interaction.invoke(self.bot.get_command('bank deposit'), amnt)
 
-	@commands.command(aliases=['w', 'with', 'withd'])
-	async def withdraw(self, ctx, amnt=None):
+	@nextcord.slash_command()
+	async def withdraw(self, interaction:Interaction, amnt=None):
 		if not amnt:
-			await ctx.invoke(self.bot.get_command('help bank'))
+			await interaction.invoke(self.bot.get_command('help bank'))
 			return
-		await ctx.invoke(self.bot.get_command('bank withdraw'), amnt)
+		await interaction.invoke(self.bot.get_command('bank withdraw'), amnt)
 
-	@commands.group(invoke_without_command=True)
-	async def bank(self, ctx):
-		if ctx.invoked_subcommand is None:
-			await ctx.invoke(self.bot.get_command('help bank'))
+	@nextcord.slash_command()
+	async def bank(self, interaction:Interaction):
+		if interaction.invoked_subcommand is None:
+			await interaction.invoke(self.bot.get_command('help bank'))
 
-	@bank.command(name='deposit', aliases=['dep', 'd', 'depo'])
+	@bank.subcommand(name='deposit')
 	@commands.cooldown(1, 3, commands.BucketType.user)
-	async def _deposit(self, ctx, amnt):
+	async def _deposit(self, interaction:Interaction, amnt):
 
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 
-		amnt = await self.bot.get_cog("Economy").GetBetAmount(ctx, amnt)
+		amnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, amnt)
 
-		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amnt):
-			embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
-			embed.set_thumbnail(url=ctx.author.avatar_url)
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amnt):
+			embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
+			embed.set_thumbnail(url=interaction.user.avatar)
 			embed.add_field(name="ERROR", value="You do not have enough to do that.")
 
-			embed.set_footer(text=ctx.author)
+			embed.set_footer(text=interaction.user)
 
-			await ctx.send(embed=embed)
+			await interaction.response.send_message(embed=embed)
 			return
 
-		DB.update("UPDATE Economy SET Bank = Bank + ? WHERE DiscordID = ?;", [amnt, ctx.author.id])
+		DB.update("UPDATE Economy SET Bank = Bank + ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
 
-		await ctx.send(f"Successfully deposited {amnt}{self.coin}!")
+		await interaction.response.send_message(f"Successfully deposited {amnt}{self.coin}!")
 
 
-	@bank.command(name='withdraw', aliases=['w', 'with', 'withd'])
+	@bank.subcommand(name='withdraw')
 	@commands.cooldown(1, 3, commands.BucketType.user)
-	async def _withdraw(self, ctx, amnt):
+	async def _withdraw(self, interaction:Interaction, amnt):
 		try:
 			amnt = int(amnt)
-			if self.getBankBal(ctx.author.id) < amnt:
-				await ctx.send("You do not have enough funds in your bank to withdraw that amount.")
+			if self.getBankBal(interaction.user.id) < amnt:
+				await interaction.response.send_message("You do not have enough funds in your bank to withdraw that amount.")
 				return
 		except:
 			if amnt == "all":
-				amnt = self.getBankBal(ctx.author.id)
+				amnt = self.getBankBal(interaction.user.id)
 			elif amnt == "half":
-				amnt = floor(self.getBankBal(ctx.author.id) / 2)
+				amnt = floor(self.getBankBal(interaction.user.id) / 2)
 			else:
-				await ctx.send("Incorrect withdrawal amount.")
+				await interaction.response.send_message("Incorrect withdrawal amount.")
 				return
 		if amnt <= 0:
-			await ctx.send("You must withdraw an amount greater than 0.")
+			await interaction.response.send_message("You must withdraw an amount greater than 0.")
 			return
 
-		DB.update("UPDATE Economy SET Bank = Bank - ? WHERE DiscordID = ?;", [amnt, ctx.author.id])
+		DB.update("UPDATE Economy SET Bank = Bank - ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
 
-		await self.bot.get_cog("Economy").addWinnings(ctx.author.id, amnt)
+		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amnt)
 
-		await ctx.send(f"Successfully withdrew {amnt}{self.coin}!")
+		await interaction.response.send_message(f"Successfully withdrew {amnt}{self.coin}!")
 
 
-	@bank.command(aliases=['status', 'stat', 'stats', 'bal'])
-	async def balance(self, ctx, user:discord.Member=None):
+	@bank.subcommand(name='balance')
+	async def balance(self, interaction:Interaction, user:nextcord.Member=None):
 		if user:
 			if not await self.bot.get_cog("Economy").accCheck(user):
-				await ctx.send(f"{user.name} has not registered yet.")
-			await ctx.send(f"{user.name} has {self.getBankBal(user.id)}{self.coin} in their bank.")
+				await interaction.response.send_message(f"{user.name} has not registered yet.")
+			await interaction.response.send_message(f"{user.name} has {self.getBankBal(user.id)}{self.coin} in their bank.")
 		else:
-			if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-				await ctx.invoke(self.bot.get_command('start'))
-			await ctx.send(f"You have {self.getBankBal(ctx.author.id)}{self.coin} in your bank.")
+			if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+				await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await interaction.response.send_message(f"You have {self.getBankBal(interaction.user.id)}{self.coin} in your bank.")
 
 	def getBankBal(self, discordID):
 		bal = DB.fetchOne("SELECT Bank FROM Economy WHERE DiscordID = ? LIMIT 1;", [discordID])[0]

@@ -1,7 +1,12 @@
 # economy-related stuff like betting and gambling, etc.
 
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
+
 import sqlite3
 import asyncio
 import random
@@ -16,17 +21,17 @@ class Economy(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 
-	@commands.command(aliases=['begin', 'new'])
+	@nextcord.slash_command()
 	@commands.cooldown(1, 5, commands.BucketType.user)
-	async def start(self, ctx, user:discord.Member=None):
+	async def start(self, interaction:Interaction, user:nextcord.Member=None):
 		if not user:
-			user = ctx.author 
-		embed = discord.Embed(color=1768431, title=self.bot.user.name)
-		embed.set_thumbnail(url=user.avatar_url)
+			user = interaction.user 
+		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
+		embed.set_thumbnail(url=user.avatar)
 		embed.set_footer(text=user)
 		if await self.accCheck(user):
 			embed.add_field(name="Error", value="You are already registered, silly")
-			await ctx.send(embed=embed)
+			await interaction.response.send_message(embed=embed)
 			return
 
 		conn = sqlite3.connect(config.db)
@@ -42,130 +47,137 @@ class Economy(commands.Cog):
 		conn.close()
 
 		embed.add_field(name="Welcome!", value="You are now successfully registered. Enjoy The Casino.")
-		await ctx.send(embed=embed)
 
-		ch = self.bot.get_channel(705118255161016431)
-		await ch.send(f"{user} has registered.")
+		# if interaction.application_command.qualified_name == 'start'
+		# 	await interaction.response.send_message(embed=embed)
+		# else
+		# 	await interaction.followup.send(embed=embed)
 
-	async def GetBetAmount(self, ctx, amntBet):
-		if amntBet.isdigit():
-			return int(amntBet)
-		if amntBet == "all" or amntBet == "allin" or amntBet == "everything":
-			return await self.getBalance(ctx.author)
-		if amntBet == "half":
-			return math.floor(await self.getBalance(ctx.author) / 2)
-		if amntBet == "third":
-			return math.floor(await self.getBalance(ctx.author) / 3)
-		if amntBet == "fourth":
-			return math.floor(await self.getBalance(ctx.author) / 4)
-		if "%" == amntBet[-1]:
-			return math.floor(await self.getBalance(ctx.author) * (int(amntBet.replace('%','')) / 100))
-		if "." in amntBet and amntBet[0] == "0":
-			return math.floor(await self.getBalance(ctx.author) * float(amntBet))
-		if "/" in amntBet:
-			pos = amntBet.find("/")
-			return math.floor(await self.getBalance(ctx.author) * float(int(amntBet[:pos]) / int(amntBet[pos+1:])))
-		raise commands.BadArgument(f'You entered {amntBet} for the amount you want to bet. Please enter a number instead.')
+		await self.bot.get_context(interaction.message).send(embed=embed)
 
-	@commands.command(aliases=['reward'])
+
+		# ch = self.bot.get_channel(705118255161016431)
+		# await ch.send(f"{user} has registered.")
+
+	async def GetBetAmount(self, interaction:Interaction, amntbet):
+		if amntbet.isdigit():
+			return int(amntbet)
+		if amntbet == "all" or amntbet == "allin" or amntbet == "everything":
+			return await self.getBalance(interaction.user)
+		if amntbet == "half":
+			return math.floor(await self.getBalance(interaction.user) / 2)
+		if amntbet == "third":
+			return math.floor(await self.getBalance(interaction.user) / 3)
+		if amntbet == "fourth":
+			return math.floor(await self.getBalance(interaction.user) / 4)
+		if "%" == amntbet[-1]:
+			return math.floor(await self.getBalance(interaction.user) * (int(amntbet.replace('%','')) / 100))
+		if "." in amntbet and amntbet[0] == "0":
+			return math.floor(await self.getBalance(interaction.user) * float(amntbet))
+		if "/" in amntbet:
+			pos = amntbet.find("/")
+			return math.floor(await self.getBalance(interaction.user) * float(int(amntbet[:pos]) / int(amntbet[pos+1:])))
+		raise commands.BadArgument(f'You entered {amntbet} for the amount you want to bet. Please enter a number instead.')
+
+	@nextcord.slash_command()
 	@commands.cooldown(1, 5, commands.BucketType.user)
-	async def rewards(self, ctx):
-		if not await self.accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+	async def rewards(self, interaction:Interaction):
+		if not await self.accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 
-		dailyReward = await self.bot.get_cog("Daily").getDailyReward(ctx)
-		multiplier = self.getMultiplier(ctx.author)
+		dailyReward = await self.bot.get_cog("Daily").getDailyReward(interaction)
+		multiplier = self.getMultiplier(interaction.user)
 
-		embed = discord.Embed(color=1768431, title=self.bot.user.name)
+		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name = "Daily", value = f"{dailyReward}{self.coin}", inline=True)
 		embed.add_field(name = "Multiplier", value = f"{multiplier}x", inline=True)
 		# embed.add_field(name = "Weekly", value = f"12500{self.coin}", inline=False)
 		# embed.add_field(name = "Monthly", value = f"36000{self.coin}", inline=True)
 
-		if self.isDonator(ctx.author.id):
-			embed.add_field(name = "_ _\nDonator Reward", value = f"{self.getDonatorReward(ctx.author.id)}{self.coin}", inline=False)
+		if self.isDonator(interaction.user.id):
+			embed.add_field(name = "_ _\nDonator Reward", value = f"{self.getDonatorReward(interaction.user.id)}{self.coin}", inline=False)
 		else:
 			embed.add_field(name = "_ _\nDonator Reward", value = f"You are not a donator", inline=False)
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 		
 
-	@commands.command(aliases=['bal', 'credits'])
+	@nextcord.slash_command()
 	@commands.cooldown(1, 5, commands.BucketType.user)
-	async def balance(self, ctx, user:discord.Member=None):
+	async def balance(self, interaction:Interaction, user:nextcord.Member=None):
 		""" Show your balance """
 		if not user:
-			user = ctx.author
+			user = interaction.user
 			pronouns = "You"
 		else:
 			pronouns = "They"
 
 		if not await self.bot.get_cog("Economy").accCheck(user):
-			await ctx.invoke(self.bot.get_command('start'), user)
+			await self.bot.get_cog("Economy").start(interaction, user)
 
-		prefix = ctx.prefix
+		prefix = "/"
 
 		balance = await self.getBalance(user)
 		crates, keys = await self.getInventory(user)
-		embed = discord.Embed(color=1768431)
+		embed = nextcord.Embed(color=1768431)
 		embed.add_field(name = "Credits", value = f"{pronouns} have **{balance}**{self.coin}", inline=False)
 		embed.add_field(name = "_ _\nCrates", value = f"{pronouns} have **{crates}** crates", inline=True)
 		embed.add_field(name = "_ _\nKeys", value = f"{pronouns} have **{keys}** keys", inline=True)
 		embed.set_footer(text=f"Use {prefix}vote, {prefix}search, {prefix}daily, and {prefix}work to get credits")
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 		
-	@commands.command()
+	@nextcord.slash_command()
 	@commands.cooldown(1, 5, commands.BucketType.user)
-	async def search(self, ctx):
-		if not await self.accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
-		embed = discord.Embed(color=1768431)
-		if await self.getBalance(ctx.author) < 300:
+	async def search(self, interaction:Interaction):
+		if not await self.accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+		embed = nextcord.Embed(color=1768431)
+		if await self.getBalance(interaction.user) < 300:
 			amnt = random.randint(50, 250)
-			await self.addWinnings(ctx.author.id, amnt)
-			balance = await self.getBalance(ctx.author)
+			await self.addWinnings(interaction.user.id, amnt)
+			balance = await self.getBalance(interaction.user)
 			
 			embed.add_field(name = f"You found {amnt}{self.coin}", value = f"You have {balance}{self.coin}", inline=False)
 		else:
-			embed.add_field(name = f"Error", value = f"{ctx.author.mention}, you can only use this if you have less than 300{self.coin}.", inline=False)
+			embed.add_field(name = f"Error", value = f"{interaction.user.mention}, you can only use this if you have less than 300{self.coin}.", inline=False)
 
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 		
-	@commands.command(aliases=['earn', 'free'])
+	@nextcord.slash_command()
 	@commands.cooldown(1, 5, commands.BucketType.user)
-	async def freemoney(self, ctx):
-		prefix = ctx.prefix
-		embed = discord.Embed(color=1768431, title=self.bot.user.name)
+	async def freemoney(self, interaction:Interaction):
+		prefix = "/"
+		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name="Free Money Commands", value=f"`{prefix}vote`\n`{prefix}search`\n`{prefix}daily`\n`{prefix}weekly`\n`{prefix}monthly`\n`{prefix}work`")
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 
-	@commands.command(aliases=['donate'])
+	@nextcord.slash_command()
 	@commands.cooldown(1, 5, commands.BucketType.user)
-	async def donator(self, ctx):
-		if not self.isDonator(ctx.author.id):
-			embed = discord.Embed(color=1768431, title=self.bot.user.name)
+	async def donator(self, interaction:Interaction):
+		if not self.isDonator(interaction.user.id):
+			embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 			embed.add_field(name = f"Donator Reward", value = "To be able to claim the Donator Reward, you first need to donate!\n" +
-																f"Join the server shown in the {ctx.prefix}help menu to learn how!", inline=False)
-			await ctx.send(embed=embed)
+																f"Join the server shown in the /help menu to learn how!", inline=False)
+			await interaction.response.send_message(embed=embed)
 			return
 
-		donatorReward = self.getDonatorReward(ctx.author.id)
-		multiplier = self.getMultiplier(ctx.author)
+		donatorReward = self.getDonatorReward(interaction.user.id)
+		multiplier = self.getMultiplier(interaction.user)
 		extraMoney = int(donatorReward * (multiplier - 1))
-		await self.addWinnings(ctx.author.id, donatorReward + extraMoney)
+		await self.addWinnings(interaction.user.id, donatorReward + extraMoney)
 
-		balance = await self.getBalance(ctx.author)
-		embed = discord.Embed(color=1768431, title=self.bot.user.name)
+		balance = await self.getBalance(interaction.user)
+		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name = f"You got {donatorReward} {self.coin}", 
 						value = f"You have {balance} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney}", inline=False)
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 
 
-	def isDonator(self, discordID):
-		donatorCheck = DB.fetchOne("SELECT DonatorCheck FROM Economy WHERE DiscordID = ?;", [discordID])[0]
+	def isDonator(self, discordid):
+		donatorCheck = DB.fetchOne("SELECT DonatorCheck FROM Economy WHERE DiscordID = ?;", [discordid])[0]
 		return donatorCheck
 
-	def getDonatorReward(self, discordID):
-		donatorReward = DB.fetchOne("SELECT DonatorReward FROM Economy WHERE DiscordID = ?;", [discordID])[0]
+	def getDonatorReward(self, discordid):
+		donatorReward = DB.fetchOne("SELECT DonatorReward FROM Economy WHERE DiscordID = ?;", [discordid])[0]
 		return donatorReward
 
 
@@ -174,19 +186,19 @@ class Economy(commands.Cog):
 		return multiplier
 
 
-	async def subtractBet(self, user, amntBet): # subtracts the bet users place when they play games
+	async def subtractBet(self, user, amntbet): # subtracts the bet users place when they play games
 		if not await self.accCheck(user):
 			return False
 		balance = await self.getBalance(user)
-		if amntBet <= balance and amntBet > 0:
-			DB.update("UPDATE Economy SET Credits = Credits - ? WHERE DiscordID = ?;", [amntBet, user.id])
+		if amntbet <= balance and amntbet > 0:
+			DB.update("UPDATE Economy SET Credits = Credits - ? WHERE DiscordID = ?;", [amntbet, user.id])
 			return True # return 1 if user has enough $$$ to bet their amount entered
 		else:
 			return False # return 0 if user trying to bet more $$$ than they have
 
 
-	async def addWinnings(self, discordID, winnings): # add the amount won 
-		DB.update("UPDATE Economy SET Credits = Credits + ? WHERE DiscordID = ?;", [math.ceil(winnings), discordID])
+	async def addWinnings(self, discordid, winnings): # add the amount won 
+		DB.update("UPDATE Economy SET Credits = Credits + ? WHERE DiscordID = ?;", [math.ceil(winnings), discordid])
 
 
 	async def getBalance(self, user):
@@ -201,12 +213,12 @@ class Economy(commands.Cog):
 		return crates, keys
 
 
-	async def subtractInv(self, discordId, amnt): # called when people open crates (subtracts them from inv.)
-		DB.update("UPDATE Inventory SET Crates = Crates - ?, Keyss = Keyss - ? WHERE DiscordID = ?;", [amnt, amnt, discordId])
+	async def subtractInv(self, discordid, amnt): # called when people open crates (subtracts them from inv.)
+		DB.update("UPDATE Inventory SET Crates = Crates - ?, Keyss = Keyss - ? WHERE DiscordID = ?;", [amnt, amnt, discordid])
 
 
-	@commands.command()
-	async def top(self, ctx): # scoreboard to display top 10 richest individuals
+	@nextcord.slash_command()
+	async def top(self, interaction:Interaction): # scoreboard to display top 10 richest individuals
 		conn = sqlite3.connect(config.db)
 		sql = f"""SELECT DiscordID, Credits
 				  FROM Economy"""
@@ -225,19 +237,19 @@ class Economy(commands.Cog):
 				break
 			count += 1 # number the users from 1 - 10
 
-		await ctx.send(f"```MD\nTop 10\n======\n{topUsers}```") # send the list with the top 10
+		await interaction.response.send_message(f"```MD\nTop 10\n======\n{topUsers}```") # send the list with the top 10
 
 
-	@commands.command(aliases=['pos'])
-	async def position(self, ctx, usr: discord.User=None): # scoreboard to display top 10 richest individuals
+	@nextcord.slash_command()
+	async def position(self, interaction:Interaction, usr: nextcord.User=None): # scoreboard to display top 10 richest individuals
 		if not usr:
-			usr = ctx.author
+			usr = interaction.user
 
-		if not await self.accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+		if not await self.accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 
 		if await self.getBalance(usr) < 1025:
-			await ctx.send("You need at least 1025 credits to use this command.")
+			await interaction.response.send_message("You need at least 1025 credits to use this command.")
 			return
 
 		name = usr.name
@@ -273,7 +285,7 @@ class Economy(commands.Cog):
 			else:
 				topUsers += f"{pos+x+1}. < {user.name} > - {records[pos+x][1]}\n"
 
-		await ctx.send(f"```MD\n{name} is #{pos+1}{diff}\n======\n{topUsers}```") # send the list with the top 10
+		await interaction.response.send_message(f"```MD\n{name} is #{pos+1}{diff}\n======\n{topUsers}```") # send the list with the top 10
 
 
 
@@ -285,17 +297,17 @@ class Economy(commands.Cog):
 		
 		return False
 
-	async def notEnoughMoney(self, ctx):
-		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | {str(ctx.command).title()}")
-		embed.set_thumbnail(url=ctx.author.avatar_url)
+	async def notEnoughMoney(self, interaction:Interaction):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | {str(interaction.application_command.qualified_name).title()}")
+		embed.set_thumbnail(url=interaction.user.avatar)
 		embed.add_field(name="ERROR", value="You do not have enough credits to do that.")
 
-		embed.set_footer(text=ctx.author)
+		embed.set_footer(text=interaction.user)
 
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 
 
-	async def getInput(self, ctx, user, timeout):
+	async def getInput(self, interaction:Interaction, user, timeout):
 		def is_me(m):
 			return m.author == user
 		try:

@@ -1,5 +1,10 @@
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
+
 import sqlite3
 import asyncio
 import random
@@ -12,102 +17,101 @@ class rps(commands.Cog):
 		self.bot = bot
 		self.coin = "<:coins:585233801320333313>"
 
-	@commands.command(pass_context=True)
+	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
 	@commands.cooldown(1, 5, commands.BucketType.user)
-	async def rps(self, ctx, userChoice: str, amntBet):
+	async def rockpaperscissors(self, interaction:Interaction, amntbet,
+								userchoice = nextcord.SlashOption(
+										required=True,
+										name="choice", 
+										choices=("rock", "paper", "scissors"))):
 		coin = "<:coins:585233801320333313>"
-		userChoice = userChoice.lower()
 
-		if userChoice != "rock" and userChoice != "paper" and userChoice != "scissors":
-			await ctx.send("Incorrect choice. Possible choices are rock, paper, and scissors.")
-			return
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
-		amntBet = await self.bot.get_cog("Economy").GetBetAmount(ctx, amntBet)
-
-		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
-			await self.bot.get_cog("Economy").notEnoughMoney(ctx)
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
+			await self.bot.get_cog("Economy").notEnoughMoney(interaction)
 			return
 			
 		botChoice = random.choice(['rock', 'paper', 'scissors'])
 
-		if userChoice == botChoice:
+		if userchoice == botChoice:
 			winner = 0
-			file = discord.File("./images/rps/tie.png", filename="image.png")
+			file = nextcord.File("./images/rps/tie.png", filename="image.png")
 
-		elif userChoice == "rock" and botChoice == "scissors":
+		elif userchoice == "rock" and botChoice == "scissors":
 			winner = 1
-			file = discord.File("./images/rps/rockwon.png", filename="image.png")
+			file = nextcord.File("./images/rps/rockwon.png", filename="image.png")
 
-		elif userChoice == "paper" and botChoice == "rock":
+		elif userchoice == "paper" and botChoice == "rock":
 			winner = 1
-			file = discord.File("./images/rps/paperwon.png", filename="image.png")
+			file = nextcord.File("./images/rps/paperwon.png", filename="image.png")
 
-		elif userChoice == "scissors" and botChoice == "paper":
+		elif userchoice == "scissors" and botChoice == "paper":
 			winner = 1
-			file = discord.File("./images/rps/scissorswon.png", filename="image.png")
+			file = nextcord.File("./images/rps/scissorswon.png", filename="image.png")
 
-		elif userChoice == "rock" and botChoice == "paper":	
+		elif userchoice == "rock" and botChoice == "paper":	
 			winner = -1
-			file = discord.File("./images/rps/rocklost.png", filename="image.png")
+			file = nextcord.File("./images/rps/rocklost.png", filename="image.png")
 
-		elif userChoice == "paper" and botChoice == "scissors":
+		elif userchoice == "paper" and botChoice == "scissors":
 			winner = -1
-			file = discord.File("./images/rps/paperlost.png", filename="image.png")
+			file = nextcord.File("./images/rps/paperlost.png", filename="image.png")
 
-		elif userChoice == "scissors" and botChoice == "rock":
+		elif userchoice == "scissors" and botChoice == "rock":
 			winner = -1
-			file = discord.File("./images/rps/scissorslost.png", filename="image.png")
+			file = nextcord.File("./images/rps/scissorslost.png", filename="image.png")
 
-		multiplier = self.bot.get_cog("Economy").getMultiplier(ctx.author)
-		embed = discord.Embed(color=0xff2020)
+		multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
+		embed = nextcord.Embed(color=0xff2020)
 		embed.set_thumbnail(url="attachment://image.png")
 		if winner == 1:
-			moneyToAdd = amntBet * 2 
-			profitInt = moneyToAdd - amntBet
+			moneyToAdd = amntbet * 2 
+			profitInt = moneyToAdd - amntbet
 			result = "YOU WON"
 			profit = f"**{profitInt}** (**+{int(profitInt * (multiplier - 1))}**)"
 			
-			embed.color = discord.Color(0x23f518)
+			embed.color = nextcord.Color(0x23f518)
 
 		elif winner == -1:
 			moneyToAdd = 0 # nothing to add since loss
-			profitInt = -amntBet # profit = amntWon - amntBet; amntWon = 0 in this case
+			profitInt = -amntbet # profit = amntWon - amntbet; amntWon = 0 in this case
 			result = "YOU LOST"
 			profit = f"**{profitInt}**"
 
 		
 		elif winner == 0:
-			moneyToAdd = amntBet # add back their bet they placed since it was pushed (tied)
+			moneyToAdd = amntbet # add back their bet they placed since it was pushed (tied)
 			profitInt = 0 # they get refunded their money (so they don't make or lose money)
 			result = "PUSHED"
 			profit = f"**{profitInt}**"
 
-		embed.add_field(name=f"{self.bot.user.name}' Casino | RPS", value=f"**{ctx.author.name}** picked **{userChoice}** \n**Pit Boss** picked **{botChoice}**",inline=False)
+		embed.add_field(name=f"{self.bot.user.name}' Casino | RPS", value=f"**{interaction.user.name}** picked **{userchoice}** \n**Pit Boss** picked **{botChoice}**",inline=False)
 		giveZeroIfNeg = max(0, profitInt) # will give 0 if profit is negative. 
 																				# we don't want it subtracting anything, only adding
-		await self.bot.get_cog("Economy").addWinnings(ctx.author.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
-		balance = await self.bot.get_cog("Economy").getBalance(ctx.author)
+		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed.add_field(name="Profit", value=f"{profit}{coin}", inline=True)
 		embed.add_field(name="Credits", value=f"**{balance}**{coin}", inline=True)
 
 		priorBal = balance - profitInt
 		minBet = priorBal * 0.05
 		minBet = int(math.ceil(minBet / 10.0) * 10.0)
-		if amntBet >= minBet:	
+		if amntbet >= minBet:	
 			xp = random.randint(50, 500)
 			embed.set_footer(text=f"Earned {xp} XP!")
-			await self.bot.get_cog("XP").addXP(ctx, xp)
+			await self.bot.get_cog("XP").addXP(interaction, xp)
 		else:
 			embed.set_footer(text=f"You have to bet your minimum to earn xp.")
 
-		await ctx.send(content=f"{ctx.message.author.mention}", file=file, embed=embed)
-		await self.bot.get_cog("Totals").addTotals(ctx, amntBet, moneyToAdd, 5)
+		await interaction.response.send_message(content=f"{interaction.user.mention}", file=file, embed=embed)
+		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 5)
 
-		await self.bot.get_cog("Quests").AddQuestProgress(ctx, ctx.author, "RPS", profitInt)
+		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "RPS", profitInt)
 
 
 def setup(bot):

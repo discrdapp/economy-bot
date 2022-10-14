@@ -1,7 +1,11 @@
 # economy-related stuff like betting and gambling, etc.
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import discord
-from discord.ext import commands
 import sqlite3
 import asyncio
 import random
@@ -123,50 +127,51 @@ class Totals(commands.Cog):
 			"tangerine": 0xF08000
 		}
 
-	@commands.group(invoke_without_command=True)
-	async def profile(self, ctx):
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
-		if ctx.invoked_subcommand is not None:
-			return
+	@nextcord.slash_command()
+	async def profile(self, interaction:Interaction):
+		pass
+	
+	@profile.subcommand()
+	async def view(self, interaction:Interaction):
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 
-
-		totals = DB.fetchOne("SELECT Profit, Games FROM Totals WHERE DiscordID = ?;", [ctx.author.id])
+		totals = DB.fetchOne("SELECT Profit, Games FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 		profit = totals[0]
 		games = totals[1]
 
-		eco = DB.fetchOne("SELECT Credits, Level, XP FROM Economy WHERE DiscordID = ?;", [ctx.author.id])
+		eco = DB.fetchOne("SELECT Credits, Level, XP FROM Economy WHERE DiscordID = ?;", [interaction.user.id])
 		balance = eco[0]
 		level = eco[1]
 		xp = eco[2]
  
 		requiredXP = self.XPtoLevelUp[level]
 
-		crates, keys = await self.bot.get_cog("Economy").getInventory(ctx.author)
+		crates, keys = await self.bot.get_cog("Economy").getInventory(interaction.user)
 
 
 		with open(r"profiles.json", 'r') as f:
 			profileFile = json.load(f)
 
 		try:
-			embedColor = profileFile[f"{ctx.author.id}"]["embedColor"]
-			textColor = profileFile[f"{ctx.author.id}"]["textColor"]
-			background = profileFile[f"{ctx.author.id}"]["background"]
+			embedColor = profileFile[f"{interaction.user.id}"]["embedColor"]
+			textColor = profileFile[f"{interaction.user.id}"]["textColor"]
+			background = profileFile[f"{interaction.user.id}"]["background"]
 		except:
 			embedColor = 1768431
 			textColor = (170,126,0)
 			background = "scroll.png"
 
-			profileFile[f"{ctx.author.id}"] = dict()
-			profileFile[f"{ctx.author.id}"]["embedColor"] = embedColor
-			profileFile[f"{ctx.author.id}"]["textColor"] = textColor
-			profileFile[f"{ctx.author.id}"]["background"] = background
+			profileFile[f"{interaction.user.id}"] = dict()
+			profileFile[f"{interaction.user.id}"]["embedColor"] = embedColor
+			profileFile[f"{interaction.user.id}"]["textColor"] = textColor
+			profileFile[f"{interaction.user.id}"]["background"] = background
 			with open(r"profiles.json", 'w') as f:
 				json.dump(profileFile, f, indent=4)
 
-		embed = discord.Embed(color=embedColor, title=f"{self.bot.user.name} | Profile")
-		embed.set_thumbnail(url=ctx.author.avatar_url)
-		# embed.add_field(name = "User", value = f"{ctx.author.name}", inline=True)
+		embed = nextcord.Embed(color=embedColor, title=f"{self.bot.user.name} | Profile")
+		embed.set_thumbnail(url=interaction.user.avatar)
+		# embed.add_field(name = "User", value = f"{interaction.user.name}", inline=True)
 		# embed.add_field(name = "Level", value = f"{level}", inline=True)
 		# embed.add_field(name = "Balance", value = f"{balance}", inline=True)
 		embed.add_field(name = "XP / Next Level", value = f"{xp} / {requiredXP}", inline=True)
@@ -203,24 +208,24 @@ class Totals(commands.Cog):
 
 		font_type = ImageFont.truetype('arial.ttf',25)
 		draw = ImageDraw.Draw(img)
-		draw.text(xy=(100,100), text=f"{ctx.author.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript.ttf',55))
+		draw.text(xy=(100,100), text=f"{interaction.user.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript.ttf',55))
 		draw.text(xy=(420,160), text=f"Level {level}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,160), text=f"Balance: {balance}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,230), text=f"Badges", fill=tuple(textColor), font=font_type)
 		img.save("images/profile.png")
-		file = discord.File("images/profile.png", filename="image.png")
+		file = nextcord.File("images/profile.png", filename="image.png")
 		embed.set_image(url="attachment://image.png")
 
-		embed.set_footer(text=f"Customize your profile with {ctx.prefix}profile edit")
+		embed.set_footer(text=f"Customize your profile with /profile edit")
 
-		await ctx.send(file=file, embed=embed)
+		await interaction.response.send_message(file=file, embed=embed)
 
 
-	@commands.command()
-	async def colors(self, ctx):
-		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Colors")
-		embed1 = discord.Embed(color=self.colors["green"], title=f"Shades of Green")
-		embed2 = discord.Embed(color=self.colors["darkorange"], title=f"Shades of Orange")
+	@nextcord.slash_command()
+	async def colors(self, interaction:Interaction):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Colors")
+		embed1 = nextcord.Embed(color=self.colors["green"], title=f"Shades of Green")
+		embed2 = nextcord.Embed(color=self.colors["darkorange"], title=f"Shades of Orange")
 		count = 0
 		msg = ""
 		msg1 = ""
@@ -236,126 +241,96 @@ class Totals(commands.Cog):
 		embed.add_field(name="Regular colors", value=f"{msg}")
 		embed1.add_field(name="_ _", value=f"{msg1}")
 		embed2.add_field(name="_ _", value=f"{msg2}")
-		await ctx.send(embed=embed)
-		await ctx.send(embed=embed1)
-		await ctx.send(embed=embed2)
+		await interaction.response.send_message(embed=embed)
+		await interaction.followup.send(embed=embed1)
+		await interaction.followup.send(embed=embed2)
 
-	@commands.command(aliases=['bg'])
-	async def background(self, ctx, choice:str=None):
-		await ctx.invoke(self.bot.get_command(f'profile edit'), "3", choice)
 
-	@commands.command()
-	async def edit(self, ctx, field=None, choice=None):
-		await ctx.invoke(self.bot.get_command('profile edit'), field, choice)
+	@profile.subcommand()
+	async def edit(self, interaction:Interaction):
+		pass
 
-	@profile.command(name='edit', aliases=['help'])
-	async def _edit(self, ctx, field=None, choice=None):
-		# if ctx.author.id != 547475078082985990:
-		# 	if ctx.guild.id != 585226670361804827:
-		# 		await ctx.send("This is currently being worked on... Feel free to join the support server for updates.")
-		# 		return
-		# 	await ctx.send("This is currently being worked on...")
-		# 	return
-
-		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
-		embed.set_thumbnail(url=ctx.author.avatar_url)
-
-		if (not field or not choice) and field != "3":
-			embed.add_field(name = "_ _\nAvailable profile features you can edit:", value = f"1. Color of embed (DEFAULT: cyan)\n" +
-				"2. Color of text in the scroll (DEFAULT: darkorange)\n" +
-				"3. Image background (DEFAULT: scroll) (type: .background or .bg)", inline=True)
-			embed.set_footer(text="Edit a property with: .edit <property> <value> such as .edit 1 green\nType .colors to see a list of all available colors")
-
-			await ctx.send(embed=embed)
-			
+	@edit.subcommand(description="Get color list from /colors")
+	async def embedcolor(self, interaction:Interaction, choice):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
+		embed.set_thumbnail(url=interaction.user.avatar)
+		try:
+			newColor = self.colors[choice]
+		except:
+			embed.add_field(name="Error", value="Color not found. Type /colors to see all available colors")
+			await interaction.response.send_message(embed=embed)
 			return
-
-		if choice: choice = choice.lower()
 
 		with open(r"profiles.json", 'r') as f:
 			profileFile = json.load(f)
 
+		profileFile[f"{interaction.user.id}"]["embedColor"] = newColor
+		with open(r"profiles.json", 'w') as f:
+			json.dump(profileFile, f, indent=4)
 
-		if field == "1":
-			try:
-				newColor = self.colors[choice]
-			except:
-				embed.add_field(name="Error", value="Color not found.")
-				await ctx.send(embed=embed)
-				return
-
-			with open(r"profiles.json", 'r') as f:
-				profileFile = json.load(f)
-
-			profileFile[f"{ctx.author.id}"]["embedColor"] = newColor
-			with open(r"profiles.json", 'w') as f:
-				json.dump(profileFile, f, indent=4)
-
-		elif field == "2":
-			try:
-				newColor = str(hex(self.colors[choice])) # convert to the literal hexadecimal string
-			except:
-				embed.add_field(name="Error", value="Color not found.")
-				await ctx.send(embed=embed)
-				return
-			newColor = "#" + "0"*(8-len(newColor))+ newColor[2:] # append trailing 0's and switch out 0x for #
-
-			newColor = ImageColor.getcolor(newColor, "RGB") # get RGB version of color 
-			
-			with open(r"profiles.json", 'r') as f:
-				profileFile = json.load(f)
-
-			profileFile[f"{ctx.author.id}"]["textColor"] = newColor
-			with open(r"profiles.json", 'w') as f:
-				json.dump(profileFile, f, indent=4)
-
-		elif field == "3" and not choice:
-			embed.add_field(name="Pick an option:", value=f"1. Scroll\n2. Ink Paper\n3. Spiral Notebook")
-			embed.set_footer(text=".background 3")
-
-			await ctx.send(embed=embed)
+		embed.add_field(name="Success!", value=f"Your profile's embed color has been changed to {choice}")
+		embed.color = newColor
+		await interaction.response.send_message(embed=embed)
+	
+	@edit.subcommand(description="Get color list from /colors")
+	async def textcolor(self, interaction:Interaction, choice):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
+		embed.set_thumbnail(url=interaction.user.avatar)
+		try:
+			newColor = str(hex(self.colors[choice])) # convert to the literal hexadecimal string
+		except:
+			embed.add_field(name="Error", value="Color not found. Type /colors to see all available colors")
+			await interaction.response.send_message(embed=embed)
 			return
+		newColor = "#" + "0"*(8-len(newColor))+ newColor[2:] # append trailing 0's and switch out 0x for #
 
-		elif field == "3":
-			with open(r"profiles.json", 'r') as f:
-				profileFile = json.load(f)
+		newColor = ImageColor.getcolor(newColor, "RGB") # get RGB version of color 
+		
+		with open(r"profiles.json", 'r') as f:
+			profileFile = json.load(f)
 
-			if choice == "1" or "scroll" in choice.lower():
-				background = "scroll.png"
-			elif choice == "2" or "ink" in choice.lower():
-				background = "inkpaper.png"
-			elif choice == "3" or "spiral" in choice.lower():
-				background = "spiralnotebook.png"
-			else:
-				await ctx.send("Invalid choice for background.")
-				return
+		profileFile[f"{interaction.user.id}"]["textColor"] = newColor
+		with open(r"profiles.json", 'w') as f:
+			json.dump(profileFile, f, indent=4)
 
-			profileFile[f"{ctx.author.id}"]["background"] = background
-			with open(r"profiles.json", 'w') as f:
-				json.dump(profileFile, f, indent=4)
+		embed.add_field(name="Success!", value=f"Your profile's text color has been changed to {choice}")
+		embed.color = self.colors[choice]
+		await interaction.response.send_message(embed=embed)
 
-			background = profileFile[f"{ctx.author.id}"]["background"]
-			file = discord.File(f"./images/writingbackgrounds/{background}", filename="image.png")
-			embed.set_image(url="attachment://image.png")
-			embed.add_field(name="Edited!", value=f"Successfully changed to {choice}.")
-			await ctx.send(file=file, embed=embed)
-			return
+	@edit.subcommand()
+	async def backgroundimage(self, interaction:Interaction, choice = nextcord.SlashOption(
+																required=True,
+																name="bgimg", 
+																choices=("scroll", "inkpaper", "spiralnotebook"))):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
+		embed.set_thumbnail(url=interaction.user.avatar)
+		with open(r"profiles.json", 'r') as f:
+			profileFile = json.load(f)
 
-		embedColor = profileFile[f"{ctx.author.id}"]["embedColor"]
-		embed = discord.Embed(color=embedColor, title=f"{self.bot.user.name} | Edit Profile")
-		embed.set_thumbnail(url=ctx.author.avatar_url)
+		if choice == "scroll":
+			background = "scroll.png"
+		elif choice == "inkpaper":
+			background = "inkpaper.png"
+		elif choice == "spiralnotebook":
+			background = "spiralnotebook.png"
 
+		profileFile[f"{interaction.user.id}"]["background"] = background
+		with open(r"profiles.json", 'w') as f:
+			json.dump(profileFile, f, indent=4)
+
+		background = profileFile[f"{interaction.user.id}"]["background"]
+		file = nextcord.File(f"./images/writingbackgrounds/{background}", filename="image.png")
+		embed.set_image(url="attachment://image.png")
 		embed.add_field(name="Edited!", value=f"Successfully changed to {choice}.")
+		await interaction.response.send_message(file=file, embed=embed)
 
-		await ctx.send(embed=embed)
 
+	@nextcord.slash_command()
+	async def badges(self, interaction:Interaction):
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 
-	@commands.command()
-	async def badges(self, ctx):
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
-
-		getRow = DB.fetchOne("SELECT E.Credits, E.Level, T.Profit, T.Games FROM Economy E INNER JOIN Totals T ON E.DiscordID = T.DiscordID WHERE E.DiscordID = ?;", [ctx.author.id])
+		getRow = DB.fetchOne("SELECT E.Credits, E.Level, T.Profit, T.Games FROM Economy E INNER JOIN Totals T ON E.DiscordID = T.DiscordID WHERE E.DiscordID = ?;", [interaction.user.id])
 		
 		games = getRow[3]
 		balance = getRow[0]
@@ -386,27 +361,27 @@ class Totals(commands.Cog):
 		if level >= self.lvlBadge:
 			lvlMsg = ":white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark::white_check_mark:"
 		else:
-			lvlMsg = ":red_square::red_square::red_square::red_square::red_square::red_square::red_square::red_square::red_square::red_square:`"	
+			lvlMsg = ":red_square::red_square::red_square::red_square::red_square::red_square::red_square::red_square::red_square::red_square:"	
 			for _ in range(0, level*2):
 				lvlMsg = lvlMsg.replace(":red_square:",":white_check_mark:",1)
 
-		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Badges")
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Badges")
 		embed.add_field(name="Games Badge", value=f"{gameMsg} {self.gameBadge}", inline=False)
 		embed.add_field(name="Balance Badge", value=f"{balMsg} {self.balBadge}", inline=False)
 		embed.add_field(name="Profit Badge", value=f"{profitMsg} {self.profitBadge}", inline=False)
 		embed.add_field(name="Level Badge", value=f"{lvlMsg} {self.lvlBadge}", inline=False)
 
-		embed.set_footer(text="Badges can be viewed in your .profile")
+		embed.set_footer(text="Badges can be viewed in your `/profile view`")
 		
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 
 
-	@commands.command(pass_context=True, aliases=['totals', 'me'])
-	async def stats(self, ctx):
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+	@nextcord.slash_command()
+	async def stats(self, interaction:Interaction):
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 		
-		getRow = DB.fetchOne("SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS FROM Totals WHERE DiscordID = ?;", [ctx.author.id])
+		getRow = DB.fetchOne("SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 
 		creditsSpent = getRow[0]
 		creditsWon = getRow[1]
@@ -419,7 +394,7 @@ class Totals(commands.Cog):
 		coinflip = getRow[8]
 		rps = getRow[9]
 
-		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Stats")
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Stats")
 		embed.add_field(name = "Total Spent", value = f"{creditsSpent}", inline=True)
 		embed.add_field(name = "Total Won", value = f"{creditsWon}", inline=True)
 		embed.add_field(name = "Profit", value = f"{profit}", inline=True)
@@ -431,12 +406,12 @@ class Totals(commands.Cog):
 		embed.add_field(name = "Coinflip", value = f"{coinflip}", inline=True)
 		embed.add_field(name = "Rock-Paper-Scissors", value = f"{rps}", inline=True)
 
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 
 
 
-	async def addTotals(self, ctx, spent, won, game):
-		discordID = ctx.author.id
+	async def addTotals(self, interaction:Interaction, spent, won, game):
+		discordID = interaction.user.id
 		profit = won - spent
 		conn = sqlite3.connect(config.db)
 
@@ -449,12 +424,12 @@ class Totals(commands.Cog):
 
 		sql = f"""UPDATE Totals
 				  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, {gameName} = {gameName} + {profit}
-				  WHERE DiscordID = '{ctx.author.id}';"""
+				  WHERE DiscordID = '{interaction.user.id}';"""
 
 		cursor = conn.execute(sql)
 		conn.commit()
 
-		bal = await self.bot.get_cog("Economy").getBalance(ctx.author)
+		bal = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		log(discordID, spent, won, game, bal)
 
 		conn.close()

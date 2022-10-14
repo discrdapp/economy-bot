@@ -1,6 +1,9 @@
-import discord
-from discord.ext import commands
-from discord.ext.commands import has_permissions
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
 
 import asyncio
 import sqlite3
@@ -14,43 +17,32 @@ class Admin(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
-	@commands.command()
-	async def send(self, ctx, user: discord.Member, amnt):
-		if ctx.guild.id != 821015960931794964 and ctx.guild.id != 585226670361804827 and ctx.guild.id != 825179206958055425:
-			await ctx.send("This command is only allowed in premium servers.")
+	@nextcord.slash_command()
+	async def send(self, interaction:Interaction, user: nextcord.Member, amnt):
+		if interaction.guild.id != 821015960931794964 and interaction.guild.id != 585226670361804827 and interaction.guild.id != 825179206958055425 and interaction.guild.id != 467084194200289280:
+			await interaction.response.send_message("This command is only allowed in premium servers.")
 			return
 
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 		if not await self.bot.get_cog("Economy").accCheck(user):
-			await ctx.invoke(self.bot.get_command('start'), user)
+			await self.bot.get_cog("Economy").start(interaction, user)
 
-		amnt = await self.bot.get_cog("Economy").GetBetAmount(ctx, amnt)
+		amnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, amnt)
 		amntToReceive = math.floor(amnt * .95)
-		msg = await ctx.send(f"{ctx.author.mention}, you will send {str(amnt)} to {user.mention} and they will receive {str(amntToReceive)} (5% transfer fee)\nContinue? (type yes)")
 
-		def is_me(m):
-			return m.author.id == ctx.author.id and m.content == "yes"
-
-		try:
-			await self.bot.wait_for('message', check=is_me, timeout=15)
-		except asyncio.TimeoutError:
-			await msg.edit(message="Timed out.")
-			return
-
-
-		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amnt):
-			await ctx.send(f"**ERROR:** {ctx.author.mention}, you do not have enough credits to send that.")
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amnt):
+			await interaction.response.send_message(f"**ERROR:** {interaction.user.mention}, you do not have enough credits to send that.")
 			return
 
 		await self.bot.get_cog("Economy").addWinnings(user.id, amntToReceive)
 
-		await ctx.send("Successfully sent!")
+		await interaction.response.send_message("Successfully sent!")
 
 
 
-	# @commands.command()
-	# async def randNum(self, ctx):
+	# @nextcord.slash_command()
+	# async def randNum(self, interaction:Interaction):
 
 	# 	# 50% chance of it crashing at 1.2
 	# 	# 20% crashing 
@@ -74,19 +66,19 @@ class Admin(commands.Cog):
 	# 		msg += str(randNum) + "\n"
 
 		
-	# 	await ctx.send(msg)
+	# 	await interaction.response.send_message(msg)
 
 		# msg = ""
 		# for _ in range(0, 6):
 		# 	msg += str(round(random.uniform(1.2, 2.4), 1)) + "\n"
 
-		# await ctx.send(msg)
+		# await interaction.response.send_message(msg)
 
-	@commands.command()
+	@nextcord.slash_command()
 	@commands.is_owner()
-	async def delete(self, ctx, user: discord.Member):
+	async def delete(self, interaction:Interaction, user: nextcord.Member):
 		if not await self.bot.get_cog("Economy").accCheck(user):
-			await ctx.send("User not registered in system...")
+			await interaction.response.send_message("User not registered in system...")
 			return
 		conn = sqlite3.connect(config.db)
 		sql = f"DELETE FROM Economy WHERE DiscordID={user.id};"
@@ -98,75 +90,74 @@ class Admin(commands.Cog):
 		conn.commit()
 		conn.close()
 
-		await ctx.send("Deleted user.")
+		await interaction.response.send_message("Deleted user.")
 
-	@commands.command()
+	@nextcord.slash_command()
 	@commands.is_owner()
-	async def resetMultipliers(self, ctx):
+	async def resetmultipliers(self, interaction:Interaction):
 		db.update(f"UPDATE Economy SET Multiplier = 1;", None)
-		await ctx.send(f"All multipliers have been reset.\nUpdated {cursor.rowcount} rows.")
+		await interaction.response.send_message(f"All multipliers have been reset.\nUpdated {cursor.rowcount} rows.")
 
 
-	@commands.command()
+	@nextcord.slash_command()
 	@commands.is_owner()
-	async def getMultipliers():
+	async def getmultipliers():
 		pass
 
 
-	@commands.command()
+	@nextcord.slash_command()
 	@commands.is_owner()
-	async def servers(self, ctx):
-		await ctx.send(f"I am currently in {len(self.bot.guilds)} servers")
+	async def servers(self, interaction:Interaction):
+		await interaction.response.send_message(f"I am currently in {len(self.bot.guilds)} servers")
 
-	@commands.command()
+	@nextcord.slash_command()
 	@commands.is_owner()
-	async def end(self, ctx):
+	async def end(self, interaction:Interaction):
 		await self.bot.logout()
 
 
-	@commands.command()
+	@nextcord.slash_command()
 	@commands.is_owner()
-	async def copy(self, ctx, *, words):
-		await ctx.message.delete() # delete the original message
-		await ctx.send(words) # send the message
+	async def copy(self, interaction:Interaction, *, words):
+		await interaction.response.send_message(words) # send the message
 
 
-	@commands.command(aliases=['add', 'givemoney', 'give'])
+	@nextcord.slash_command()
 	@commands.is_owner()
-	async def addmoney(self, ctx, user: discord.Member, amnt: int):
+	async def addmoney(self, interaction:Interaction, user: nextcord.Member, amnt: int):
 		await self.bot.get_cog("Economy").addWinnings(user.id, amnt)
-		await ctx.send("Money added, Master.")
+		await interaction.response.send_message("Money added, Master.")
 
 
-	@commands.command()
+	@nextcord.slash_command()
 	@commands.is_owner()
-	async def givexp(self, ctx, user: discord.Member, xp: int):
+	async def givexp(self, interaction:Interaction, user: nextcord.Member, xp: int):
 		db.update("UPDATE Economy SET XP = XP + ?, TotalXP = TotalXP + ? WHERE DiscordID = ?;", [xp, xp, user.id])
-		await self.bot.get_cog("XP").levelUp(ctx, conn, user.id) # checks if they lvl up
+		await self.bot.get_cog("XP").levelUp(interaction, user.id) # checks if they lvl up
 
 
-	@commands.command()
+	@nextcord.slash_command()
 	@commands.is_owner()
-	async def givedonator(self, ctx, *, member: discord.Member): # grabs member from input
-		await ctx.send(f"Thanks for donating {member.mention}! Giving you perks now.")
-		donatorRole = discord.utils.get(ctx.guild.roles, name = "Donator")
+	async def givedonator(self, interaction:Interaction, *, member: nextcord.Member): # grabs member from input
+		await interaction.response.send_message(f"Thanks for donating {member.mention}! Giving you perks now.")
+		donatorRole = nextcord.utils.get(interaction.guild.roles, name = "Donator")
 		await member.add_roles(donatorRole)
 		await self.bot.get_cog("Economy").addWinnings(member.id, 10000)
 
 		db.update("UPDATE Economy SET DonatorCheck = 1 WHERE DiscordID = ?;", [member.id])
 		db.update("UPDATE Economy SET DonatorReward = DonatorReward + 5000 WHERE DiscordID = ?;", [member.id])
 
-		await ctx.send(f"Donator role added.\n10000 credits added.\n5000 credits added to your Donator Reward")
+		await interaction.response.send_message(f"Donator role added.\n10000 credits added.\n5000 credits added to your Donator Reward")
 
 
-	@commands.command()
+	@nextcord.slash_command()
 	@commands.is_owner()
-	async def showallcommands(self, ctx):
+	async def showallcommands(self, interaction:Interaction):
 		msg = ""
 		for cmd in self.bot.commands:
 			if not cmd.description:
 				msg += f"{cmd.name}\n"
-		await ctx.send(msg)
+		await interaction.response.send_message(msg)
 
 def setup(bot):
 	bot.add_cog(Admin(bot))

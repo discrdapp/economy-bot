@@ -1,5 +1,10 @@
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
+
 import sqlite3
 import asyncio
 import config
@@ -14,11 +19,11 @@ class WeeklyMonthly(commands.Cog):
 		self.levelReward = [550, 1500, 3000, 7500, 13500, 18500, 24000, 29000, 35000, 42000, 50000]
 		self.coin = "<:coins:585233801320333313>"
 
-	@commands.command()
-	async def weekly(self, ctx):
-		userId = ctx.author.id
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+	@nextcord.slash_command()
+	async def weekly(self, interaction:Interaction):
+		userId = interaction.user.id
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 		else:
 			with open(r"rewards.json", 'r') as f:
 				rewards = json.load(f)
@@ -26,7 +31,7 @@ class WeeklyMonthly(commands.Cog):
 			if (str(userId) in rewards) and ('weekly' in rewards[f'{userId}']):
 				if rewards[f'{userId}']['weekly'] > time.time():
 					waittime = rewards[f'{userId}']['weekly'] - time.time()
-					await ctx.send(f"Please wait **{math.floor(waittime/86400)}d {math.floor((waittime/3600) % 24)}h {math.floor((waittime/60) % 60)}m** to use this again!")
+					await interaction.response.send_message(f"Please wait **{math.floor(waittime/86400)}d {math.floor((waittime/3600) % 24)}h {math.floor((waittime/60) % 60)}m** to use this again!")
 					return
 
 			elif not str(userId) in rewards:
@@ -39,22 +44,22 @@ class WeeklyMonthly(commands.Cog):
 
 
 		weeklyReward = 12500
-		multiplier = self.bot.get_cog("Economy").getMultiplier(ctx.author)
+		multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
 		extraMoney = int(weeklyReward * (multiplier - 1))
 		await self.bot.get_cog("Economy").addWinnings(userId, weeklyReward + extraMoney)
-		balance = await self.bot.get_cog("Economy").getBalance(ctx.author)
-		embed = discord.Embed(color=1768431)
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
+		embed = nextcord.Embed(color=1768431)
 		embed.add_field(name = f"You got {weeklyReward} (+{extraMoney}) {self.coin}", 
 						value = f"You have {balance} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney}", inline=False)
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 
 
 
-	@commands.command()
-	async def monthly(self, ctx):
-		userId = ctx.author.id
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+	@nextcord.slash_command()
+	async def monthly(self, interaction:Interaction):
+		userId = interaction.user.id
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 		else:
 			with open(r"rewards.json", 'r') as f:
 				rewards = json.load(f)
@@ -62,7 +67,7 @@ class WeeklyMonthly(commands.Cog):
 			if (str(userId) in rewards) and ('monthly' in rewards[f'{userId}']):
 				if rewards[f'{userId}']['monthly'] > time.time():
 					waittime = rewards[f'{userId}']['monthly'] - time.time()
-					await ctx.send(f"Please wait **{math.floor(waittime/86400)}d {math.floor((waittime/3600) % 24)}h {math.floor((waittime/60) % 60)}m** to use this again!")
+					await interaction.response.send_message(f"Please wait **{math.floor(waittime/86400)}d {math.floor((waittime/3600) % 24)}h {math.floor((waittime/60) % 60)}m** to use this again!")
 					return
 
 			elif not str(userId) in rewards:
@@ -76,14 +81,14 @@ class WeeklyMonthly(commands.Cog):
 
 
 		monthlyReward = 36000
-		multiplier = self.bot.get_cog("Economy").getMultiplier(ctx.author)
+		multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
 		extraMoney = int(monthlyReward * (multiplier - 1))
 		await self.bot.get_cog("Economy").addWinnings(userId, monthlyReward + extraMoney)
-		balance = await self.bot.get_cog("Economy").getBalance(ctx.author)
-		embed = discord.Embed(color=1768431)
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
+		embed = nextcord.Embed(color=1768431)
 		embed.add_field(name = f"You got {monthlyReward} (+{extraMoney}) {self.coin}", 
 						value = f"You have {balance} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney}", inline=False)
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 
 def setup(bot):
 	bot.add_cog(WeeklyMonthly(bot))

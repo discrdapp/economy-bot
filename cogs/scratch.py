@@ -1,5 +1,10 @@
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
+
 import asyncio
 
 from random import randint
@@ -11,18 +16,18 @@ class Scratch(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 
-	@commands.command(description="Play BlackJack!", aliases=['scratchoff'], pass_context=True)
+	@nextcord.slash_command(description="Play Scratch!")
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
 	@commands.cooldown(1, 5, commands.BucketType.user)	
-	async def scratch(self, ctx, amntBet, skip:str=""):
+	async def scratch(self, interaction:Interaction, amntbet, skip:str=""):
 
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 
-		amntBet = await self.bot.get_cog("Economy").GetBetAmount(ctx, amntBet)
+		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
-		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
-			await self.bot.get_cog("Economy").notEnoughMoney(ctx)
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
+			await self.bot.get_cog("Economy").notEnoughMoney(interaction)
 			return
 
 		winningNumber = randint(9,91)
@@ -38,13 +43,13 @@ class Scratch(commands.Cog):
 			msg += "B1\tB2\tB3\n"
 			msg += "C1\tC2\tC3\n"
 
-			msgSent = await ctx.send(msg)
+			msgSent = await interaction.response.send_message(msg)
 
 			count = 0
 
 			while count < 10:
 				def is_me(m):
-					if m.author.id == ctx.author.id and m.content.upper() in spots.keys():
+					if m.author.id == interaction.user.id and m.content.upper() in spots.keys():
 						return True
 				try:
 					scratchOff = await self.bot.wait_for('message', check=is_me, timeout=45)
@@ -66,17 +71,17 @@ class Scratch(commands.Cog):
 			msg += f"{n[3]}\t{n[4]}\t{n[5]}\n"
 			msg += f"{n[6]}\t{n[7]}\t{n[8]}\n"
 
-			msgSent = await ctx.send(msg)
+			msgSent = await interaction.response.send_message(msg)
 
 		profit = 0
 		for num in n:
 			if winningNumber == num:
-				profit += amntBet
+				profit += amntbet
 
-		await ctx.send(f"You won {profit}{self.coin}")
+		await interaction.response.send_message(f"You won {profit}{self.coin}")
 
 		if profit != 0:
-			await self.bot.get_cog("Economy").addWinnings(ctx.author.id, amntBet + profit)
+			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntbet + profit)
 
 
 def setup(bot):

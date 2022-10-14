@@ -1,32 +1,46 @@
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
+
 import random
 import asyncio
-from discord.ext.commands import has_permissions
-from discord.utils import find
 import time
 import json
 
 import ztoken
 
-async def get_prefix(bot, message):
-	with open(r"prefix.json", 'r') as f:
-		prefixFile = json.load(f)
-
-	try:
-		prefix = prefixFile[f"{message.guild.id}"]
-	except:
-		prefix = "."
-	return prefix
-
-bot = commands.Bot(command_prefix = get_prefix, case_insensitive=True)
+bot = commands.Bot()
 bot.remove_command('help')
 
-extensions = ["db", "cogs.admin", "cogs.bank", "cogs.bj", "cogs.coinflip", "cogs.color_guesser", "cogs.crash",
-			  "cogs.daily", "cogs.economy", "cogs.error_handling", "cogs.lottery", "cogs.miner", "cogs.others", "cogs.quests", "cogs.roulette", "cogs.rps", 
-			  "cogs.scratch", "cogs.shop", "cogs.slots", "cogs.totals", "cogs.ttt", "cogs.user_settings", "cogs.util", "cogs.vote", "cogs.weeklymonthly",
-			   "cogs.xp"] # list of cogs to call
-
+extensions = ["db", 
+			  "cogs.admin", 
+			  "cogs.bank", 
+			  "cogs.bj",
+			  "cogs.coinflip",
+			  "cogs.color_guesser", 
+			  "cogs.crash",
+			  "cogs.daily",
+			  "cogs.economy", 
+			  "cogs.error_handling",
+			  "cogs.miner",
+			  "cogs.others", 
+			  "cogs.quests", 
+			  "cogs.roulette", 
+			  "cogs.rps",
+			  "cogs.scratch", 
+			  "cogs.shop", 
+			  "cogs.slots", 
+			  "cogs.totals",
+			  "cogs.ttt", 
+			  "cogs.user_settings", 
+			  "cogs.util", 
+			  "cogs.vote",
+			  "cogs.weeklymonthly",
+			  "cogs.xp"] # list of cogs to call
+# extensions = ["db", "cogs.daily", "cogs.admin"]
 
 
 @bot.event
@@ -36,10 +50,10 @@ async def on_ready():
 	LogFile = open("Logs.txt", "a")
 
 	print(f"{bot.user.name} - {bot.user.id}")
-	print(discord.__version__)
+	print(nextcord.__version__)
 	print("Ready...")
 
-	await bot.change_presence(activity=discord.Game(name="Do .help for help!"))
+	await bot.change_presence(activity=nextcord.Game(name="Do /help for help! SLASH COMMANDS!!!"))
 
 
 # stop user input
@@ -55,7 +69,7 @@ async def on_ready():
 # 	await bot.process_commands(message)
 
 # manually load a cog
-@bot.command()
+@bot.slash_command()
 @commands.is_owner()
 async def load(ctx, extension):
 	try:
@@ -68,7 +82,7 @@ async def load(ctx, extension):
 
 
 # manually unload a cog
-@bot.command()
+@bot.slash_command()
 @commands.is_owner()
 async def unload(ctx, extension):
 	try:
@@ -81,7 +95,7 @@ async def unload(ctx, extension):
 
 
 # manually reload a cog
-@bot.command()
+@bot.slash_command()
 @commands.is_owner()
 async def reload(ctx, extension):
 	if extension == 'all':
@@ -106,12 +120,17 @@ async def reload(ctx, extension):
 			print(f"{extension} could not be reloaded. [{error}]")
 			await ctx.send(f"{extension} could not be reloaded. [{error}]")
 
-if __name__ == '__main__':
+
+
+async def main():
+	# if you need to, initialize other things, such as aiohttp
 	for extension in extensions:
 		try:
 			bot.load_extension(extension)
 			print(f"Loaded cog: {extension}")
 		except Exception as error:
 			print(f"{extension} could not be loaded. [{error}]")
-	# bot.loop.create_task(background_loop())
-	bot.run(ztoken.token)
+
+	await bot.start(ztoken.token)
+
+bot.loop.run_until_complete(main())

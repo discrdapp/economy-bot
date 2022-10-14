@@ -1,5 +1,9 @@
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
 
 import datetime
 
@@ -41,21 +45,21 @@ class Settings(commands.Cog):
 		
 		return userSettings
 
-	@commands.group(invoke_without_command=True, pass_context=True)
-	async def settings(self, ctx, game: str):
+	@nextcord.slash_command()
+	async def settings(self, interaction:Interaction, game: str):
 		# check if settings page exist
 		# if not, input new user to data with default options
 
-		author = ctx.author
+		author = interaction.user
 		game = game.lower()
 
-		async def msgUser(ctx, msgString):
+		async def msgUser(interaction, msgString):
 			try:
-				#if not isinstance(ctx.channel, discord.DMChannel):
-				#	await ctx.send("Sending DM...")
+				#if not isinstance(interaction.channel, nextcord.DMChannel):
+				#	await interaction.response.send_message("Sending DM...")
 				return await author.send(f"{msgString}")
-			except discord.Forbidden:
-				# await ctx.send("Your Discord settings do not allow me to DM you. Please change them and try again.")
+			except nextcord.Forbidden:
+				# await interaction.response.send_message("Your Discord settings do not allow me to DM you. Please change them and try again.")
 				raise Exception("forbiddenError")
 
 
@@ -77,12 +81,12 @@ class Settings(commands.Cog):
 				return "\u274c", "\u274c"
 			else: return "\u2705", "\u2705"
 		
-		userSettings = self.getUserSettings(ctx.author)
+		userSettings = self.getUserSettings(interaction.user)
 
 		if game == "blackjack":
 			emojis = userSettings[str(author.id)]["blackjack"]["emojis"]
 			placeholder = userSettings[str(author.id)]["blackjack"]["pass"]
-			msg = await msgUser(ctx, f"Choose an option:\n1) Use emojis instead of commands -- {emojis}\n2) placeholder -- {placeholder}")
+			msg = await msgUser(interaction, f"Choose an option:\n1) Use emojis instead of commands -- {emojis}\n2) placeholder -- {placeholder}")
 
 			reaction, user = await get_reaction(msg)
 
@@ -91,7 +95,7 @@ class Settings(commands.Cog):
 			if str(reaction) == "1⃣": emojis, userSettings[str(author.id)]["blackjack"]["emojis"] = await switchEmojis(emojis)
 			elif str(reaction) == "2⃣": placeholder, userSettings[str(author.id)]["blackjack"]["pass"] = await switchEmojis(placeholder)
 
-			msg = await msgUser(ctx, f"New settings:\n1) Use emojis instead of commands  {emojis}\n2) placeholder -- {placeholder}")
+			msg = await msgUser(interaction, f"New settings:\n1) Use emojis instead of commands  {emojis}\n2) placeholder -- {placeholder}")
 
 
 
@@ -99,16 +103,16 @@ class Settings(commands.Cog):
 		elif game == "roulette":
 			simple = userSettings[str(author.id)]["roulette"]["simple"]
 			default = userSettings[str(author.id)]["roulette"]["default"]
-			msg = await msgUser(ctx, f"Choose an option:\n1) Simple Roulette (play each game with only using one command!) -- {simple}\n2) Set default bet: {default}")
+			msg = await msgUser(interaction, f"Choose an option:\n1) Simple Roulette (play each game with only using one command!) -- {simple}\n2) Set default bet: {default}")
 
 			reaction, user = await get_reaction(msg)
 
 			await msg.delete()
 
 			if str(reaction) == "1⃣": simple, userSettings[str(author.id)]["roulette"]["simple"] = await switchEmojis(simple)
-			elif str(reaction) == "2⃣": await ctx.send("Enter what to change the default bet to...")
+			elif str(reaction) == "2⃣": await interaction.response.send_message("Enter what to change the default bet to...")
 
-			msg = await msgUser(ctx, f"New settings:\n1) Simple Roulette (play each game with only using one command!) -- {simple}\n2) Set default bet: {default}")
+			msg = await msgUser(interaction, f"New settings:\n1) Simple Roulette (play each game with only using one command!) -- {simple}\n2) Set default bet: {default}")
 
 
 
@@ -116,7 +120,7 @@ class Settings(commands.Cog):
 		elif game == "fight":
 			Dms = userSettings[str(author.id)]["fight"]["Dms"]
 			autoConfirm = userSettings[str(author.id)]["fight"]["autoConfirm"]
-			msg = await msgUser(ctx, f"Choose an option:\n1) Send me DMs for the whole fighting log -- {Dms}\n2) Confirm fight request automatically -- {autoConfirm}")
+			msg = await msgUser(interaction, f"Choose an option:\n1) Send me DMs for the whole fighting log -- {Dms}\n2) Confirm fight request automatically -- {autoConfirm}")
 
 			reaction, user = await get_reaction(msg)
 
@@ -128,7 +132,7 @@ class Settings(commands.Cog):
 				autoConfirm, userSettings[str(author.id)]["fight"]["autoConfirm"] = await switchEmojis(autoConfirm)
 
 
-			msg = await msgUser(ctx, f"New settings:\n1) Send me DMs for the whole fighting log -- {Dms}\n2) Confirm fight request automatically -- {autoConfirm}")
+			msg = await msgUser(interaction, f"New settings:\n1) Send me DMs for the whole fighting log -- {Dms}\n2) Confirm fight request automatically -- {autoConfirm}")
 
 		else:
 			raise Exception

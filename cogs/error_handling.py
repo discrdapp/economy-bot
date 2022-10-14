@@ -1,7 +1,12 @@
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
+
 import asyncio
-import discord
 import sys
-from discord.ext import commands
 
 import datetime
 import traceback
@@ -13,22 +18,22 @@ class ErrorHandling(commands.Cog):
 		self.bot = bot
 
 	@commands.Cog.listener()
-	async def on_command_error(self, ctx, error):
-		embed = discord.Embed(title=f"{self.bot.user.name} | ERROR", color=0xFF0000)
+	async def on_command_error(self, interaction:Interaction, error):
+		embed = nextcord.Embed(title=f"{self.bot.user.name} | ERROR", color=0xFF0000)
 		error = getattr(error, 'original', error)
 
 		if "missing permissions" in str(error).lower() or "send message" in str(error).lower():
 			return
 
 		elif isinstance(error, commands.CommandNotFound):
-			if "Discord" in ctx.guild.name or "Discords.com" in ctx.guild.name:
+			if "Discord" in interaction.guild.name or "Discords.com" in interaction.guild.name:
 				return
 			lst = [	"background", "bal", "balance", "bank", "blackjack", "bg",
 					"coinflip", "claim", "colorguesser", "credits", "crash", "crate", "earn", "free", "freemoney", 
 					"level", "monthly", "position", "profile", "rewards", "roulette", "rps", 
 					"shop", "slot", "slots", "stats", "top", "vote", "weekly"]
 		#	embed.description = "Command not found!"
-			cmd = ctx.message.content.split()[0][1:]
+			cmd = interaction.message.content.split()[0][1:]
 			try:
 				closest = get_close_matches(cmd.lower(), lst)[0]
 			except IndexError:
@@ -37,11 +42,11 @@ class ErrorHandling(commands.Cog):
 				embed.description = f"`{cmd.lower()}` is not a command, did you mean `{closest}`?"
 
 		elif isinstance(error, commands.MissingRequiredArgument):
-			if ctx.command is None:
+			if interaction.command is None:
 				return
 			try:	
-				await ctx.invoke(self.bot.get_command(f'help {ctx.command.name}'))
-				ctx.command.reset_cooldown(ctx)
+				await interaction.invoke(self.bot.get_command(f'help {interaction.command.name}'))
+				interaction.command.reset_cooldown(interaction)
 				return
 			except:
 				err = str(error.param)
@@ -54,13 +59,10 @@ class ErrorHandling(commands.Cog):
 				else:
 					a_an = "a"
 
-				if err == 'amntBet':
+				if err == 'amntbet':
 					err = 'amount to bet'
 				elif err == 'sideBet':
 					err = 'side to vote for (heads or tails)'
-				elif err == 'newprefix':
-					err = 'new prefix'
-					a_an = "the"
 				embed.description = f"Please specify {a_an} {err} for this command to work."
 
 		elif isinstance(error, commands.TooManyArguments):
@@ -68,7 +70,7 @@ class ErrorHandling(commands.Cog):
 
 		elif isinstance(error, commands.CheckFailure):
 			try:
-				await ctx.send(f"{error}")
+				await interaction.response.send_message(f"{error}")
 			except Exception:
 				pass
 			return
@@ -76,7 +78,7 @@ class ErrorHandling(commands.Cog):
 		elif isinstance(error, commands.CommandOnCooldown):
 			a = datetime.timedelta(seconds=error.retry_after)
 			cooldown = str(a).split(".")[0]
-			embed.description = f"{str(ctx.command).title()} is on cooldown. Please retry again in {cooldown}"
+			embed.description = f"{str(interaction.command).title()} is on cooldown. Please retry again in {cooldown}"
 
 		elif isinstance(error, commands.BadArgument):
 			embed.description = f"{error}"
@@ -86,11 +88,11 @@ class ErrorHandling(commands.Cog):
 			err = err.split(':', 2)[-1]
 			
 			if err == "forbiddenError":
-				await ctx.send("Your Discord settings does not allow me to DM you. Please change them and try again.")
+				await interaction.response.send_message("Your Discord settings does not allow me to DM you. Please change them and try again.")
 				return
 
 			if err == "timeoutError":
-				await ctx.send("Did not respond in time; timeout.")
+				await interaction.response.send_message("Did not respond in time; timeout.")
 				return
 
 			exc = ''.join(traceback.format_exception(type(error), error, error.__traceback__, chain=False))
@@ -104,27 +106,31 @@ class ErrorHandling(commands.Cog):
 				await ch.send(f"{exc[:1999]}")
 				if len(exc) > 3998:
 					await ch.send(f"{exc[1999:3998]}")
-					await ch.send(f"{exc[3998:]}")
+					if len(exc) > 5997:
+						await ch.send(f"{exc[3998:5997]}")
+						await ch.send(f"{exc[5997:]}")
+					else:
+						await ch.send(f"{exc[3998:]}")
 				else:
 					await ch.send(f"{exc[1999:]}")
 			else:
 				await ch.send(f"{exc}")
-			await ch.send(f"Error.\nCommand message: {ctx.message.content}\nUser: {ctx.author.id}")
+			await ch.send(f"Error.\nCommand message: {interaction.message.content}\nUser: {interaction.user.id}")
 
 			# await ch.send(embed=e)
-			# await ctx.send(f"{error}  {ctx.command.qualified_name}")
+			# await interaction.response.send_message(f"{error}  {interaction.command.qualified_name}")
 
-		embed.set_thumbnail(url=ctx.author.avatar_url)
-		embed.set_footer(text=ctx.author)
+		embed.set_thumbnail(url=interaction.user.avatar)
+		embed.set_footer(text=interaction.user)
 
 		try:
-			await ctx.send(embed=embed)
+			await interaction.response.send_message(embed=embed)
 		except Exception as e:
 			pass
 			
 			
-		if ctx.command is not None and not isinstance(error, commands.CommandOnCooldown):
-			ctx.command.reset_cooldown(ctx)
+		if interaction.command is not None and not isinstance(error, commands.CommandOnCooldown):
+			interaction.command.reset_cooldown(interaction)
 
 def setup(bot):
 	bot.add_cog(ErrorHandling(bot))

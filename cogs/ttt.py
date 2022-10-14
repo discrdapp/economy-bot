@@ -1,5 +1,9 @@
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
 
 class TTT(commands.Cog):
 	def __init__(self, bot):
@@ -7,10 +11,10 @@ class TTT(commands.Cog):
 		self.grid = []
 		self.game_in_progress = False
 
-	@commands.command(description="Play TicTacToe with a friend!", aliases=['ttt'], pass_context=True)
-	async def tictactoe(self, ctx, member: discord.Member=None):
+	@nextcord.slash_command(description="Play TicTacToe with a friend!")
+	async def tictactoe(self, interaction:Interaction, member: nextcord.Member=None):
 		""" Play Tic-Tac-Toe with a friend! """
-		channel = ctx.message.channel
+		channel = interaction.message.channel
 
 		if self.game_in_progress:
 			return
@@ -21,7 +25,7 @@ class TTT(commands.Cog):
 
 		self.game_in_progress = True
 		self.populate_grid()
-		author = ctx.message.author
+		author = interaction.user
 		win = False
 		draw = False
 		player = "X"

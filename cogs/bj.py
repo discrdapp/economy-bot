@@ -7,8 +7,13 @@
 # d: dealer
 
 
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands 
+from nextcord import Interaction
+from nextcord import FFmpegPCMAudio 
+from nextcord import Member 
+from nextcord.ext.commands import has_permissions, MissingPermissions
+
 import asyncio
 from random import randrange
 from random import randint
@@ -25,34 +30,34 @@ class bj(commands.Cog):
 					  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
 		self.coin = "<:coins:585233801320333313>"
 
-	@commands.command(description="Play BlackJack!", aliases=['blackjack'])
+	@nextcord.slash_command(description="Play BlackJack!")
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
 	@commands.cooldown(1, 5, commands.BucketType.user)	
-	async def bj(self, ctx, amntBet):
-		if not await self.bot.get_cog("Economy").accCheck(ctx.author):
-			await ctx.invoke(self.bot.get_command('start'))
+	async def blackjack(self, interaction:Interaction, amntbet):
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").start(interaction, interaction.user)
 
-		amntBet = await self.bot.get_cog("Economy").GetBetAmount(ctx, amntBet)
+		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 		
-		if not await self.bot.get_cog("Economy").subtractBet(ctx.author, amntBet):
-			await self.bot.get_cog("Economy").notEnoughMoney(ctx)
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
+			await self.bot.get_cog("Economy").notEnoughMoney(interaction)
 			return
 		# generate the starting cards
-		dFirstHand, dFirstNum = await self.dealer_first_turn(ctx)
+		dFirstHand, dFirstNum = await self.dealer_first_turn(interaction)
 		
 		# collect player input for player's hand
-		player_hand, player_num, embed = await self.player_turn(dFirstHand, dFirstNum, ctx)
+		player_hand, player_num, embed = await self.player_turn(dFirstHand, dFirstNum, interaction)
 		# generate dealer's hand
-		dealer_hand, dealer_num = await self.dealer_turn(dFirstHand, dFirstNum, ctx)
+		dealer_hand, dealer_num = await self.dealer_turn(dFirstHand, dFirstNum, interaction)
 		
-		winner = await self.compare_between(player_num, dealer_num, ctx)
+		winner = await self.compare_between(player_num, dealer_num, interaction)
 		
-		await self.displayWinner(ctx, winner, player_hand, player_num, dealer_hand, dealer_num, amntBet, embed.copy()) 
+		await self.displayWinner(interaction, winner, player_hand, player_num, dealer_hand, dealer_num, amntbet, embed.copy()) 
 
 
 
-	async def player_turn(self, dCard, dCardNum, ctx):
-		author = ctx.author
+	async def player_turn(self, dCard, dCardNum, interaction):
+		author = interaction.user
 		pCARD = []
 		pCardSuit = []
 		pCardNum = []
@@ -70,10 +75,11 @@ class bj(commands.Cog):
 			pDrawnCard[1] = "11"
 		pCardNum.append(int(pDrawnCard[1]))
 
-		embed = discord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack")
-		file = discord.File("./images/bj.png", filename="image.png")
-		embed.set_thumbnail(url="attachment://image.png")
-		botMsg = await ctx.send(f"{author.mention}", file=file, embed=embed)
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack")
+		file = nextcord.File("./images/bj.png", filename="image.png")
+		# embed.set_thumbnail(url="attachment://image.png")
+		botMsg = await interaction.response.send_message(f"{author.mention}", embed=embed)
+		botMsg = await botMsg.fetch()
 		ans = "hit"
 		while (ans.lower() == "h") or (ans.lower() == "hit"):
 			
@@ -121,40 +127,40 @@ class bj(commands.Cog):
 			await botMsg.edit(content=f"{author.mention}", embed=embed)
 
 			userSettings = self.bot.get_cog("Settings").getUserSettings(author)
-			emojis = userSettings[str(author.id)]["blackjack"]["emojis"]
+			# emojis = userSettings[str(author.id)]["blackjack"]["emojis"]
 
-			if emojis == "\u2705":
-				def is_me_reaction(reaction, user):
-					return user == author
+			# if emojis == "\u2705":
+			def is_me_reaction(reaction, user):
+				return user == author
 
-				await botMsg.add_reaction("1⃣") 
-				await botMsg.add_reaction("2⃣")
-				try:
-					reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=45)
-					#return reaction, user
-				except asyncio.TimeoutError:
-					await botMsg.delete()
-					raise Exception("timeoutError")
+			await botMsg.add_reaction("🇭") 
+			await botMsg.add_reaction("🇸")
+			try:
+				reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=45)
+				#return reaction, user
+			except asyncio.TimeoutError:
+				await botMsg.delete()
+				raise Exception("timeoutError")
 
-				if str(reaction) == "1⃣": 
-					ans = "hit"
-				elif str(reaction) == "2⃣": 
-					ans = "stay"
-				else:
-					raise Exception
-
-				await botMsg.clear_reactions()
-
+			if str(reaction) == "🇭": 
+				ans = "hit"
+			elif str(reaction) == "🇸": 
+				ans = "stay"
 			else:
-				def is_me(m):
-					return (m.author.id == author.id) and (m.content.lower() in ["hit", "stay", "h", "s", "stand"])
-				try:
-					# waits for user action; while loop repeated
-					ans = await self.bot.wait_for('message', check=is_me, timeout=45)
-					ans = ans.content
-				except asyncio.TimeoutError:
-					await botMsg.delete()
-					raise Exception("timeoutError")
+				raise Exception
+
+			await botMsg.clear_reactions()
+
+			# else:
+			# 	def is_me(m):
+			# 		return (m.author.id == author.id) and (m.content.lower() in ["hit", "stay", "h", "s", "stand"])
+			# 	try:
+			# 		# waits for user action; while loop repeated
+			# 		ansMsg = await self.bot.wait_for('message', check=is_me, timeout=45)
+			# 		ans = ansMsg.content
+			# 	except asyncio.TimeoutError:
+			# 		await botMsg.delete()
+			# 		raise Exception("timeoutError")
 
 		return pCARD, pCardNum, embed
 
@@ -198,7 +204,7 @@ class bj(commands.Cog):
 			return True
 		return None
 
-	async def dealer_first_turn(self, ctx):
+	async def dealer_first_turn(self, interaction:Interaction):
 		dCARD = []
 		dCardNum = []
 
@@ -218,7 +224,7 @@ class bj(commands.Cog):
 		
 		return dCARD, dCardNum
 
-	async def dealer_turn(self, dCARD, dCardNum, ctx):
+	async def dealer_turn(self, dCARD, dCardNum, interaction):
 		# d will keep drawing until card values sum > 16
 		while sum(dCardNum) <= 16:
 			# grabs a card
@@ -240,7 +246,7 @@ class bj(commands.Cog):
 		return dCARD, dCardNum
 
 
-	async def compare_between(self, player_hand, dealer_hand, ctx):
+	async def compare_between(self, player_hand, dealer_hand, interaction):
 		total_player = sum(player_hand)
 		total_dealer = sum(dealer_hand)
 		player_bust = await self.is_bust(player_hand)
@@ -272,7 +278,7 @@ class bj(commands.Cog):
 			else:
 				return 0
 
-	async def displayWinner(self, ctx, winner, player_hand, player_num, dealer_hand, dealer_num, amntBet, embed):
+	async def displayWinner(self, interaction:Interaction, winner, player_hand, player_num, dealer_hand, dealer_num, amntbet, embed):
 		pTotal = ""
 		for x in player_hand:
 			pTotal += f"{x} "
@@ -287,69 +293,69 @@ class bj(commands.Cog):
 		coin = "<:coins:585233801320333313>"
 
 		embed.set_field_at(1, name = f"{self.bot.user.name}' CARD", value = f"{dTotal}\n**Score**: {sum(dealer_num)}", inline=True)
-		embed.color = discord.Color(0xff2020)
+		embed.color = nextcord.Color(0xff2020)
 		result = ""
 
 
 		# MONEY WINNINGS EXPLAINED:
 		# If you win, you get 2x your money
-		# (amntBet * 2)
+		# (amntbet * 2)
 		# 
 		# But profit is only how much you won subtracted with how much you bet
-		# Meaning profit = amntBet
+		# Meaning profit = amntbet
 		# 
 		# 
 		#########################
 
-		multiplier = self.bot.get_cog("Economy").getMultiplier(ctx.author)
+		multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
 
 		file = None
 		if winner == 1:
-			moneyToAdd = amntBet * 2 
-			profitInt = moneyToAdd - amntBet
+			moneyToAdd = amntbet * 2 
+			profitInt = moneyToAdd - amntbet
 			result = "YOU WON"
 			profit = f"**{profitInt}** (+**{int(profitInt * (multiplier - 1))}**)"
 			
-			embed.color = discord.Color(0x23f518)
+			embed.color = nextcord.Color(0x23f518)
 			if player_num != 21:
-				file = discord.File("./images/bjwon.png", filename="image.png")
+				file = nextcord.File("./images/bjwon.png", filename="image.png")
 			else:
-				file = discord.File("./images/21.png", filename="image.png")
+				file = nextcord.File("./images/21.png", filename="image.png")
 
 		elif winner == -1:
 			moneyToAdd = 0 # nothing to add since loss
-			profitInt = -amntBet # profit = amntWon - amntBet; amntWon = 0 in this case
+			profitInt = -amntbet # profit = amntWon - amntbet; amntWon = 0 in this case
 			result = "YOU LOST"
 			profit = f"**{profitInt}**"
-			file = discord.File("./images/bjlost.png", filename="image.png")
+			file = nextcord.File("./images/bjlost.png", filename="image.png")
 
 		
 		elif winner == 0:
-			moneyToAdd = amntBet # add back their bet they placed since it was pushed (tied)
+			moneyToAdd = amntbet # add back their bet they placed since it was pushed (tied)
 			profitInt = 0 # they get refunded their money (so they don't make or lose money)
 			result = "PUSHED"
 			profit = f"**{profitInt}**"
-			file = discord.File("./images/bjpushed.png", filename="image.png")
+			file = nextcord.File("./images/bjpushed.png", filename="image.png")
 		
 		if file:
 			embed.set_thumbnail(url="attachment://image.png")
 
 		giveZeroIfNeg = max(0, profitInt) # will give 0 if profit is negative. 
 																				# we don't want it subtracting anything, only adding
-		await self.bot.get_cog("Economy").addWinnings(ctx.author.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
-		balance = await self.bot.get_cog("Economy").getBalance(ctx.author)
+		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed.set_field_at(2, name = f"**--- {result} ---**", value = "_ _", inline=False)
 		embed.add_field(name="Profit", value=f"{profit}{coin}", inline=True)
 		embed.add_field(name="Credits", value=f"**{balance}**{coin}", inline=True)
 
 		priorBal = balance - profitInt + (giveZeroIfNeg * (multiplier - 1))
-		embed = await DB.calculateXP(self, ctx, priorBal, amntBet, embed)
+		embed = await DB.calculateXP(self, interaction, priorBal, amntbet, embed)
 
-		await ctx.send(content=f"{ctx.author.mention}", file=file, embed=embed)
+		await interaction.followup.send(content=f"{interaction.user.mention}", file=file, embed=embed)
 
-		await self.bot.get_cog("Totals").addTotals(ctx, amntBet, moneyToAdd, 1)	
+		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 1)	
 
-		await self.bot.get_cog("Quests").AddQuestProgress(ctx, ctx.author, "BJ", profitInt)
+		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "BJ", profitInt)
 
 def setup(bot):
 	bot.add_cog(bj(bot))
