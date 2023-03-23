@@ -5,3 +5,4 @@ numpy
 datetime
 Pillow
 topggpy
+function-cooldowns
