@@ -5,6 +5,7 @@ from nextcord import FFmpegPCMAudio
 from nextcord import Member 
 from nextcord.ext.commands import has_permissions, MissingPermissions
 
+import cooldowns
 import asyncio
 import random
 # import topgg
@@ -20,7 +21,7 @@ class Vote(commands.Cog):
 
 	@nextcord.slash_command(description="Vote")
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
-	@commands.cooldown(1, 5, commands.BucketType.user)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def vote(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Vote")
 		embed.set_thumbnail(url=interaction.user.avatar)

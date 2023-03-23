@@ -46,19 +46,19 @@ class Quests(commands.Cog):
 					description = f"{gameselection}1. Play 30 games\n{gameselection}2. Win 20 games\n{gameselection}3. Earn a profit of 50,000{self.coin}")
 			embed.set_footer(text=f"Type /quests start to start a quest")
 
-			await interaction.response.send_message(embed=embed)
+			await interaction.send(embed=embed)
 		
 			return
 		currQuest = self.GetQuest(interaction.user)
 		if not self.InQuestsDB(interaction.user) or not currQuest:
 			embed=nextcord.Embed(color=0x109D00, title="Quests", description="1. Slots\n2. Blackjack\n3. Crash\n4. Roulette\n5. Coinflip\n6. Rock-Paper-Scissors")
 			embed.set_footer(text=f"ALL quests give 5000 credits and 200 XP!")
-			await interaction.response.send_message(embed=embed)
+			await interaction.send(embed=embed)
 			# embed = nextcord.Embed(color=0xFF0000, description="You do not have any active quests")
-			await interaction.response.send_message(embed=nextcord.Embed(color=0xFF0000, description="You do not have any active quests"))
+			await interaction.send(embed=nextcord.Embed(color=0xFF0000, description="You do not have any active quests"))
 		elif currQuest:
 			questStr = await self.Decode(interaction, currQuest)
-			await interaction.response.send_message(embed=nextcord.Embed(color=0x109D00, description=f"{questStr}\n"))
+			await interaction.send(embed=nextcord.Embed(color=0x109D00, description=f"{questStr}\n"))
 
 	@quests.subcommand()
 	async def start(self, interaction:Interaction, game=nextcord.SlashOption(name="gamechoice", required=True,
@@ -87,17 +87,17 @@ class Quests(commands.Cog):
 			embed.description = f"You must first complete your current quest before you can begin a new one."
 			embed.set_footer(text=f"Type `/quests cancel` to cancel your current quest")
 
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 
 	@quests.subcommand()
 	async def cancel(self, interaction:Interaction):
 		currQuest = self.GetQuest(interaction.user)
 		if not self.InQuestsDB(interaction.user) or not currQuest:
-			await interaction.response.send_message(embed=nextcord.Embed(color=0xFF0000, description="You do not have any active quests"))
+			await interaction.send(embed=nextcord.Embed(color=0xFF0000, description="You do not have any active quests"))
 			return
 
 		DB.update("UPDATE Quests SET ActiveQuest = NULL, Games = 0, Wins = 0, Profit = 0 WHERE DiscordID = ?;", [interaction.user.id])
-		await interaction.response.send_message(embed=nextcord.Embed(color=0x109D00, description=f"You have successfully canceled your current quest"))
+		await interaction.send(embed=nextcord.Embed(color=0x109D00, description=f"You have successfully canceled your current quest"))
 
 
 
@@ -156,7 +156,7 @@ class Quests(commands.Cog):
 			await self.bot.get_cog("Economy").addWinnings(user.id, 5000)
 			await self.bot.get_cog("XP").addXP(interaction, 200)
 
-			await interaction.followup.send(embed=nextcord.Embed(color=0x109D00, title="Quest Complete!", description=f"Your quest to {goal} in {self.realGameNamesDict[game]} is now complete!" +
+			await interaction.send(embed=nextcord.Embed(color=0x109D00, title="Quest Complete!", description=f"Your quest to {goal} in {self.realGameNamesDict[game]} is now complete!" +
 				f"\n5000{self.coin} and 200 XP has been added to your account!\n"))
 			DB.update("UPDATE Quests SET ActiveQuest = NULL, " + questType + " = 0 WHERE DiscordID = ? and ActiveQuest = ?;", [user.id, activeQuest])
 

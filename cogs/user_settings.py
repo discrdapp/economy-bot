@@ -56,10 +56,10 @@ class Settings(commands.Cog):
 		async def msgUser(interaction, msgString):
 			try:
 				#if not isinstance(interaction.channel, nextcord.DMChannel):
-				#	await interaction.response.send_message("Sending DM...")
+				#	await interaction.send("Sending DM...")
 				return await author.send(f"{msgString}")
 			except nextcord.Forbidden:
-				# await interaction.response.send_message("Your Discord settings do not allow me to DM you. Please change them and try again.")
+				# await interaction.send("Your Discord settings do not allow me to DM you. Please change them and try again.")
 				raise Exception("forbiddenError")
 
 
@@ -110,7 +110,7 @@ class Settings(commands.Cog):
 			await msg.delete()
 
 			if str(reaction) == "1⃣": simple, userSettings[str(author.id)]["roulette"]["simple"] = await switchEmojis(simple)
-			elif str(reaction) == "2⃣": await interaction.response.send_message("Enter what to change the default bet to...")
+			elif str(reaction) == "2⃣": await interaction.send("Enter what to change the default bet to...")
 
 			msg = await msgUser(interaction, f"New settings:\n1) Simple Roulette (play each game with only using one command!) -- {simple}\n2) Set default bet: {default}")
 

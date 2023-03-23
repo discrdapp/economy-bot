@@ -134,7 +134,7 @@ class Totals(commands.Cog):
 	@profile.subcommand()
 	async def view(self, interaction:Interaction):
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		totals = DB.fetchOne("SELECT Profit, Games FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 		profit = totals[0]
@@ -218,7 +218,7 @@ class Totals(commands.Cog):
 
 		embed.set_footer(text=f"Customize your profile with /profile edit")
 
-		await interaction.response.send_message(file=file, embed=embed)
+		await interaction.send(file=file, embed=embed)
 
 
 	@nextcord.slash_command()
@@ -241,9 +241,9 @@ class Totals(commands.Cog):
 		embed.add_field(name="Regular colors", value=f"{msg}")
 		embed1.add_field(name="_ _", value=f"{msg1}")
 		embed2.add_field(name="_ _", value=f"{msg2}")
-		await interaction.response.send_message(embed=embed)
-		await interaction.followup.send(embed=embed1)
-		await interaction.followup.send(embed=embed2)
+		await interaction.send(embed=embed)
+		await interaction.send(embed=embed1)
+		await interaction.send(embed=embed2)
 
 
 	@profile.subcommand()
@@ -258,7 +258,7 @@ class Totals(commands.Cog):
 			newColor = self.colors[choice]
 		except:
 			embed.add_field(name="Error", value="Color not found. Type /colors to see all available colors")
-			await interaction.response.send_message(embed=embed)
+			await interaction.send(embed=embed)
 			return
 
 		with open(r"profiles.json", 'r') as f:
@@ -270,7 +270,7 @@ class Totals(commands.Cog):
 
 		embed.add_field(name="Success!", value=f"Your profile's embed color has been changed to {choice}")
 		embed.color = newColor
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 	
 	@edit.subcommand(description="Get color list from /colors")
 	async def textcolor(self, interaction:Interaction, choice):
@@ -280,7 +280,7 @@ class Totals(commands.Cog):
 			newColor = str(hex(self.colors[choice])) # convert to the literal hexadecimal string
 		except:
 			embed.add_field(name="Error", value="Color not found. Type /colors to see all available colors")
-			await interaction.response.send_message(embed=embed)
+			await interaction.send(embed=embed)
 			return
 		newColor = "#" + "0"*(8-len(newColor))+ newColor[2:] # append trailing 0's and switch out 0x for #
 
@@ -295,7 +295,7 @@ class Totals(commands.Cog):
 
 		embed.add_field(name="Success!", value=f"Your profile's text color has been changed to {choice}")
 		embed.color = self.colors[choice]
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 
 	@edit.subcommand()
 	async def backgroundimage(self, interaction:Interaction, choice = nextcord.SlashOption(
@@ -322,13 +322,13 @@ class Totals(commands.Cog):
 		file = nextcord.File(f"./images/writingbackgrounds/{background}", filename="image.png")
 		embed.set_image(url="attachment://image.png")
 		embed.add_field(name="Edited!", value=f"Successfully changed to {choice}.")
-		await interaction.response.send_message(file=file, embed=embed)
+		await interaction.send(file=file, embed=embed)
 
 
 	@nextcord.slash_command()
 	async def badges(self, interaction:Interaction):
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		getRow = DB.fetchOne("SELECT E.Credits, E.Level, T.Profit, T.Games FROM Economy E INNER JOIN Totals T ON E.DiscordID = T.DiscordID WHERE E.DiscordID = ?;", [interaction.user.id])
 		
@@ -373,13 +373,13 @@ class Totals(commands.Cog):
 
 		embed.set_footer(text="Badges can be viewed in your `/profile view`")
 		
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 
 
 	@nextcord.slash_command()
 	async def stats(self, interaction:Interaction):
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		
 		getRow = DB.fetchOne("SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 
@@ -406,7 +406,7 @@ class Totals(commands.Cog):
 		embed.add_field(name = "Coinflip", value = f"{coinflip}", inline=True)
 		embed.add_field(name = "Rock-Paper-Scissors", value = f"{rps}", inline=True)
 
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 
 
 

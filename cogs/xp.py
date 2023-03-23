@@ -5,6 +5,7 @@ from nextcord import FFmpegPCMAudio
 from nextcord import Member 
 from nextcord.ext.commands import has_permissions, MissingPermissions
 
+import cooldowns
 import asyncio
 import math
 
@@ -26,10 +27,10 @@ class XP(commands.Cog):
 
 
 	@commands.command()
-	@commands.cooldown(1, 1, commands.BucketType.user)
+	@cooldowns.cooldown(1, 1, bucket=cooldowns.SlashBucket.author)
 	async def level(self, interaction:Interaction):
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		getRow = DB.fetchOne(f"SELECT XP, TotalXP, Level, Multiplier FROM Economy WHERE DiscordID = ?;", [interaction.user.id])
 

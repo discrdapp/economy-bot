@@ -23,7 +23,7 @@ class WeeklyMonthly(commands.Cog):
 	async def weekly(self, interaction:Interaction):
 		userId = interaction.user.id
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		else:
 			with open(r"rewards.json", 'r') as f:
 				rewards = json.load(f)
@@ -31,7 +31,7 @@ class WeeklyMonthly(commands.Cog):
 			if (str(userId) in rewards) and ('weekly' in rewards[f'{userId}']):
 				if rewards[f'{userId}']['weekly'] > time.time():
 					waittime = rewards[f'{userId}']['weekly'] - time.time()
-					await interaction.response.send_message(f"Please wait **{math.floor(waittime/86400)}d {math.floor((waittime/3600) % 24)}h {math.floor((waittime/60) % 60)}m** to use this again!")
+					await interaction.send(f"Please wait **{math.floor(waittime/86400)}d {math.floor((waittime/3600) % 24)}h {math.floor((waittime/60) % 60)}m** to use this again!")
 					return
 
 			elif not str(userId) in rewards:
@@ -51,7 +51,7 @@ class WeeklyMonthly(commands.Cog):
 		embed = nextcord.Embed(color=1768431)
 		embed.add_field(name = f"You got {weeklyReward} (+{extraMoney}) {self.coin}", 
 						value = f"You have {balance} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney}", inline=False)
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 
 
 
@@ -59,7 +59,7 @@ class WeeklyMonthly(commands.Cog):
 	async def monthly(self, interaction:Interaction):
 		userId = interaction.user.id
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		else:
 			with open(r"rewards.json", 'r') as f:
 				rewards = json.load(f)
@@ -67,7 +67,7 @@ class WeeklyMonthly(commands.Cog):
 			if (str(userId) in rewards) and ('monthly' in rewards[f'{userId}']):
 				if rewards[f'{userId}']['monthly'] > time.time():
 					waittime = rewards[f'{userId}']['monthly'] - time.time()
-					await interaction.response.send_message(f"Please wait **{math.floor(waittime/86400)}d {math.floor((waittime/3600) % 24)}h {math.floor((waittime/60) % 60)}m** to use this again!")
+					await interaction.send(f"Please wait **{math.floor(waittime/86400)}d {math.floor((waittime/3600) % 24)}h {math.floor((waittime/60) % 60)}m** to use this again!")
 					return
 
 			elif not str(userId) in rewards:
@@ -88,7 +88,7 @@ class WeeklyMonthly(commands.Cog):
 		embed = nextcord.Embed(color=1768431)
 		embed.add_field(name = f"You got {monthlyReward} (+{extraMoney}) {self.coin}", 
 						value = f"You have {balance} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney}", inline=False)
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 
 def setup(bot):
 	bot.add_cog(WeeklyMonthly(bot))

@@ -18,7 +18,7 @@ class CG(commands.Cog):
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, use_external_emojis=True)
 	async def colorguesser(self, interaction:Interaction, amntbet: int):
 
-		await interaction.response.send_message("This command is temporarily disabled while we convert it to a slash command.")
+		await interaction.send("This command is temporarily disabled while we convert it to a slash command.")
 		return
 		
 		users = list()
@@ -26,7 +26,7 @@ class CG(commands.Cog):
 		userBets = dict()
 		colorList = ["green", "red", "blue", "yellow"]
 
-		await interaction.response.send_message(f"This is meant to be a multiplayer game.\nFor all those who want to join in and bet {amntbet} coins, type JOIN\n{interaction.user.mention}, type START when everyone has joined in.")
+		await interaction.send(f"This is meant to be a multiplayer game.\nFor all those who want to join in and bet {amntbet} coins, type JOIN\n{interaction.user.mention}, type START when everyone has joined in.")
 
 		def is_me(m):
 			if m.channel.id != interaction.channel.id or (m.content.lower() != "join" and m.content.lower() != "start"):
@@ -38,7 +38,7 @@ class CG(commands.Cog):
 		try:
 			await self.bot.wait_for('message', check=is_me, timeout=45)
 		except:
-			await interaction.response.send_message("Timeout error, continuing...")
+			await interaction.send("Timeout error, continuing...")
 
 		# take out credits and create list of users who don't have enough credits (or have not typed .start)
 		msg = ""
@@ -55,9 +55,9 @@ class CG(commands.Cog):
 				users.remove(user)
 			msg += f"You do not have {amntbet} or more credits. You have been removed from this game."
 
-			await interaction.response.send_message(msg)
+			await interaction.send(msg)
 
-		await interaction.response.send_message("I will now collect the color you bet for. Please wait your turn before responding to me.")
+		await interaction.send("I will now collect the color you bet for. Please wait your turn before responding to me.")
 
 		colors = ""
 		for x in colorList:
@@ -74,7 +74,7 @@ class CG(commands.Cog):
 			def is_me_color(m):
 				return m.channel.id == interaction.channel.id and m.content in colorList and m.author.id == user.id
 
-			msg = await interaction.response.send_message(f"{user.mention}, pick a color from the list:\n{colors}")
+			msg = await interaction.send(f"{user.mention}, pick a color from the list:\n{colors}")
 			try:
 				colorPicked = await self.bot.wait_for('message', check=is_me_color, timeout=45)
 				userBets[user] = colorPicked
@@ -109,7 +109,7 @@ class CG(commands.Cog):
 		else:
 			msg += "Unfortunately, no one picked that color. Try again next time!"
 
-		await interaction.response.send_message(f"{msg}")
+		await interaction.send(f"{msg}")
 
 
 

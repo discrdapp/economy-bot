@@ -5,6 +5,7 @@ from nextcord import FFmpegPCMAudio
 from nextcord import Member 
 from nextcord.ext.commands import has_permissions, MissingPermissions
 
+import cooldowns
 import asyncio
 
 import time
@@ -31,20 +32,20 @@ class Lottery(commands.Cog):
 		
 
 	@nextcord.slash_command()
-	@commands.cooldown(1, 3, commands.BucketType.user)
+	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
 	async def lottery(self, interaction:Interaction, amnt:str=""):
 		if interaction.invoked_subcommand is not None:
 			return
 		# COMMANDS_ID = self.bot.get_channel(self.COMMANDS_ID)
 		# if interaction.guild.id != self.SERVER_ID: # if not correct channel
-		# 	await interaction.response.send_message(f"This command can only be played in the support server. Feel free to join the server in the /help menu")
+		# 	await interaction.send(f"This command can only be played in the support server. Feel free to join the server in the /help menu")
 		# 	return
 
 		with open(r"lotteryChannels.json", 'r') as f:
 			channels = json.load(f)
 
 		if str(interaction.guild.id) not in channels:
-			await interaction.response.send_message("An Administrator must set the channel for the lottery announcements. This can be ANY TEXT channel.\n" + 
+			await interaction.send("An Administrator must set the channel for the lottery announcements. This can be ANY TEXT channel.\n" + 
 				f"Please type `/lottery channel #channel`")
 			return
 
@@ -64,11 +65,11 @@ class Lottery(commands.Cog):
 			except:
 				msg += "The lottery is currently closed. Please check back soon..."
 
-			await interaction.response.send_message(msg)
+			await interaction.send(msg)
 			return
 
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		# if user tries to enter "half" or "all", talking about their balance... we need to convert that 
 		newAmnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, str(amnt))
@@ -78,7 +79,7 @@ class Lottery(commands.Cog):
 			newAmnt = int(newAmnt // 1000)
 
 		if newAmnt + self.userTickets.count(interaction.user) > 500:
-			await interaction.response.send_message("The maximum number of tickets you can buy is 500.")
+			await interaction.send("The maximum number of tickets you can buy is 500.")
 			return
 
 		cost = newAmnt * 1000
@@ -90,7 +91,7 @@ class Lottery(commands.Cog):
 		for _ in range(newAmnt):
 			self.userTickets.append(interaction.user)
 
-		await interaction.response.send_message(f"Purchased {newAmnt} tickets successfully for {cost}{self.coin}! Good luck!!!")
+		await interaction.send(f"Purchased {newAmnt} tickets successfully for {cost}{self.coin}! Good luck!!!")
 
 		if channels[f"{interaction.guild.id}"] not in self.sendToChannels:
 			self.sendToChannels.append(channels[f"{interaction.guild.id}"])
@@ -104,13 +105,13 @@ class Lottery(commands.Cog):
 		if "<#" != chnl[0:2]:
 			if chnl == 'remove' or chnl == 'stop':
 				del channels[f"{interaction.guild.id}"]
-				await interaction.response.send_message("Removed your server from the list. This will go into effect after the current lottery ends.")
+				await interaction.send("Removed your server from the list. This will go into effect after the current lottery ends.")
 			else:
-				await interaction.response.send_message(f"I don't know what {chnl} is. Please #mention a channel instead.")
+				await interaction.send(f"I don't know what {chnl} is. Please #mention a channel instead.")
 				return
 		else:
 			channels[f"{interaction.guild.id}"] = int(chnl[2:-1])
-			await interaction.response.send_message("Channel set successfully.\nYou can type `.lottery channel remove` to stop receiving the messages whenever you'd like.")
+			await interaction.send("Channel set successfully.\nYou can type `.lottery channel remove` to stop receiving the messages whenever you'd like.")
 
 		with open(r"lotteryChannels.json", 'w') as f:
 			json.dump(channels, f, indent=4)
@@ -162,11 +163,11 @@ class Lottery(commands.Cog):
 			return
 		# await interaction.message.delete()
 		if self.lotteryTask.is_running():
-			await interaction.response.send_message("Lottery stopped")
+			await interaction.send("Lottery stopped")
 			self.lotteryTask.cancel()
 			await self.refundTickets(interaction)
 		else:
-			await interaction.response.send_message("Lottery is not running!", delete_after=3)
+			await interaction.send("Lottery is not running!", delete_after=3)
 
 	@nextcord.slash_command()
 	async def startLottery(self, interaction:Interaction):
@@ -175,10 +176,10 @@ class Lottery(commands.Cog):
 		if not interaction:
 			return
 		if not self.lotteryTask.is_running():
-			await interaction.response.send_message("Starting lottery!", delete_after=3)
+			await interaction.send("Starting lottery!", delete_after=3)
 			self.lotteryTask.start()
 		else:
-			await interaction.response.send_message("Lottery is already running", delete_after=3)
+			await interaction.send("Lottery is already running", delete_after=3)
 
 	@nextcord.slash_command()
 	async def printTickets(self, interaction:Interaction):
@@ -198,9 +199,9 @@ class Lottery(commands.Cog):
 			msg += f"User {user.mention} owns {tickets} tickets.\n"
 
 		if not msg:
-			await interaction.response.send_message("No one owns a ticket.")
+			await interaction.send("No one owns a ticket.")
 		else:
-			await interaction.response.send_message(msg)
+			await interaction.send(msg)
 
 
 	@nextcord.slash_command()
@@ -221,16 +222,16 @@ class Lottery(commands.Cog):
 			msg += f"User {user.mention} refunded {tickets} tickets.\n"
 
 		if not msg:
-			await interaction.response.send_message("No one owns a ticket, so no refunds have been made.")
+			await interaction.send("No one owns a ticket, so no refunds have been made.")
 		else:
-			await interaction.response.send_message(msg)
+			await interaction.send(msg)
 
 	@nextcord.slash_command()
 	async def resetTickets(self, interaction:Interaction):
 		if interaction.user.id != self.bot.owner_id:
 			return
 		self.userTickets.clear()
-		await interaction.response.send_message("Tickets were cleared.")
+		await interaction.send("Tickets were cleared.")
 
 	
 	async def giveTickets(self, user, amnt):
@@ -240,9 +241,9 @@ class Lottery(commands.Cog):
 	@nextcord.slash_command()
 	async def sendChannelList(self, interaction:Interaction):
 		if self.sendToChannels:
-			await interaction.response.send_message(self.sendToChannels)
+			await interaction.send(self.sendToChannels)
 		else:
-			await interaction.response.send_message("List is empty.")
+			await interaction.send("List is empty.")
 
 
 def setup(bot):

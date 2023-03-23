@@ -5,6 +5,7 @@ from nextcord import FFmpegPCMAudio
 from nextcord import Member 
 from nextcord.ext.commands import has_permissions, MissingPermissions
 
+import cooldowns
 from random import randint
 
 import json
@@ -33,10 +34,10 @@ class Miner(commands.Cog):
 	# 	embed.add_field(name = "Gameplay", value="`mine`, `sell`, `upgrade`", inline=False)
 	# 	embed.add_field(name = "Usage", value="**.miner mine**", inline=False)
 	# 	embed.set_footer(text=f"Profile: {interaction.user.name}")
-	# 	await interaction.response.send_message(embed=embed)
+	# 	await interaction.send(embed=embed)
 
 	@miner.subcommand()
-	@commands.cooldown(1, 3, commands.BucketType.user)
+	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
 	async def mine(self, interaction:Interaction):
 
 		with open(r"miner.json", 'r') as f:
@@ -54,7 +55,7 @@ class Miner(commands.Cog):
 		spaceLeft = inv[0] - spaceUsed
 
 		if spaceLeft <= 0:
-			await interaction.response.send_message("You need to sell your blocks before you can mine some more.\nType `.miner sell`")
+			await interaction.send("You need to sell your blocks before you can mine some more.\nType `.miner sell`")
 			return
 
 		block = randint(0, 4)
@@ -64,27 +65,29 @@ class Miner(commands.Cog):
 		elif block == 3: amnt = randint(4, 8)
 		elif block == 4: amnt = randint(1, 4)
 
-		await interaction.response.send_message(f"Mined {amnt} {self.blocks[block]}!")
+		await interaction.send(f"Mined {amnt} {self.blocks[block]}!")
 
 		if amnt < spaceLeft: 
 			inv[block+1] += amnt
 		else: 
 			inv[block+1] += spaceLeft
-			await interaction.followup.send("Your backpack is now full!")
+			await interaction.send("Your backpack is now full!")
 
 		invFile[f"{interaction.user.id}"] = inv
 		with open(r"miner.json", 'w') as f:
 			json.dump(invFile, f, indent=4)
 
 	@miner.subcommand()
-	@commands.cooldown(1, 10, commands.BucketType.user)
+	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author)
 	async def sell(self, interaction:Interaction):
+		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		with open(r"miner.json", 'r') as f:
 			invFile = json.load(f)
 		try:
 			inv = invFile[f"{interaction.user.id}"]
 		except:
-			await interaction.response.send_message("You haven't mined yet. Type `miner mine` to start")
+			await interaction.send("You haven't mined yet. Type `miner mine` to start")
 			return
 
 		dirtMoney = inv[1] * self.dirtValue
@@ -106,9 +109,9 @@ class Miner(commands.Cog):
 			multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
 			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, totalMoney * multiplier)
 			sellMsg += f"Total profit: {totalMoney} (+{int(totalMoney * (1 - multiplier))}){self.coin}"
-			await interaction.response.send_message(sellMsg)
+			await interaction.send(sellMsg)
 		else:
-			await interaction.response.send_message("Your inventory is empty.")
+			await interaction.send("Your inventory is empty.")
 
 		invFile[f"{interaction.user.id}"] = [32, 0, 0, 0, 0, 0]
 		with open(r"miner.json", 'w') as f:
@@ -116,7 +119,7 @@ class Miner(commands.Cog):
 
 
 	@miner.subcommand()
-	@commands.cooldown(1, 3, commands.BucketType.user)
+	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
 	async def backpack(self, interaction:Interaction, what:str=None):
 		with open(r"miner.json", 'r') as f:
 			invFile = json.load(f)
@@ -124,17 +127,17 @@ class Miner(commands.Cog):
 		try:
 			inv = invFile[f"{interaction.user.id}"]
 		except:
-			await interaction.response.send_message("You haven't mined yet. Type `miner mine` to start")
+			await interaction.send("You haven't mined yet. Type `miner mine` to start")
 			return
 
 		msg = ""
 		count = 0
 		for i in inv:
 			msg += f"{i} {self.blocks[count]}\n"
-		await interaction.response.send_message(msg)
+		await interaction.send(msg)
 
 	@miner.subcommand()
-	@commands.cooldown(1, 3, commands.BucketType.user)
+	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
 	async def upgrade(self, interaction:Interaction, what:str=None):
 		if not what:
 			embed = nextcord.Embed(color=1768431)
@@ -142,10 +145,10 @@ class Miner(commands.Cog):
 			embed.add_field(name = "Inventory Size", value="32 -> 64", inline=False)
 			embed.add_field(name = "Usage", value="**.miner upgrade <pickaxe/inventory>**", inline=False)
 			embed.set_footer(text=f"User: {interaction.user.name}")
-			await interaction.response.send_message(embed=embed)
+			await interaction.send(embed=embed)
 			return
 
-		await interaction.response.send_message("Work in Progress")
+		await interaction.send("Work in Progress")
 
 
 

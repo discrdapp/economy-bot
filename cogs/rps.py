@@ -5,12 +5,10 @@ from nextcord import FFmpegPCMAudio
 from nextcord import Member 
 from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import sqlite3
+import cooldowns
 import asyncio
 import random
 import math
-
-from db import DB
 
 class rps(commands.Cog):
 	def __init__(self, bot):
@@ -19,7 +17,7 @@ class rps(commands.Cog):
 
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
-	@commands.cooldown(1, 5, commands.BucketType.user)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def rockpaperscissors(self, interaction:Interaction, amntbet,
 								userchoice = nextcord.SlashOption(
 										required=True,
@@ -28,7 +26,7 @@ class rps(commands.Cog):
 		coin = "<:coins:585233801320333313>"
 
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
@@ -108,7 +106,7 @@ class rps(commands.Cog):
 		else:
 			embed.set_footer(text=f"You have to bet your minimum to earn xp.")
 
-		await interaction.response.send_message(content=f"{interaction.user.mention}", file=file, embed=embed)
+		await interaction.send(content=f"{interaction.user.mention}", file=file, embed=embed)
 		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 5)
 
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "RPS", profitInt)

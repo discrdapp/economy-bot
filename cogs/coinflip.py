@@ -7,6 +7,7 @@ from nextcord import FFmpegPCMAudio
 from nextcord import Member 
 from nextcord.ext.commands import has_permissions, MissingPermissions
 
+import cooldowns
 import asyncio
 import random
 import math
@@ -19,14 +20,14 @@ class Coinflip(commands.Cog):
 
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, use_external_emojis=True)
-	@commands.cooldown(1, 3, commands.BucketType.user)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)	
 	async def coinflip(self, interaction:Interaction, amntbet, sidebet = nextcord.SlashOption(
 																required=True,
 																name="side", 
 																choices=("heads", "tails")), 
 														user: nextcord.Member=None):
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
@@ -34,7 +35,7 @@ class Coinflip(commands.Cog):
 			def is_me(m):
 				return m.channel.id == interaction.channel.id and m.author.id == user.id and m.content == "accept"
 
-			msg = await interaction.response.send_message(f"{user.mention}, type: `accept`")
+			msg = await interaction.send(f"{user.mention}, type: `accept`")
 			try:
 				await self.bot.wait_for('message', check=is_me, timeout=45)
 			except:
@@ -47,7 +48,7 @@ class Coinflip(commands.Cog):
 				return
 
 			if not await self.bot.get_cog("Economy").subtractBet(user, amntbet):
-				await interaction.response.send_message(f"{user.mention} has either not typed .start yet or does not have enough money for this.")
+				await interaction.send(f"{user.mention} has either not typed /start yet or does not have enough money for this.")
 				return
 
 			side = random.choice(["Heads", "Tails"]).lower() # computer picks result
@@ -65,7 +66,7 @@ class Coinflip(commands.Cog):
 			embed.set_thumbnail(url="attachment://image.png")
 			embed.add_field(name=f"{self.bot.user.name} | Coinflip", value=f"The coin landed on {side}\n_ _{winner.mention} wins!", inline=False)
 
-			await interaction.response.send_message(file=file, embed=embed)
+			await interaction.send(file=file, embed=embed)
 			await self.bot.get_cog("Economy").addWinnings(winner.id, amntbet*2)
 
 			return
@@ -121,7 +122,7 @@ class Coinflip(commands.Cog):
 
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed)
 
-		await interaction.response.send_message(file=file, embed=embed)
+		await interaction.send(file=file, embed=embed)
 		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 4)
 
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "CF", profitInt)

@@ -5,8 +5,8 @@ from nextcord import FFmpegPCMAudio
 from nextcord import Member 
 from nextcord.ext.commands import has_permissions, MissingPermissions
 
+import cooldowns
 import asyncio
-
 import random
 
 
@@ -17,7 +17,7 @@ class Util(commands.Cog):
 
 
 	async def getChoice(self, interaction:Interaction):
-		await interaction.response.send_message("Type something...")
+		await interaction.send("Type something...")
 		def is_me(m):
 			return m.author == interaction.user
 		try:
@@ -29,49 +29,49 @@ class Util(commands.Cog):
 	@nextcord.slash_command(name="aatest")
 	async def atest(self, interaction:Interaction):
 		getInput = await self.getChoice(interaction)
-		await interaction.followup.send(f"User chose {getInput.content}")
+		await interaction.send(f"User chose {getInput.content}")
 
 	@nextcord.slash_command()
-	@commands.cooldown(1, 5400, commands.BucketType.user)
+	@cooldowns.cooldown(1, 5400, bucket=cooldowns.SlashBucket.author)
 	async def work(self, interaction:Interaction):
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		job = random.choice(self.jobs)
 		pay = random.randrange(6000, 20001)
 
-		await interaction.response.send_message(f"You worked as a {job} and earned {pay}<:coins:585233801320333313>")
+		await interaction.send(f"You worked as a {job} and earned {pay}<:coins:585233801320333313>")
 
 		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay)
 
 
 	@nextcord.slash_command()
-	@commands.cooldown(1, 20, commands.BucketType.user)
+	@cooldowns.cooldown(1, 20, bucket=cooldowns.SlashBucket.author)
 	async def rob(self, interaction:Interaction, *, member: nextcord.Member):
 		if interaction.user == member:
-			await interaction.response.send_message("Trying to rob yourself? That doesn't make sense. :joy:")
+			await interaction.send("Trying to rob yourself? That doesn't make sense. :joy:")
 			return
 			
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		if not await self.bot.get_cog("Economy").accCheck(member):
-			await self.bot.get_cog("Economy").start(interaction, member)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, member)
 
 		bal1 = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if bal1 < 500:
-			await interaction.response.send_message(f"{interaction.user}, you need at least 500<:coins:585233801320333313> to rob.")
+			await interaction.send(f"{interaction.user}, you need at least 500<:coins:585233801320333313> to rob.")
 			return
 		
 		bal2 = await self.bot.get_cog("Economy").getBalance(member)
 		if bal2 < 500:
-			await interaction.response.send_message(f"{member.mention} needs at least 500<:coins:585233801320333313> to be robbed.")
+			await interaction.send(f"{member.mention} needs at least 500<:coins:585233801320333313> to be robbed.")
 			return
 
 		choice = random.randrange(0, 10)
 		# amnt = random.range(500, 5000)
 
 		if choice > 7: # 30% chance
-			await interaction.response.send_message(f"{member.mention} caught you red-handed! But they decided to forgive you... No money has been robbed!")
+			await interaction.send(f"{member.mention} caught you red-handed! But they decided to forgive you... No money has been robbed!")
 			return
 
 		coin = "<:coins:585233801320333313>"
@@ -105,7 +105,7 @@ class Util(commands.Cog):
 		await self.bot.get_cog("Economy").addWinnings(robbee.id, -amnt)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		await interaction.response.send_message(message + f"\nYour new balance is {balance}{coin}")
+		await interaction.send(message + f"\nYour new balance is {balance}{coin}")
 
 
 

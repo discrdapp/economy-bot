@@ -5,8 +5,7 @@ from nextcord import FFmpegPCMAudio
 from nextcord import Member 
 from nextcord.ext.commands import has_permissions, MissingPermissions
 
-
-import sqlite3
+import cooldowns
 import asyncio
 import random
 
@@ -19,21 +18,21 @@ class Slots(commands.Cog):
 
 	@nextcord.slash_command()
 	async def memes(self, interaction:Interaction, stuff: int):
-		await interaction.response.send_message(f"{max(0, stuff)}")
+		await interaction.send(f"{max(0, stuff)}")
 
 	@nextcord.slash_command(name="test")
 	async def _test(self, interaction:Interaction):
 		embed = nextcord.Embed(title="embed test")
-		await interaction.response.send_message.send(content="test", embed=embed)
+		await interaction.send.send(content="test", embed=embed)
 
 	@nextcord.slash_command(description="Pay to play the slots!")
-	@commands.cooldown(1, 9, commands.BucketType.user)
+	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author)
 	@commands.bot_has_guild_permissions(send_messages=True, use_external_emojis=True)
 	async def slots(self, interaction:Interaction, amntbet):
 		coin = "<:coins:585233801320333313>"
 		
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
@@ -44,7 +43,7 @@ class Slots(commands.Cog):
 
 			embed.set_footer(text=interaction.user)
 
-			await interaction.response.send_message(embed=embed)
+			await interaction.send(embed=embed)
 			return
 
 		emojis = "🍎🍋🍇🍓🍒🍊"
@@ -56,7 +55,7 @@ class Slots(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name}' Casino | Slots", type="rich")
 
 		embed.add_field(name="----------------------------\n| 🎰  [  ]  [  ]  [  ]  🎰 |\n----------------------------", value="_ _")
-		botMsg = await interaction.response.send_message(embed=embed)
+		botMsg = await interaction.send(embed=embed)
 		await asyncio.sleep(1.5)
 
 		embed.set_field_at(0, name=f"------------------------------\n| 🎰  {a}  [  ]  [  ]  🎰 |\n------------------------------", value="_ _")

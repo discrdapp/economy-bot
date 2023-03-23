@@ -26,7 +26,7 @@ class Daily(commands.Cog):
 		userId = interaction.user.id
 
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		else:
 			with open(r"rewards.json", 'r') as f:
 				rewards = json.load(f)
@@ -34,7 +34,7 @@ class Daily(commands.Cog):
 			if (str(userId) in rewards) and ('daily' in rewards[f'{userId}']):
 				if rewards[f'{userId}']['daily'] > time.time():
 					waittime = rewards[f'{userId}']['daily'] - time.time()
-					await interaction.response.send_message(f"Please wait **{math.floor(waittime/3600)}h {math.floor((waittime/60) % 60)}m** to use this again!")
+					await interaction.send(f"Please wait **{math.floor(waittime/3600)}h {math.floor((waittime/60) % 60)}m** to use this again!")
 					return
 
 			elif not str(userId) in rewards:
@@ -53,7 +53,7 @@ class Daily(commands.Cog):
 		embed = nextcord.Embed(color=1768431)
 		embed.add_field(name = f"You got {dailyReward} (+{extraMoney}) {self.coin}", 
 						value = f"You have {balance} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney}", inline=False)
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 
 
 

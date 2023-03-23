@@ -35,7 +35,7 @@ class Achievements(commands.Cog):
 			await self.bot.get_cog("Economy").addWinnings(user.id, 5000)
 			await self.bot.get_cog("XP").addXP(interaction, 200)
 
-			await interaction.response.send_message(embed=nextcord.Embed(color=0x109D00, title="Achievement Complete!", description=f"Your achivement to {goal} in {self.realGameNamesDict[game]} is now complete!" +
+			await interaction.send(embed=nextcord.Embed(color=0x109D00, title="Achievement Complete!", description=f"Your achivement to {goal} in {self.realGameNamesDict[game]} is now complete!" +
 				f"\n5000{self.coin} and 200 XP has been added to your account!\n"))
 
 	async def IsAchievementComplete(self, goal, questType, user: nextcord.Member, activeQuest):

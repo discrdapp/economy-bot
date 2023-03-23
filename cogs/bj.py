@@ -14,6 +14,7 @@ from nextcord import FFmpegPCMAudio
 from nextcord import Member 
 from nextcord.ext.commands import has_permissions, MissingPermissions
 
+import cooldowns
 import asyncio
 from random import randrange
 from random import randint
@@ -32,10 +33,10 @@ class bj(commands.Cog):
 
 	@nextcord.slash_command(description="Play BlackJack!")
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
-	@commands.cooldown(1, 5, commands.BucketType.user)	
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)	
 	async def blackjack(self, interaction:Interaction, amntbet):
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 		
@@ -78,7 +79,7 @@ class bj(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack")
 		file = nextcord.File("./images/bj.png", filename="image.png")
 		# embed.set_thumbnail(url="attachment://image.png")
-		botMsg = await interaction.response.send_message(f"{author.mention}", embed=embed)
+		botMsg = await interaction.send(f"{author.mention}", embed=embed)
 		botMsg = await botMsg.fetch()
 		ans = "hit"
 		while (ans.lower() == "h") or (ans.lower() == "hit"):
@@ -137,9 +138,7 @@ class bj(commands.Cog):
 			await botMsg.add_reaction("🇸")
 			try:
 				reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=45)
-				#return reaction, user
 			except asyncio.TimeoutError:
-				await botMsg.delete()
 				raise Exception("timeoutError")
 
 			if str(reaction) == "🇭": 
@@ -147,20 +146,9 @@ class bj(commands.Cog):
 			elif str(reaction) == "🇸": 
 				ans = "stay"
 			else:
-				raise Exception
+				raise Exception("timeoutError")
 
 			await botMsg.clear_reactions()
-
-			# else:
-			# 	def is_me(m):
-			# 		return (m.author.id == author.id) and (m.content.lower() in ["hit", "stay", "h", "s", "stand"])
-			# 	try:
-			# 		# waits for user action; while loop repeated
-			# 		ansMsg = await self.bot.wait_for('message', check=is_me, timeout=45)
-			# 		ans = ansMsg.content
-			# 	except asyncio.TimeoutError:
-			# 		await botMsg.delete()
-			# 		raise Exception("timeoutError")
 
 		return pCARD, pCardNum, embed
 
@@ -351,7 +339,7 @@ class bj(commands.Cog):
 		priorBal = balance - profitInt + (giveZeroIfNeg * (multiplier - 1))
 		embed = await DB.calculateXP(self, interaction, priorBal, amntbet, embed)
 
-		await interaction.followup.send(content=f"{interaction.user.mention}", file=file, embed=embed)
+		await interaction.send(content=f"{interaction.user.mention}", file=file, embed=embed)
 
 		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 1)	
 
