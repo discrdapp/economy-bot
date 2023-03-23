@@ -7,6 +7,7 @@ from nextcord import FFmpegPCMAudio
 from nextcord import Member 
 from nextcord.ext.commands import has_permissions, MissingPermissions
 
+import cooldowns
 import sqlite3
 import asyncio
 import random
@@ -22,8 +23,11 @@ class Economy(commands.Cog):
 
 
 	@nextcord.slash_command()
-	@commands.cooldown(1, 5, commands.BucketType.user)
-	async def start(self, interaction:Interaction, user:nextcord.Member=None):
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
+	async def start(self, interaction:Interaction):
+		self.StartPlaying(interaction, interaction.user)
+
+	async def StartPlaying(self, interaction:Interaction, user:nextcord.Member=None):
 		if not user:
 			user = interaction.user 
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
@@ -31,7 +35,7 @@ class Economy(commands.Cog):
 		embed.set_footer(text=user)
 		if await self.accCheck(user):
 			embed.add_field(name="Error", value="You are already registered, silly")
-			await interaction.response.send_message(embed=embed)
+			await interaction.send(embed=embed)
 			return
 
 		conn = sqlite3.connect(config.db)
@@ -49,15 +53,10 @@ class Economy(commands.Cog):
 		embed.add_field(name="Welcome!", value="You are now successfully registered. Enjoy The Casino.")
 
 		# if interaction.application_command.qualified_name == 'start'
-		# 	await interaction.response.send_message(embed=embed)
+		# 	await interaction.send(embed=embed)
 		# else
-		# 	await interaction.followup.send(embed=embed)
+		await interaction.send(embed=embed)
 
-		await self.bot.get_context(interaction.message).send(embed=embed)
-
-
-		# ch = self.bot.get_channel(705118255161016431)
-		# await ch.send(f"{user} has registered.")
 
 	async def GetBetAmount(self, interaction:Interaction, amntbet):
 		if amntbet.isdigit():
@@ -80,10 +79,10 @@ class Economy(commands.Cog):
 		raise commands.BadArgument(f'You entered {amntbet} for the amount you want to bet. Please enter a number instead.')
 
 	@nextcord.slash_command()
-	@commands.cooldown(1, 5, commands.BucketType.user)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def rewards(self, interaction:Interaction):
 		if not await self.accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		dailyReward = await self.bot.get_cog("Daily").getDailyReward(interaction)
 		multiplier = self.getMultiplier(interaction.user)
@@ -98,11 +97,11 @@ class Economy(commands.Cog):
 			embed.add_field(name = "_ _\nDonator Reward", value = f"{self.getDonatorReward(interaction.user.id)}{self.coin}", inline=False)
 		else:
 			embed.add_field(name = "_ _\nDonator Reward", value = f"You are not a donator", inline=False)
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 		
 
 	@nextcord.slash_command()
-	@commands.cooldown(1, 5, commands.BucketType.user)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def balance(self, interaction:Interaction, user:nextcord.Member=None):
 		""" Show your balance """
 		if not user:
@@ -112,7 +111,7 @@ class Economy(commands.Cog):
 			pronouns = "They"
 
 		if not await self.bot.get_cog("Economy").accCheck(user):
-			await self.bot.get_cog("Economy").start(interaction, user)
+			await self.StartPlaying(interaction, user)
 
 		prefix = "/"
 
@@ -123,13 +122,14 @@ class Economy(commands.Cog):
 		embed.add_field(name = "_ _\nCrates", value = f"{pronouns} have **{crates}** crates", inline=True)
 		embed.add_field(name = "_ _\nKeys", value = f"{pronouns} have **{keys}** keys", inline=True)
 		embed.set_footer(text=f"Use {prefix}vote, {prefix}search, {prefix}daily, and {prefix}work to get credits")
-		await interaction.response.send_message(embed=embed)
+		
+		await interaction.send(embed=embed)
 		
 	@nextcord.slash_command()
-	@commands.cooldown(1, 5, commands.BucketType.user)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def search(self, interaction:Interaction):
 		if not await self.accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		embed = nextcord.Embed(color=1768431)
 		if await self.getBalance(interaction.user) < 300:
 			amnt = random.randint(50, 250)
@@ -140,24 +140,24 @@ class Economy(commands.Cog):
 		else:
 			embed.add_field(name = f"Error", value = f"{interaction.user.mention}, you can only use this if you have less than 300{self.coin}.", inline=False)
 
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 		
 	@nextcord.slash_command()
-	@commands.cooldown(1, 5, commands.BucketType.user)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def freemoney(self, interaction:Interaction):
 		prefix = "/"
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name="Free Money Commands", value=f"`{prefix}vote`\n`{prefix}search`\n`{prefix}daily`\n`{prefix}weekly`\n`{prefix}monthly`\n`{prefix}work`")
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 
 	@nextcord.slash_command()
-	@commands.cooldown(1, 5, commands.BucketType.user)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def donator(self, interaction:Interaction):
 		if not self.isDonator(interaction.user.id):
 			embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 			embed.add_field(name = f"Donator Reward", value = "To be able to claim the Donator Reward, you first need to donate!\n" +
 																f"Join the server shown in the /help menu to learn how!", inline=False)
-			await interaction.response.send_message(embed=embed)
+			await interaction.send(embed=embed)
 			return
 
 		donatorReward = self.getDonatorReward(interaction.user.id)
@@ -169,7 +169,7 @@ class Economy(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name = f"You got {donatorReward} {self.coin}", 
 						value = f"You have {balance} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney}", inline=False)
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 
 
 	def isDonator(self, discordid):
@@ -237,7 +237,7 @@ class Economy(commands.Cog):
 				break
 			count += 1 # number the users from 1 - 10
 
-		await interaction.response.send_message(f"```MD\nTop 10\n======\n{topUsers}```") # send the list with the top 10
+		await interaction.send(f"```MD\nTop 10\n======\n{topUsers}```") # send the list with the top 10
 
 
 	@nextcord.slash_command()
@@ -246,10 +246,10 @@ class Economy(commands.Cog):
 			usr = interaction.user
 
 		if not await self.accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		if await self.getBalance(usr) < 1025:
-			await interaction.response.send_message("You need at least 1025 credits to use this command.")
+			await interaction.send("You need at least 1025 credits to use this command.")
 			return
 
 		name = usr.name
@@ -285,7 +285,7 @@ class Economy(commands.Cog):
 			else:
 				topUsers += f"{pos+x+1}. < {user.name} > - {records[pos+x][1]}\n"
 
-		await interaction.response.send_message(f"```MD\n{name} is #{pos+1}{diff}\n======\n{topUsers}```") # send the list with the top 10
+		await interaction.send(f"```MD\n{name} is #{pos+1}{diff}\n======\n{topUsers}```") # send the list with the top 10
 
 
 
@@ -304,7 +304,7 @@ class Economy(commands.Cog):
 
 		embed.set_footer(text=interaction.user)
 
-		await interaction.response.send_message(embed=embed)
+		await interaction.send(embed=embed)
 
 
 	async def getInput(self, interaction:Interaction, user, timeout):
