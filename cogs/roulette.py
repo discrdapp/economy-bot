@@ -19,7 +19,7 @@ class Roulette(commands.Cog):
 
 
 	async def sendError(self, interaction:Interaction):
-		await interaction.response.send_message("Unknown betting choices...\n" +
+		await interaction.send("Unknown betting choices...\n" +
 					   "Proper use: `.roulette <choice> <bet>`\n" +
 					   "Advaced use: `.roulette <choice1> <bet1> <choice2> <bet2> <choice3> <bet3> <choice4> <bet4>`\n" + 
 					   "Possible choices:\n`red`, `black`, `green`\n`odd`, `even`\n`high`, `low`\nNumber `1 - 36`\n\n" + 
@@ -27,17 +27,25 @@ class Roulette(commands.Cog):
 
 
 
-	@nextcord.slash_command(description="Play Roulette!")
+	@nextcord.slash_command(description="Play Roulette!", guild_ids=[585226670361804827])
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
-	@commands.cooldown(1, 1, commands.BucketType.user)
-	async def roulette(self, interaction:Interaction, choice1=None, bet1=None, choice2=None, bet2=None, choice3=None, bet3=None, choice4=None, bet4=None):
+	async def roulette(self, interaction:Interaction, betamount):
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
-		msg = interaction.message
-		channel = msg.channel
-		author = msg.author
+		# msg = interaction.message
+		channel = interaction.channel
+		author = interaction.user
 		mention = author.mention
+
+		choice1=None
+		bet1=None
+		choice2=None
+		bet2=None
+		choice3=None
+		bet3=None
+		choice4=None
+		bet4=None
 
 		numberBet = ""
 		rangeBet = ""
@@ -111,7 +119,7 @@ class Roulette(commands.Cog):
 					amntRangeBet = bet
 				elif choice.isdigit():
 					if int(choice) < 0 or int(choice) > 36:
-						await interaction.response.send_message("Proper automatic number betting format:\n`.roulette <number> <bet>`\nExample: .roulette 35 500")
+						await interaction.send("Proper automatic number betting format:\n`.roulette <number> <bet>`\nExample: .roulette 35 500")
 						return
 					emojiNum = await self.getNumEmoji(interaction, int(choice))
 					numberBet = int(choice)
@@ -124,7 +132,7 @@ class Roulette(commands.Cog):
 				totalBet += bet
 
 			if not await self.bot.get_cog("Economy").subtractBet(interaction.user, totalBet):
-				await interaction.response.send_message("You do not have enough money for that... Cancelling roulette game...")
+				await interaction.send("You do not have enough money for that... Cancelling roulette game...")
 				return
 
 
@@ -139,9 +147,10 @@ class Roulette(commands.Cog):
 		embed.add_field(name = "Current picks:", value = f"Number bet: {displayNumberBet}\nHigh/low bet: {displayRangeBet}\nColor bet: {displayColorBet}\nParity bet: {displayParityBet}", inline=True)
 		embed.add_field(name = "Previous Numbers:", value = f"{nums}_ _", inline=True)
 		#embed.add_field(name = "", value = "", inline=False)
-		msg = await interaction.response.send_message(file=nextcord.File('images/roulette.png'), embed=embed)
+		msg = await interaction.send(file=nextcord.File('images/roulette.png'), embed=embed)
+		msg = await msg.fetch()
 
-		#await interaction.response.send_message(f"```Welcome to roulette, choose an option to bet on or choose start```\n\tCurrent picks:\n\t\t\tNumber bet: {str(numberBet)}\n\t\t\tHigh/low bet: {rangeBet}\n\t\t\tColor bet: {colorBet}\n\t\t\tParity bet: {parityBet}\n_ _")
+		#await interaction.send(f"```Welcome to roulette, choose an option to bet on or choose start```\n\tCurrent picks:\n\t\t\tNumber bet: {str(numberBet)}\n\t\t\tHigh/low bet: {rangeBet}\n\t\t\tColor bet: {colorBet}\n\t\t\tParity bet: {parityBet}\n_ _")
 
 		embedSelection = nextcord.Embed(color=1768431)
 
@@ -149,6 +158,7 @@ class Roulette(commands.Cog):
 			await self.addReactions(msg)
 
 			def is_me(m):
+				print(f"Content is: {m.content}")
 				return m.author.id == author.id
 
 			def is_me_reaction(reaction, user):
@@ -169,12 +179,13 @@ class Roulette(commands.Cog):
 					await msg.clear_reactions()
 					raise Exception("timeoutError")
 				else:
+					print(numberBetMsg.system_content)
 					numberBets = numberBetMsg.content.split()
 					try:
 						numberBet = int(numberBets[0])
 						amntNumberBet = int(numberBets[1])
 					except:
-						await interaction.response.send_message("ERROR: Did not provide number.")
+						await interaction.send("ERROR: Did not provide number.")
 						embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 						await msg.edit(embed=embedError)
 						await msg.clear_reactions()
@@ -190,7 +201,7 @@ class Roulette(commands.Cog):
 							numberBet = ""
 							amntNumberBet = 0
 					else:
-						await interaction.response.send_message("You do not have enough credits to bet that amount")
+						await interaction.send("You do not have enough credits to bet that amount")
 						amntNumberBet = 0
 
 			if str(reaction) == "🔃":
@@ -216,7 +227,7 @@ class Roulette(commands.Cog):
 						try:
 							amntRangeBet = int(amntRangeBetMsg.content)
 						except:
-							await interaction.response.send_message("ERROR: Did not provide number.")
+							await interaction.send("ERROR: Did not provide number.")
 							embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 							await msg.edit(embed=embedError)
 							await msg.clear_reactions()
@@ -226,7 +237,7 @@ class Roulette(commands.Cog):
 							rangeBet = reaction
 							displayRangeBet = f"{reaction}  {amntRangeBet}{self.coin}"
 						else:
-							await interaction.response.send_message("You do not have enough credits to bet that amount")
+							await interaction.send("You do not have enough credits to bet that amount")
 							amntRangeBet = 0
 				else:
 					rangeBet = ""
@@ -257,7 +268,7 @@ class Roulette(commands.Cog):
 						try:
 							amntColorBet = int(amntColorBetMsg.content)
 						except:
-							await interaction.response.send_message("ERROR: Did not provide number.")
+							await interaction.send("ERROR: Did not provide number.")
 							embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 							await msg.edit(embed=embedError)
 							await msg.clear_reactions()
@@ -267,7 +278,7 @@ class Roulette(commands.Cog):
 							colorBet = reaction
 							displayColorBet = f"{reaction}  {amntColorBet}{self.coin}"
 						else:
-							await interaction.response.send_message("You do not have enough credits to bet that amount")
+							await interaction.send("You do not have enough credits to bet that amount")
 							amntColorBet = 0
 				else:
 					colorBet = ""
@@ -298,7 +309,7 @@ class Roulette(commands.Cog):
 						try:
 							amntParityBet = int(amntParityBetMsg.content)
 						except:
-							await interaction.response.send_message("ERROR: Did not provide number.")
+							await interaction.send("ERROR: Did not provide number.")
 							embedError = await self.onTimeout(interaction, msg, amntNumberBet, amntRangeBet, amntColorBet, amntParityBet)
 							await msg.edit(embed=embedError)
 							await msg.clear_reactions()
@@ -308,7 +319,7 @@ class Roulette(commands.Cog):
 							parityBet = reaction
 							displayParityBet = f"{reaction}  {amntParityBet}{self.coin}"
 						else:
-							await interaction.response.send_message("You do not have enough credits to bet that amount")
+							await interaction.send("You do not have enough credits to bet that amount")
 							amntParityBet = 0
 				else:
 					parityBet = ""
