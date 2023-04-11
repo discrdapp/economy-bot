@@ -55,6 +55,14 @@ class ErrorHandling(commands.Cog):
 				await interaction.send(f"Did not respond in time; timeout.")
 				return
 
+			if err == "valueError":
+				await interaction.send(f"Did not provide correct option. Please try again")
+				return
+
+			if err == "tooPoor":
+				await interaction.send("You do not have enough credits to bet that amount, or you are trying to bet less than 1 credit")
+				return
+
 			exc = ''.join(traceback.format_exception(type(error), error, error.__traceback__, chain=False))
 			exc = exc.split("kwargs)", 1)[1]
 
