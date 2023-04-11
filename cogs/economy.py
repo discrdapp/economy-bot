@@ -300,7 +300,7 @@ class Economy(commands.Cog):
 	async def notEnoughMoney(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | {str(interaction.application_command.qualified_name).title()}")
 		embed.set_thumbnail(url=interaction.user.avatar)
-		embed.add_field(name="ERROR", value="You do not have enough credits to do that.")
+		embed.add_field(name="ERROR", value="You do not have enough credits to do that or you are trying to bet an amount less than 1.")
 
 		embed.set_footer(text=interaction.user)
 

@@ -16,15 +16,6 @@ class Slots(commands.Cog):
 		self.bot = bot
 		self.coin = "<:coins:585233801320333313>"
 
-	@nextcord.slash_command()
-	async def memes(self, interaction:Interaction, stuff: int):
-		await interaction.send(f"{max(0, stuff)}")
-
-	@nextcord.slash_command(name="test")
-	async def _test(self, interaction:Interaction):
-		embed = nextcord.Embed(title="embed test")
-		await interaction.send.send(content="test", embed=embed)
-
 	@nextcord.slash_command(description="Pay to play the slots!")
 	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author)
 	@commands.bot_has_guild_permissions(send_messages=True, use_external_emojis=True)

@@ -26,7 +26,7 @@ class XP(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 
-	@commands.command()
+	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 1, bucket=cooldowns.SlashBucket.author)
 	async def level(self, interaction:Interaction):
 		if not await self.bot.get_cog("Economy").accCheck(interaction.user):

@@ -39,7 +39,7 @@ class Coinflip(commands.Cog):
 			try:
 				await self.bot.wait_for('message', check=is_me, timeout=45)
 			except:
-				await msg.edit(content=f"~~{msg.content}~~")
+				# await msg.edit(content=f"Timed out...")
 				raise Exception("timeoutError")
 				return
 

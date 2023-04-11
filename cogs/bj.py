@@ -80,7 +80,10 @@ class bj(commands.Cog):
 		file = nextcord.File("./images/bj.png", filename="image.png")
 		# embed.set_thumbnail(url="attachment://image.png")
 		botMsg = await interaction.send(f"{author.mention}", embed=embed)
-		botMsg = await botMsg.fetch()
+		try:
+			botMsg = await botMsg.fetch()
+		except:
+			pass
 		ans = "hit"
 		while (ans.lower() == "h") or (ans.lower() == "hit"):
 			

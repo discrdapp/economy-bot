@@ -69,7 +69,7 @@ async def on_ready():
 # 	await bot.process_commands(message)
 
 # manually load a cog
-@bot.slash_command()
+@bot.slash_command(guild_ids=[585226670361804827])
 @commands.is_owner()
 async def load(ctx, extension):
 	try:
@@ -82,7 +82,7 @@ async def load(ctx, extension):
 
 
 # manually unload a cog
-@bot.slash_command()
+@bot.slash_command(guild_ids=[585226670361804827])
 @commands.is_owner()
 async def unload(ctx, extension):
 	try:
@@ -95,7 +95,7 @@ async def unload(ctx, extension):
 
 
 # manually reload a cog
-@bot.slash_command()
+@bot.slash_command(guild_ids=[585226670361804827])
 @commands.is_owner()
 async def reload(ctx, extension):
 	if extension == 'all':
