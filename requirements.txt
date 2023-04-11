@@ -1,8 +1,7 @@
 nextcord==2.2.0
-asyncio
-sqlite3
-numpy
-datetime
-Pillow
-topggpy
-function-cooldowns
+asyncio==3.4.3
+numpy==1.21.2
+datetime==4.3
+Pillow==8.3.2
+topggpy==1.3.0
+function-cooldowns==1.7.0
