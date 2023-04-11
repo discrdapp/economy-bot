@@ -17,7 +17,7 @@ class Scratch(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 
-	@nextcord.slash_command(description="Play Scratch!")
+	@nextcord.slash_command(description="Play Scratch!", guild_ids=[585226670361804827])
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def scratch(self, interaction:Interaction, amntbet, skip:str=""):
