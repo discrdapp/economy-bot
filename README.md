@@ -30,3 +30,7 @@ Stats:
 
 Bank:  
 ![](https://i.imgur.com/dbjG4hz.png)
+
+Quests:  
+![](https://i.imgur.com/93B352Z.png)
+
