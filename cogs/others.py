@@ -76,24 +76,8 @@ class Others(commands.Cog):
 		bal = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		await interaction.send(f"Successfully claimed reward! New balance is {bal}")
 
-	def helpCommands():
-		return ["bank", "roulette", "crash", "blackjack", "colorguesser", 
-													"slots", "rockpaperscissors", "coinflip", "credits", "shop", 
-													"stats", "profile", "level", "freemoney"]
 
-
-	@nextcord.slash_command()
-	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
-	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
-	async def help(self, interaction:Interaction):
-	# async def help(self, interaction:Interaction, option:Optional[str] = nextcord.SlashOption(required=False,
-												# name="choice", 
-												# choices=("bank", "roulette", "crash", "blackjack", "colorguesser", 
-													# "slots", "rockpaperscissors", "coinflip", "credits", "shop", 
-													# "stats", "profile", "level", "freemoney"))):
-
-		# print(option)
-		# if not option:
+	def GetHelpMsg(self):
 		embed = nextcord.Embed(color=1768431, title="Thanks for taking an interest in me!")
 		embed.set_footer(text="And that's all for now folks!")
 
@@ -117,7 +101,40 @@ class Others(commands.Cog):
 						# value = "\n[Support](https://www.paypal.me/AutopilotJustin) gambling bot's development or [join support server](https://discord.gg/ggUksVN).")
 		embed.add_field(name = "_ _",
 						value = f"[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{self.coin}\nAdd this bot to your server - [Click Here](https://discord.com/api/oauth2/authorize?client_id=585235000459264005&permissions=387136&scope=bot)", inline=False)
-		await interaction.send(embed=embed)
+		return embed
+
+	@nextcord.slash_command(description="The Casino Help Command")
+	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
+	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
+	async def help(self, interaction:Interaction):#, option = nextcord.SlashOption(
+																# required=True,
+																# name="command", 
+																# choices=("bank",
+																# 		"roulette",
+																# 		"crash",
+																# 		"blackjack",
+																# 		# "colorguesser",
+																# 		"slots",
+																# 		"rockpaperscissors",
+																# 		"coinflip", 
+																# 		"balance", 
+																# 		"top", 
+																# 		"shop", 
+																# 		"stats", 
+																# 		"profile", 
+																# 		"level",
+																# 		"freemoney"))):
+
+	# async def help(self, interaction:Interaction, option:Optional[str] = nextcord.SlashOption(required=False,
+												# name="choice", 
+												# choices=("bank", "roulette", "crash", "blackjack", "colorguesser", 
+													# "slots", "rockpaperscissors", "coinflip", "credits", "shop", 
+													# "stats", "profile", "level", "freemoney"))):
+
+		# print(option)
+		# if not option:
+		await interaction.send(embed=self.GetHelpMsg())
+		return
 
 		# embed = nextcord.Embed(color=1768431)
 
@@ -145,9 +162,9 @@ class Others(commands.Cog):
 		# elif option == "coinflip":
 		# 	helpMsg = "Bet the side the coin will land on"
 		# 	usageMsg = "**/coinflip <heads/tails> <bet>**"
-		# elif option == "credits":
+		# elif option == "balance":
 		# 	helpMsg = "Look at your balance"
-		# 	usageMsg = "**/credits**"
+		# 	usageMsg = "**/balance**"
 		# elif option == "top":
 		# 	helpMsg = "Show the users with the most money in the server!"
 		# 	usageMsg = "**/top**"
@@ -166,7 +183,9 @@ class Others(commands.Cog):
 		# elif option == "freemoney":
 		# 	helpMsg = "Look at all the ways to get free money!"
 		# 	usageMsg = "**/freemoney**"
-		
+		# else:
+		# 	await interaction.send(embed=self.GetHelpMsg())
+		# 	return
 
 		# embed.add_field(name = "Help", value=f"{helpMsg}", inline=False)
 		# embed.add_field(name = "Usage", value=f"{usageMsg}", inline=False)
