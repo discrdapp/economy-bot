@@ -218,23 +218,36 @@ class Economy(commands.Cog):
 
 
 	@nextcord.slash_command()
-	async def top(self, interaction:Interaction): # scoreboard to display top 10 richest individuals
+	async def top(self, interaction:Interaction, sidebet = nextcord.SlashOption(
+																required=False,
+																name="option", 
+																choices=("Balance", "Level", "Profit"))): # scoreboard to display top 10 richest individuals
+		
+
+		if sidebet and sidebet != "Balance":
+			if sidebet == "Level":
+				sql = f"""SELECT DiscordID, Level
+					  	  FROM Economy ORDER BY Level DESC LIMIT 10"""
+			elif sidebet == "Profit":
+				sql = f"""SELECT DiscordID, Profit
+					  	  FROM Totals ORDER BY Profit DESC LIMIT 10"""
+		else:
+			sql = f"""SELECT DiscordID, Credits
+					  FROM Economy ORDER BY Credits DESC LIMIT 10"""
+
 		conn = sqlite3.connect(config.db)
-		sql = f"""SELECT DiscordID, Credits
-				  FROM Economy"""
 		cursor = conn.execute(sql)
 		data = cursor.fetchall() 
 		conn.close()
 
-		data = sorted(data, key = lambda x: x[1], reverse=True) # sort rows by credits  
+		# data = sorted(data, key = lambda x: x[1], reverse=True) # sort rows by credits  
 
 		topUsers = ""
 		count = 1
 		for x in data: 
 			user = await self.bot.fetch_user(x[0]) # grab the user from the current record
 			topUsers += f"{count}. < {user.name} > - " + "{:,}".format(x[1]) + "\n"
-			if count == 10:
-				break
+
 			count += 1 # number the users from 1 - 10
 
 		await interaction.send(f"```MD\nTop 10\n======\n{topUsers}```") # send the list with the top 10
@@ -248,42 +261,39 @@ class Economy(commands.Cog):
 		if not await self.accCheck(interaction.user):
 			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
-		if await self.getBalance(usr) < 1025:
-			await interaction.send("You need at least 1025 credits to use this command.")
+		if await self.getBalance(usr) < 5000:
+			await interaction.send("You need at least 5000 credits to use this command.")
 			return
 
 		name = usr.name
 
-		conn = sqlite3.connect(config.db)
 		sql = f"""SELECT DiscordID, Credits
-				  FROM Economy"""
+				  FROM Economy ORDER BY Credits DESC"""
+		conn = sqlite3.connect(config.db)
 		cursor = conn.execute(sql) 
-		# conn.commit()
-		records = cursor.fetchall() 
+		data = cursor.fetchall() 
 		conn.close()
 
-		records = sorted(records, key = lambda x: x[1], reverse=True) # sort rows by credits  
-
 		pos = 0
-		for x in records:
+		for x in data:
 			if str(usr.id) == x[0]:
 				break
 			pos += 1
 
 		diff = ""
 		if pos > 0:
-			diff = f" and needs {str(records[pos-1][1] - records[pos][1] + 1)} coin(s) to beat the person above them"
+			diff = f" and needs {str(data[pos-1][1] - data[pos][1] + 1)} coin(s) to beat the person above them"
 		# else:
 		# 	diff = " so no one is beating them!"
 		topUsers = ""
 		for x in range(-3, 4):
-			if pos + x < 0 or pos + x > len(records):
+			if pos + x < 0 or pos + x > len(data):
 				continue
-			user = await self.bot.fetch_user(records[pos+x][0])
+			user = await self.bot.fetch_user(data[pos+x][0])
 			if x == 0:
-				topUsers += f"** {pos+x+1}. < {user.name} > - {records[pos+x][1]} **\n"
+				topUsers += f"** {pos+x+1}. < {user.name} > - {data[pos+x][1]} **\n"
 			else:
-				topUsers += f"{pos+x+1}. < {user.name} > - {records[pos+x][1]}\n"
+				topUsers += f"{pos+x+1}. < {user.name} > - {data[pos+x][1]}\n"
 
 		await interaction.send(f"```MD\n{name} is #{pos+1}{diff}\n======\n{topUsers}```") # send the list with the top 10
 
