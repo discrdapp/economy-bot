@@ -1,0 +1,38 @@
+CREATE TABLE `Economy` (
+  `DiscordID` varchar(64) DEFAULT NULL,
+  `Credits` bigint(20) NOT NULL DEFAULT '1000',
+  `Bank` bigint(20) NOT NULL DEFAULT '0',
+  `XP` bigint(20) NOT NULL DEFAULT '0',
+  `TotalXP` bigint(20) NOT NULL DEFAULT '0',
+  `Level` int(11) NOT NULL DEFAULT '0',
+  `Multiplier` float(3,2) NOT NULL DEFAULT '1.00',
+  `DailyReward` int(11) NOT NULL DEFAULT '2500',
+  `DonatorCheck` tinyint(1) NOT NULL DEFAULT '0',
+  `DonatorReward` int(11) NOT NULL DEFAULT '0'
+);
+CREATE TABLE `Inventory` (
+  `DiscordID` varchar(64) DEFAULT NULL,
+  `Crates` int(11) NOT NULL DEFAULT '0',
+  `Keyss` int(11) NOT NULL DEFAULT '0'
+);
+CREATE TABLE `Totals` (
+  `DiscordID` varchar(64) DEFAULT NULL,
+  `Paid` bigint(20) NOT NULL DEFAULT '0',
+  `Won` bigint(20) NOT NULL DEFAULT '0',
+  `Profit` bigint(20) NOT NULL DEFAULT '0',
+  `Games` bigint(20) DEFAULT '0',
+  `Slots` bigint(20) NOT NULL DEFAULT '0',
+  `Blackjack` bigint(20) NOT NULL DEFAULT '0',
+  `Crash` bigint(20) NOT NULL DEFAULT '0',
+  `Roulette` bigint(20) NOT NULL DEFAULT '0',
+  `Coinflip` bigint(20) NOT NULL DEFAULT '0',
+  `RPS` bigint(20) NOT NULL DEFAULT '0'
+);
+CREATE TABLE `Quests` (
+        `DiscordID`  varchar(64) DEFAULT NULL,
+        `ActiveQuest`      varchar(30) DEFAULT NULL,
+        `Games`      tinyint(3) DEFAULT 0,
+        `Wins`       tinyint(3) DEFAULT 0,
+        `Profit`     integer(6) DEFAULT 0,
+        PRIMARY KEY (DiscordID, ActiveQuest)
+);
