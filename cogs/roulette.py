@@ -293,8 +293,7 @@ class Roulette(commands.Cog):
 		elif num in [28, 29, 30]:		x = 900
 		elif num in [31, 32, 33]:		x = 985
 		elif num in [34, 35, 36]:		x = 1075
-
-		print(f"num is {num}")
+		
 		return (x,y)
 
 	def getNumEmoji(self, num):
