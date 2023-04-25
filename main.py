@@ -1,16 +1,8 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import random
-import asyncio
-import time
-import json
-
-import ztoken
+import config
 
 bot = commands.Bot()
 bot.remove_command('help')
@@ -18,29 +10,31 @@ bot.remove_command('help')
 extensions = ["db", 
 			  "cogs.admin", 
 			  "cogs.bank", 
-			  "cogs.bj",
-			  "cogs.coinflip",
-			  "cogs.color_guesser", 
-			  "cogs.crash",
+			  "cogs.games.bj",
+			  "cogs.games.coinflip",
+			  "cogs.games.color_guesser", 
+			  "cogs.games.crash",
 			  "cogs.daily",
 			  "cogs.economy", 
 			  "cogs.error_handling",
-			  "cogs.miner",
+			  "cogs.inventory",
+			  "cogs.games.lottery",
+			  "cogs.games.miner",
+			  "cogs.multipliers",
 			  "cogs.others", 
 			  "cogs.quests", 
-			  "cogs.roulette", 
-			  "cogs.rps",
-			  "cogs.scratch", 
+			  "cogs.games.roulette", 
+			  "cogs.games.rps",
+			  "cogs.games.scratch", 
 			  "cogs.shop", 
-			  "cogs.slots", 
+			  "cogs.games.slots", 
 			  "cogs.totals",
 			  "cogs.ttt", 
 			  "cogs.user_settings", 
 			  "cogs.util", 
 			  "cogs.vote",
 			  "cogs.weeklymonthly",
-			  "cogs.xp"] # list of cogs to call
-# extensions = ["db", "cogs.daily", "cogs.admin"]
+			  "cogs.xp"] 
 
 
 @bot.event
@@ -56,20 +50,18 @@ async def on_ready():
 	await bot.change_presence(activity=nextcord.Game(name="Do /help for help! SLASH COMMANDS!!!"))
 
 
-# stop user input
-# @bot.event
-# async def on_message(message):
-# 	if message.author.bot:
-# 		return
-# 	if message.content[0] != '.':
-# 		return
-# 	if not await bot.is_owner(message.author):
-# 		await message.channel.send("Improving bot... Please check back in 1 hour!")
-# 		return
-# 	await bot.process_commands(message)
+@bot.event
+async def on_interaction(interaction: Interaction):
+	# if interaction.application_command.qualified_name == "delete":
+		# return
+	if not await bot.get_cog("Economy").accCheck(interaction.user):
+		await bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
+
+	await bot.process_application_commands(interaction)
+
 
 # manually load a cog
-@bot.slash_command(guild_ids=[585226670361804827])
+@bot.slash_command(guild_ids=[config.adminServerID])
 @commands.is_owner()
 async def load(ctx, extension):
 	try:
@@ -82,7 +74,7 @@ async def load(ctx, extension):
 
 
 # manually unload a cog
-@bot.slash_command(guild_ids=[585226670361804827])
+@bot.slash_command(guild_ids=[config.adminServerID])
 @commands.is_owner()
 async def unload(ctx, extension):
 	try:
@@ -95,7 +87,7 @@ async def unload(ctx, extension):
 
 
 # manually reload a cog
-@bot.slash_command(guild_ids=[585226670361804827])
+@bot.slash_command(guild_ids=[config.adminServerID])
 @commands.is_owner()
 async def reload(ctx, extension):
 	if extension == 'all':
@@ -131,6 +123,6 @@ async def main():
 		except Exception as error:
 			print(f"{extension} could not be loaded. [{error}]")
 
-	await bot.start(ztoken.token)
+	await bot.start(config.token)
 
 bot.loop.run_until_complete(main())

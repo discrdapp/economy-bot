@@ -15,21 +15,61 @@ import config
 class DB(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
+		self.coin = "<:coins:585233801320333313>"
 
 	@staticmethod
-	def fetchOne(sql, values: list):
+	def fetchOne(sql, values: list=None):
 		conn = sqlite3.connect(config.db)
 
-		cursor = conn.execute(sql, values) 
+		if values:
+			cursor = conn.execute(sql, values)
+		else:
+			cursor = conn.execute(sql)
 		data = cursor.fetchone()
+
 		conn.close()
 
 		return data
 
 	@staticmethod
-	def update(sql, values: list):
+	def fetchAll(sql, values: list=None):
+		conn = sqlite3.connect(config.db)
+
+		if values:
+			cursor = conn.execute(sql, values)
+		else:
+			cursor = conn.execute(sql)
+		data = cursor.fetchall() 
+
+		conn.close()
+
+		return data
+
+	@staticmethod
+	def insert(sql, values: list=None):
 		conn = sqlite3.connect(config.db)
 		conn.execute(sql, values)
+		conn.commit()
+		conn.close()
+
+
+	@staticmethod
+	def update(sql, values: list=None):
+		conn = sqlite3.connect(config.db)
+		if values:
+			conn.execute(sql, values)
+		else:
+			conn.execute(sql)
+		conn.commit()
+		conn.close()
+
+	@staticmethod
+	def delete(sql, values: list=None):
+		conn = sqlite3.connect(config.db)
+		if values:
+			conn.execute(sql, values)
+		else:
+			conn.execute(sql)
 		conn.commit()
 		conn.close()
 
@@ -39,7 +79,7 @@ class DB(commands.Cog):
 		minBet = int(ceil(minBet / 10.0) * 10.0)
 		if amntBet >= minBet:
 			xp = randint(50, 500)
-			embed.set_footer(text=f"Earned {xp} XP!")
+			embed.set_footer(text=f"Earned {xp:,} XP!")
 			await self.bot.get_cog("XP").addXP(interaction, xp)
 		else:
 			embed.set_footer(text=f"You have to bet your minimum to earn xp.")
@@ -49,7 +89,7 @@ class DB(commands.Cog):
 	async def addProfitAndBalFields(self, interaction, profit, embed):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed.add_field(name="Profit", value=f"{profit}{self.coin}", inline=True)
-		embed.add_field(name="Credits", value=f"**{balance}**{self.coin}", inline=True)
+		embed.add_field(name="Credits", value=f"**{balance:,}**{self.coin}", inline=True)
 		return embed
 
 def setup(bot):

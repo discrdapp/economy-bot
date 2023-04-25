@@ -1,19 +1,11 @@
 # economy-related stuff like betting and gambling, etc.
 
 import nextcord
-from nextcord.ext import commands 
+from nextcord.ext import commands
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import cooldowns
-import sqlite3
-import asyncio
-import random
-import math
+import cooldowns, asyncio, random, math
 
-import config
 from db import DB
 
 class Economy(commands.Cog):
@@ -25,7 +17,7 @@ class Economy(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def start(self, interaction:Interaction):
-		self.StartPlaying(interaction, interaction.user)
+		await self.StartPlaying(interaction, interaction.user)
 
 	async def StartPlaying(self, interaction:Interaction, user:nextcord.Member=None):
 		if not user:
@@ -34,29 +26,18 @@ class Economy(commands.Cog):
 		embed.set_thumbnail(url=user.avatar)
 		embed.set_footer(text=user)
 		if await self.accCheck(user):
-			embed.add_field(name="Error", value="You are already registered, silly")
+			embed.description = "You are already registered, silly"
 			await interaction.send(embed=embed)
 			return
+		DB.insert('INSERT INTO Economy(DiscordID) VALUES (?);', [user.id])
+		DB.insert('INSERT INTO Totals(DiscordID) VALUES (?);', [user.id])
 
-		conn = sqlite3.connect(config.db)
-		sql = "INSERT INTO Economy(DiscordID) VALUES (?);"
-		conn.execute(sql, [user.id])
-
-		sql = "INSERT INTO Inventory(DiscordID) VALUES (?);"
-		conn.execute(sql, [user.id])
-
-		sql = "INSERT INTO Totals(DiscordID) VALUES (?);"
-		conn.execute(sql, [user.id])
-		conn.commit()
-		conn.close()
-
-		embed.add_field(name="Welcome!", value="You are now successfully registered. Enjoy The Casino.")
+		embed.description = f"You are now successfully registered. Enjoy {self.bot.user.name}."
 
 		# if interaction.application_command.qualified_name == 'start'
 		# 	await interaction.send(embed=embed)
 		# else
 		await interaction.send(embed=embed)
-
 
 	async def GetBetAmount(self, interaction:Interaction, amntbet):
 		if amntbet.isdigit():
@@ -81,15 +62,17 @@ class Economy(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def rewards(self, interaction:Interaction):
-		if not await self.accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
 		dailyReward = await self.bot.get_cog("Daily").getDailyReward(interaction)
-		multiplier = self.getMultiplier(interaction.user)
+		multiplier, expiration = self.bot.get_cog("Multipliers").getMultiplierAndExpiration(interaction.user)
 
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name = "Daily", value = f"{dailyReward}{self.coin}", inline=True)
 		embed.add_field(name = "Multiplier", value = f"{multiplier}x", inline=True)
+		if expiration:
+			embed.add_field(name = "Expires In", value=f"{expiration}", inline=True)
+
+
 		# embed.add_field(name = "Weekly", value = f"12500{self.coin}", inline=False)
 		# embed.add_field(name = "Monthly", value = f"36000{self.coin}", inline=True)
 
@@ -103,33 +86,26 @@ class Economy(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def balance(self, interaction:Interaction, user:nextcord.Member=None):
-		""" Show your balance """
 		if not user:
 			user = interaction.user
 			pronouns = "You"
 		else:
 			pronouns = "They"
 
-		if not await self.bot.get_cog("Economy").accCheck(user):
-			await self.StartPlaying(interaction, user)
-
-		prefix = "/"
-
 		balance = await self.getBalance(user)
-		crates, keys = await self.getInventory(user)
+		crates, keys = self.bot.get_cog("Inventory").getInventory(user)
+
 		embed = nextcord.Embed(color=1768431)
-		embed.add_field(name = "Credits", value = f"{pronouns} have **{balance}**{self.coin}", inline=False)
+		embed.add_field(name = "Credits", value = f"{pronouns} have **{balance:,}**{self.coin}", inline=False)
 		embed.add_field(name = "_ _\nCrates", value = f"{pronouns} have **{crates}** crates", inline=True)
 		embed.add_field(name = "_ _\nKeys", value = f"{pronouns} have **{keys}** keys", inline=True)
-		embed.set_footer(text=f"Use {prefix}vote, {prefix}search, {prefix}daily, and {prefix}work to get credits")
+		embed.set_footer(text=f"Use /vote, /search, /daily, and /work to get credits")
 		
 		await interaction.send(embed=embed)
 		
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def search(self, interaction:Interaction):
-		if not await self.accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		embed = nextcord.Embed(color=1768431)
 		if await self.getBalance(interaction.user) < 300:
 			amnt = random.randint(50, 250)
@@ -161,29 +137,26 @@ class Economy(commands.Cog):
 			return
 
 		donatorReward = self.getDonatorReward(interaction.user.id)
-		multiplier = self.getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
 		extraMoney = int(donatorReward * (multiplier - 1))
 		await self.addWinnings(interaction.user.id, donatorReward + extraMoney)
 
 		balance = await self.getBalance(interaction.user)
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
-		embed.add_field(name = f"You got {donatorReward} {self.coin}", 
-						value = f"You have {balance} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney}", inline=False)
+		embed.add_field(name = f"You got {donatorReward:,} {self.coin}", 
+						value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
 		await interaction.send(embed=embed)
 
 
 	def isDonator(self, discordid):
-		donatorCheck = DB.fetchOne("SELECT DonatorCheck FROM Economy WHERE DiscordID = ?;", [discordid])[0]
+		donatorCheck = DB.fetchOne("SELECT 1 FROM Donators WHERE DiscordID = ?;", [discordid])
 		return donatorCheck
 
 	def getDonatorReward(self, discordid):
-		donatorReward = DB.fetchOne("SELECT DonatorReward FROM Economy WHERE DiscordID = ?;", [discordid])[0]
-		return donatorReward
-
-
-	def getMultiplier(self, user):
-		multiplier = DB.fetchOne("SELECT Multiplier FROM Economy WHERE DiscordID = ?;", [user.id])[0]
-		return multiplier
+		donatorReward = DB.fetchOne("SELECT DonatorReward FROM Donators WHERE DiscordID = ?;", [discordid])
+		if donatorReward:
+			return donatorReward[0]
+		return None
 
 
 	async def subtractBet(self, user, amntbet): # subtracts the bet users place when they play games
@@ -206,44 +179,27 @@ class Economy(commands.Cog):
 		return balance
 	
 
-	async def getInventory(self, user): # grabs all the crates and keys from database
-		inv = DB.fetchOne("SELECT Crates, Keyss FROM Inventory WHERE DiscordID = ?;", [user.id])
-		crates = inv[0]
-		keys = inv[1]
-		return crates, keys
-
-
-	async def subtractInv(self, discordid, amnt): # called when people open crates (subtracts them from inv.)
-		DB.update("UPDATE Inventory SET Crates = Crates - ?, Keyss = Keyss - ? WHERE DiscordID = ?;", [amnt, amnt, discordid])
-
-
 	@nextcord.slash_command()
-	async def top(self, interaction:Interaction, sidebet = nextcord.SlashOption(
+	async def top(self, interaction:Interaction, option = nextcord.SlashOption(
 																required=False,
 																name="option", 
-																choices=("Balance", "Level", "Profit"))): # scoreboard to display top 10 richest individuals
+																choices=("Balance", "Level", "Profit"))):
 		
 
-		if sidebet and sidebet != "Balance":
-			if sidebet == "Level":
+		if option and option != "Balance":
+			if option == "Level":
 				sql = f"""SELECT DiscordID, Level
 					  	  FROM Economy ORDER BY Level DESC LIMIT 10"""
-			elif sidebet == "Profit":
+			elif option == "Profit":
 				sql = f"""SELECT DiscordID, Profit
 					  	  FROM Totals ORDER BY Profit DESC LIMIT 10"""
 		else:
 			sql = f"""SELECT DiscordID, Credits
 					  FROM Economy ORDER BY Credits DESC LIMIT 10"""
-
-		conn = sqlite3.connect(config.db)
-		cursor = conn.execute(sql)
-		data = cursor.fetchall() 
-		conn.close()
-
-		# data = sorted(data, key = lambda x: x[1], reverse=True) # sort rows by credits  
-
+		
 		topUsers = ""
 		count = 1
+		data = DB.fetchAll(sql, None)
 		for x in data: 
 			user = await self.bot.fetch_user(x[0]) # grab the user from the current record
 			topUsers += f"{count}. < {user.name} > - " + "{:,}".format(x[1]) + "\n"
@@ -254,25 +210,29 @@ class Economy(commands.Cog):
 
 
 	@nextcord.slash_command()
-	async def position(self, interaction:Interaction, usr: nextcord.User=None): # scoreboard to display top 10 richest individuals
+	async def position(self, interaction:Interaction, usr: nextcord.Member=None, option = nextcord.SlashOption(
+																required=False,
+																name="option", 
+																choices=("Balance", "Level", "Profit"))):
 		if not usr:
 			usr = interaction.user
 
-		if not await self.accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-
 		if await self.getBalance(usr) < 5000:
-			await interaction.send("You need at least 5000 credits to use this command.")
+			await interaction.send("You need at least 5,000 credits to use this command.")
 			return
 
-		name = usr.name
-
-		sql = f"""SELECT DiscordID, Credits
-				  FROM Economy ORDER BY Credits DESC"""
-		conn = sqlite3.connect(config.db)
-		cursor = conn.execute(sql) 
-		data = cursor.fetchall() 
-		conn.close()
+		if option and option != "Balance":
+			if option == "Level":
+				sql = f"""SELECT DiscordID, Level
+					  	  FROM Economy ORDER BY Level DESC LIMIT 10"""
+			elif option == "Profit":
+				sql = f"""SELECT DiscordID, Profit
+					  	  FROM Totals ORDER BY Profit DESC LIMIT 10"""
+		else:
+			sql = f"""SELECT DiscordID, Credits
+					  FROM Economy ORDER BY Credits DESC LIMIT 10"""
+		
+		data = DB.fetchAll(sql, None)
 
 		pos = 0
 		for x in data:
@@ -295,7 +255,7 @@ class Economy(commands.Cog):
 			else:
 				topUsers += f"{pos+x+1}. < {user.name} > - {data[pos+x][1]}\n"
 
-		await interaction.send(f"```MD\n{name} is #{pos+1}{diff}\n======\n{topUsers}```") # send the list with the top 10
+		await interaction.send(f"```MD\n{user.name} is #{pos+1}{diff}\n======\n{topUsers}```") # send the list with the top 10
 
 
 

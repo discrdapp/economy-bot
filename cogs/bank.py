@@ -1,21 +1,15 @@
 import nextcord
 from nextcord.ext import commands, tasks
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import asyncio
-
-from datetime import time, datetime
-from math import floor, ceil
+from datetime import time
+from math import floor
 
 from db import DB
 
 class Bank(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		self.items = [1000, 5000, 25000, 100000, 150000, 250000, 20000]
 		self.coin = "<:coins:585233801320333313>"
 
 	@commands.Cog.listener()
@@ -47,51 +41,55 @@ class Bank(commands.Cog):
 
 	@bank.subcommand(name='deposit')
 	async def _deposit(self, interaction:Interaction, amnt):
-
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
+		embed.set_thumbnail(url=interaction.user.avatar)
 
 		amnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, amnt)
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amnt):
 			embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
 			embed.set_thumbnail(url=interaction.user.avatar)
-			embed.add_field(name="ERROR", value="You do not have enough to do that.")
-
-			embed.set_footer(text=interaction.user)
-
+			embed.description = "You do not have enough to do that."
 			await interaction.send(embed=embed)
 			return
 
 		DB.update("UPDATE Economy SET Bank = Bank + ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
 
-		await interaction.send(f"Successfully deposited {amnt}{self.coin}!")
+		embed.description = f"Successfully deposited {amnt:,}{self.coin}!"
+		await interaction.send(embed=embed)
 
 
 	@bank.subcommand(name='withdraw')
 	async def _withdraw(self, interaction:Interaction, amnt):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
+		embed.set_thumbnail(url=interaction.user.avatar)
 		try:
 			amnt = int(amnt)
 			if self.getBankBal(interaction.user.id) < amnt:
-				await interaction.send("You do not have enough funds in your bank to withdraw that amount.")
+				embed.description = "You do not have enough funds in your bank to withdraw that amount."
+				await interaction.send(embed=embed)
 				return
 		except:
-			if amnt == "all":
+			if amnt == "all" or amnt == "100%":
 				amnt = self.getBankBal(interaction.user.id)
-			elif amnt == "half":
+			elif amnt == "half" or amnt == "50%":
 				amnt = floor(self.getBankBal(interaction.user.id) / 2)
 			else:
-				await interaction.send("Incorrect withdrawal amount.")
+				embed.description = "Incorrect withdrawal amount."
+				await interaction.send(embed=embed)
 				return
 		if amnt <= 0:
-			await interaction.send("You must withdraw an amount greater than 0.")
+			embed.description = "You must withdraw an amount greater than 0."
+			await interaction.send(embed=embed)
 			return
 
 		DB.update("UPDATE Economy SET Bank = Bank - ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
 
 		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amnt)
 
-		await interaction.send(f"Successfully withdrew {amnt}{self.coin}!")
+
+		embed.description = f"Successfully withdrew {amnt:,}{self.coin}!"
+		await interaction.send(embed=embed)
 
 
 	@bank.subcommand(name='balance')
@@ -103,13 +101,18 @@ class Bank(commands.Cog):
 			if not await self.bot.get_cog("Economy").accCheck(user):
 				embed.description=f"{user.name} has not registered yet."
 			else:
-				embed.description=f"{user.name} has {self.getBankBal(user.id)}{self.coin} in their bank."
+				embed.description=f"{user.name} has {self.getBankBal(user.id):,}{self.coin} in their bank."
 		else:
 			embed.set_thumbnail(url=interaction.user.avatar)
 			embed.set_footer(text=interaction.user)
-			if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-				await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-			embed.description=f"You have {self.getBankBal(interaction.user.id)}{self.coin} in your bank."
+			
+			bankBal = self.getBankBal(interaction.user.id)
+			embed.description=f"You have {bankBal:,}{self.coin} in your bank."
+
+			if bankBal < 10000:
+				embed.set_footer(text=f"You must deposit at least {(10000-bankBal):,} more credits in order to get interest")
+			else:
+				embed.set_footer(text=f"5% interest is earned every 12 hours!")
 
 		await interaction.send(embed=embed)
 

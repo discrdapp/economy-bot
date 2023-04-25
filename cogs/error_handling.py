@@ -1,12 +1,8 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import asyncio
-import sys
+import config
 
 from cooldowns import CallableOnCooldown
 
@@ -22,7 +18,9 @@ class ErrorHandling(commands.Cog):
 
 	# @commands.Cog.listener()
 	async def on_application_command_error(self, interaction:Interaction, error):
-		embed = nextcord.Embed(title=f"{self.bot.user.name} | ERROR", color=0xFF0000)
+		commandName = interaction.application_command.qualified_name.title()
+
+		embed = nextcord.Embed(title=f"{self.bot.user.name} | {commandName} ERROR", color=0xFF0000)
 		error = getattr(error, 'original', error)
 
 		if "missing permissions" in str(error).lower() or "send message" in str(error).lower() or "missing access" in str(error).lower():
@@ -31,7 +29,7 @@ class ErrorHandling(commands.Cog):
 		elif isinstance(error, commands.CommandOnCooldown) or isinstance(error, CallableOnCooldown):
 			a = datetime.timedelta(seconds=error.retry_after)
 			cooldown = str(a).split(".")[0]
-			embed.description = f"{str(interaction.application_command.qualified_name).title()} is on cooldown. Please retry again in {cooldown}"
+			embed.description = f"{commandName} is on cooldown. Please retry again in {cooldown}"
 
 		elif isinstance(error, commands.CheckFailure):
 			try:
@@ -48,19 +46,23 @@ class ErrorHandling(commands.Cog):
 			err = err.split(':', 2)[-1]
 			
 			if err == "forbiddenError":
-				await interaction.send("Your Discord settings does not allow me to DM you. Please change them and try again.")
+				embed.description = "Your Discord settings does not allow me to DM you. Please change them and try again."
+				await interaction.send(embed=embed)
 				return
 
 			if err == "timeoutError":
-				await interaction.send(f"Did not respond in time; timeout.")
+				embed.description = f"Did not respond in time; timeout."
+				await interaction.send(embed=embed)
 				return
 
 			if err == "valueError":
-				await interaction.send(f"Did not provide correct option. Please try again")
+				embed.description = "Did not provide correct option. Please try again"
+				await interaction.send(embed=embed)
 				return
 
 			if err == "tooPoor":
-				await interaction.send("You do not have enough credits to bet that amount, or you are trying to bet less than 1 credit")
+				embed.description = "You do not have enough credits to do that or you are trying to bet an amount less than 1."
+				await interaction.send(embed=embed)
 				return
 
 			exc = ''.join(traceback.format_exception(type(error), error, error.__traceback__, chain=False))
@@ -69,7 +71,7 @@ class ErrorHandling(commands.Cog):
 			if "MySQL server" in exc:
 				embed.description = "We're having difficulties connecting to the database... Apologies for the inconvenience... Please try again later!"
 			
-			ch = self.bot.get_channel(790282020009148446)
+			ch = self.bot.get_channel(config.channelIDForErrors)
 			if len(exc) > 1999:
 				await ch.send(f"{exc[:1999]}")
 				if len(exc) > 3998:
@@ -85,7 +87,7 @@ class ErrorHandling(commands.Cog):
 				await ch.send(f"{exc}")
 
 			try:
-				await ch.send(f"Further info\n{interaction.application_command.qualified_name} ")
+				await ch.send(f"Further info\n{commandName} ")
 			except Exception as e:
 				await ch.send(f"error with further infooooo: {e}")
 			

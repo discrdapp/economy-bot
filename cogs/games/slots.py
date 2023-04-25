@@ -1,13 +1,8 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import cooldowns
-import asyncio
-import random
+import cooldowns, asyncio, random
 
 from db import DB
 
@@ -20,11 +15,6 @@ class Slots(commands.Cog):
 	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author)
 	@commands.bot_has_guild_permissions(send_messages=True, use_external_emojis=True)
 	async def slots(self, interaction:Interaction, amntbet):
-		coin = "<:coins:585233801320333313>"
-		
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
@@ -62,26 +52,26 @@ class Slots(commands.Cog):
 
 		#slotmachine = f"**[ {a} {b} {c} ]\n{interaction.user.name}**,"
 		embed.color = nextcord.Color(0x23f518)
-		multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
 		if (a == b == c): # if all match
 			moneyToAdd = int(amntbet * 2)
 			profitInt = moneyToAdd - amntbet
 			result = "YOU WON"
-			profit = f"**{profitInt}** (**+{int(profitInt * (multiplier - 1))}**)"
+			profit = f"**{profitInt:,}** (**+{int(profitInt * (multiplier - 1)):,}**)"
 
 
 		elif (a == b) or (a == c) or (b == c): # if two match
 			moneyToAdd = int(amntbet * 1.5) # you win 150% your bet
 			profitInt = moneyToAdd - amntbet
 			result = "YOU WON"
-			profit = f"**{profitInt}** (**+{int(profitInt * (multiplier - 1))}**)"
+			profit = f"**{profitInt:,}** (**+{int(profitInt * (multiplier - 1)):,}**)"
 
 
 		else: # if no match
 			moneyToAdd = 0
 			profitInt = moneyToAdd - amntbet
 			result = "YOU LOST"
-			profit = f"**{profitInt}**"
+			profit = f"**{profitInt:,}**"
 
 			embed.color = nextcord.Color(0xff2020)
 

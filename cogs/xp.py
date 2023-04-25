@@ -1,15 +1,8 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import cooldowns
-import asyncio
-import math
-
-from random import randint
+import math, cooldowns
 
 from db import DB
 
@@ -29,12 +22,7 @@ class XP(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 1, bucket=cooldowns.SlashBucket.author)
 	async def level(self, interaction:Interaction):
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-
-		getRow = DB.fetchOne(f"SELECT XP, TotalXP, Level, Multiplier FROM Economy WHERE DiscordID = ?;", [interaction.user.id])
-
-		multiplier = getRow[3]
+		getRow = DB.fetchOne(f"SELECT XP, TotalXP, Level FROM Economy WHERE DiscordID = ?;", [interaction.user.id])
 		level = getRow[2]
 		xp = getRow[0]
 		requiredXP = self.XPtoLevelUp[level]
@@ -42,18 +30,22 @@ class XP(commands.Cog):
 		progress = round((xp / requiredXP) * 100)
 		totalXP = getRow[1]
 
+		multiplier, expiration = self.bot.get_cog("Multipliers").getMultiplierAndExpiration(interaction.user)
+
 		coin = "<:coins:585233801320333313>"
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		minBet = balance * 0.05
 		minBet = int(math.ceil(minBet / 10.0) * 10.0)
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name}' Casino | Level")
-		embed.add_field(name = "Level", value = f"You are level **{level}**", inline=True)
-		embed.add_field(name = "XP / Next Level", value = f"**{xp}** / **{requiredXP}**", inline=True)
-		embed.add_field(name = "Minimum Bet", value = f"**{minBet}**{coin}", inline=True)
-		embed.add_field(name = "Total XP", value = f"**{totalXP}**", inline=True)
-		embed.add_field(name = "XP Until Level Up", value = f"**{requiredXP - xp}**", inline=True)
+		embed.add_field(name = "Level", value = f"You are level **{level:,}**", inline=True)
+		embed.add_field(name = "XP / Next Level", value = f"**{xp:,}** / **{requiredXP:,}**", inline=True)
+		embed.add_field(name = "Minimum Bet", value = f"**{minBet:,}**{coin}", inline=True)
+		embed.add_field(name = "Total XP", value = f"**{totalXP:,}**", inline=True)
+		embed.add_field(name = "XP Until Level Up", value = f"**{(requiredXP - xp):,}**", inline=True)
 		embed.add_field(name = "Multiplier", value = f"**{multiplier}x**", inline=False)
+		if expiration:
+			embed.add_field(name = "Expires In", value = f"**{expiration}x**", inline=True)
 		await interaction.send(embed=embed)
 
 
@@ -72,29 +64,9 @@ class XP(commands.Cog):
 
 			embed = nextcord.Embed(color=1768431, title="Level Up!")
 			file = nextcord.File("./images/levelup.png", filename="image.png")
-			multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
+			multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
 
 			credits = (level+1)*5000
-
-			# if multiplier == 1:
-			# 	choiceMult = randint(1, 10)
-
-			# 	if choiceMult <= 7:
-			# 		newMultiplier = 1.25
-			# 	elif choiceMult <= 9:
-			# 		newMultiplier = 1.5
-			# 	else:
-			# 		newMultiplier = 2
-			# 	sql = f"""Update Economy
-			# 			  SET XP = XP - {self.XPtoLevelUp[level]}, Level = Level + 1, Credits = Credits + {credits}, Multiplier = {newMultiplier}
-			# 			  WHERE DiscordID = '{discordid}';""" 
-			# 	conn.execute(sql)
-			# 	sql = f"""CREATE EVENT IF NOT EXISTS event{str(interaction.user.id)}
-			# 			  ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 2 HOUR
-			# 			  DO UPDATE justingraham_conn.Economy SET Multiplier = 1;"""
-			# 	conn.execute(sql)
-			# 	embed.add_field(name = f"{interaction.user.name}, you Leveled Up!", value = f"You received a {newMultiplier}x multiplier for 2 hours!", inline=False)
-			# else:
 
 			DB.update("UPDATE Economy SET XP = XP - ?, Level = Level + 1, Credits = Credits + ? WHERE DiscordID = ?;", [self.XPtoLevelUp[level], credits, discordid])
 			embed.add_field(name = f"{interaction.user.name}, you Leveled Up!", value = "_ _", inline=False)

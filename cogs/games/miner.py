@@ -1,9 +1,6 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
 import cooldowns
 from random import randint
@@ -80,8 +77,6 @@ class Miner(commands.Cog):
 	@miner.subcommand()
 	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author)
 	async def sell(self, interaction:Interaction):
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		with open(r"miner.json", 'r') as f:
 			invFile = json.load(f)
 		try:
@@ -106,7 +101,7 @@ class Miner(commands.Cog):
 		if inv[5]: sellMsg += f"Sold {inv[5]} gold for {goldMoney}{self.coin}\n"
 		
 		if sellMsg:
-			multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
+			multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
 			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, totalMoney * multiplier)
 			sellMsg += f"Total profit: {totalMoney} (+{int(totalMoney * (1 - multiplier))}){self.coin}"
 			await interaction.send(sellMsg)

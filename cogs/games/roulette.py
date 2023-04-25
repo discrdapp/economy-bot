@@ -1,17 +1,11 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import sqlite3
-import asyncio
 import random
-
-import math
-
 from PIL import Image
+
+from db import DB
 
 class GetAmountToBet(nextcord.ui.TextInput):
 	def __init__(self):
@@ -104,9 +98,6 @@ class Roulette(commands.Cog):
 		modal = GetBets()
 		await interaction.response.send_modal(modal)
 
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-
 		nums = ""
 		numCount = 0
 		for x in self.previousNums:
@@ -141,8 +132,7 @@ class Roulette(commands.Cog):
 		else:
 			amntBet = int(amntBet)
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, self.totalBet):
-			await self.bot.get_cog("Economy").notEnoughMoney(interaction)
-			return
+			raise Exception("tooPoor")
 
 		if amntBet: amntBet = int(amntBet)
 		if parityBet: parityBet = parityBet.lower()
@@ -211,36 +201,38 @@ class Roulette(commands.Cog):
 
 
 		amntSpent = self.totalBet
-		multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
 		if moneyToAdd > amntSpent:
 			result = f"You won a grand total of {moneyToAdd} (+{moneyToAdd * (multiplier - 1)}){self.coin} after betting {amntSpent}{self.coin}\n**Profit:** {moneyToAdd - amntSpent}{self.coin}"
 		elif moneyToAdd < amntSpent:
 			if moneyToAdd > 0:
-				result = f"You got back {moneyToAdd}{self.coin} after betting {amntSpent}{self.coin}"
+				result = f"You got back {moneyToAdd:,}{self.coin} after betting {amntSpent:,}{self.coin}"
 			else:
-				result = f"You lost {amntSpent}{self.coin}"
+				result = f"You lost {amntSpent:,}{self.coin}"
 		else:
 			result = "You didn't lose or win anything!"
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if numberBet or highLowBet or colorBet or parityBet:
 			priorBal = balance + amntSpent - moneyToAdd
-			minBet = priorBal * 0.05
-			minBet = int(math.ceil(minBet / 10.0) * 10.0)
-			if amntSpent >= minBet:
-				xp = random.randint(50, 500)
-				embed.set_footer(text=f"Earned {xp} XP!")
-				await self.bot.get_cog("XP").addXP(interaction, xp)
-			else:
-				embed.set_footer(text=f"You have to bet your minimum to earn xp.")
+			# minBet = priorBal * 0.05
+			# minBet = int(math.ceil(minBet / 10.0) * 10.0)
+			# if amntSpent >= minBet:
+			# 	xp = random.randint(50, 500)
+			# 	embed.set_footer(text=f"Earned {xp:,} XP!")
+			# 	await self.bot.get_cog("XP").addXP(interaction, xp)
+			# else:
+			# 	embed.set_footer(text=f"You have to bet your minimum to earn xp.")
+			embed = await DB.calculateXP(self, interaction, priorBal, amntSpent, embed)
 		else:
+			
 			embed.set_footer(text="No bets were placed, no XP was earned.")
 		embed.set_field_at(0, name="Picks", 
 			value=f"Number bet: {displayNumberBet}\nHigh/low bet: {displayHighLowBet}\nColor bet: {displayColorBet}\nParity bet: {displayParityBet}")
 		embed.set_field_at(1, name="Outcome:",
 							value=f"{msg.content}Number: {emojiNum}\nHigh/low: {highLowResult}\nColor: {colorResult}\nParity: {parityResult}")
 		embed.add_field(name="-----------------------------------------------------------------",
-						value=f"{winnings}\n{result}\n**Credits:** {balance}{self.coin}", inline=False)
+						value=f"{winnings}\n{result}\n**Credits:** {balance:,}{self.coin}", inline=False)
 		await msg.edit(embed=embed, file=nextcord.File('images/roulette/temproulette.png'))
 		await self.bot.get_cog("Totals").addTotals(interaction, amntSpent, moneyToAdd + (moneyToAdd * (multiplier - 1)), 3)
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Rltte", moneyToAdd - amntSpent)

@@ -3,20 +3,15 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import cooldowns
-import asyncio
-import random
-import math
+import cooldowns, asyncio, random
 
 from db import DB
 
 class Coinflip(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
+		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, use_external_emojis=True)
@@ -26,9 +21,6 @@ class Coinflip(commands.Cog):
 																name="side", 
 																choices=("heads", "tails")), 
 														user: nextcord.Member=None):
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
 		if user:
@@ -44,8 +36,7 @@ class Coinflip(commands.Cog):
 				return
 
 			if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
-				await self.bot.get_cog("Economy").notEnoughMoney(interaction)
-				return
+				raise Exception("tooPoor")
 
 			if not await self.bot.get_cog("Economy").subtractBet(user, amntbet):
 				await interaction.send(f"{user.mention} has either not typed /start yet or does not have enough money for this.")
@@ -83,48 +74,45 @@ class Coinflip(commands.Cog):
 		###################
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
-			await self.bot.get_cog("Economy").notEnoughMoney(interaction)
-			return
+			raise Exception("tooPoor")
 
 
 		side = random.choice(["Heads", "Tails"]).lower()
 		
-		multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
 
 		embed = nextcord.Embed(color=0x23f518)
 		
 		if sidebet == side:
 			moneyToAdd = int(amntbet * 2)
 			profitInt = moneyToAdd - amntbet
-			profit = f"**{profitInt}** (**+{int(profitInt * (multiplier - 1))}**)"
+			profit = f"**{profitInt:,}** (**+{int(profitInt * (multiplier - 1))}**)"
 
 			file = nextcord.File("./images/coinwon.png", filename="image.png")
 
 		else:
 			moneyToAdd = 0
 			profitInt = moneyToAdd - amntbet
-			profit = f"**{profitInt}**"
+			profit = f"**{profitInt:,}**"
 
 			file = nextcord.File("./images/coinlost.png", filename="image.png")
 			embed.color = nextcord.Color(0xff2020)
 			
 		embed.set_thumbnail(url="attachment://image.png")
-		embed.add_field(name=f"{self.bot.user.name}' Casino | Coinflip", value=f"The coin landed on {side}\n_ _",inline=False)
+		embed.add_field(name=f"{self.bot.user.name} | Coinflip", value=f"The coin landed on {side}\n_ _",inline=False)
 		giveZeroIfNeg = max(0, profitInt) # will give 0 if profitInt is negative. 
 																		# we don't want it subtracting anything, only adding
 		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
 		
-		coin = "<:coins:585233801320333313>"
+		
+		embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
+
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed.add_field(name="Profit", value=f"{profit}{coin}", inline=True)
-		embed.add_field(name="Credits", value=f"**{balance}**{coin}", inline=True)
-
-
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed)
 
 		await interaction.send(file=file, embed=embed)
-		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 4)
 
+		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 4)
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "CF", profitInt)
 
 def setup(bot):

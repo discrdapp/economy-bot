@@ -1,15 +1,11 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
 import cooldowns
 import asyncio
 
 from random import randint
-from math import ceil
 
 class Scratch(commands.Cog):
 	def __init__(self, bot):
@@ -21,15 +17,10 @@ class Scratch(commands.Cog):
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def scratch(self, interaction:Interaction, amntbet, skip:str=""):
-
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
-			await self.bot.get_cog("Economy").notEnoughMoney(interaction)
-			return
+			raise Exception("tooPoor")
 
 		winningNumber = randint(9,91)
 		n = []

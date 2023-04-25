@@ -3,16 +3,10 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import cooldowns
-import asyncio
-import sqlite3
-import random
+import cooldowns, asyncio, random
 
-import math
+from db import DB
 
 class Crash(commands.Cog):
 	def __init__(self, bot):
@@ -34,7 +28,7 @@ class Crash(commands.Cog):
 			self.multiplier = round(self.multiplier, 1)
 			#await self.bot.wait_for('message', check=is_stop, timeout=2)
 			embed.set_field_at(0, name = f"Multiplier", value = f"{str(self.multiplier)}x", inline=True)
-			embed.set_field_at(1, name = "Profit", value = f"{str(round(self.multiplier * self.amntbet - self.amntbet))}{self.coin}", inline=True)
+			embed.set_field_at(1, name = "Profit", value = f"{round(self.multiplier * self.amntbet - self.amntbet):,}{self.coin}", inline=True)
 			await botMsg.edit(embed=embed)
 			if self.multiplier == self.crashNum: # if the current multiplier number is the number to crash on 
 				self.crash = True
@@ -44,66 +38,45 @@ class Crash(commands.Cog):
 
 	async def finished(self, interaction:Interaction):
 		embed = nextcord.Embed(color=0x23f518, title=f"{self.bot.user.name} | Crash")
-		multi = self.bot.get_cog("Economy").getMultiplier(interaction.user)
+		multi = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
 		profitInt = 0
 		
 		if not self.crash: # if they /done it before it crashes 
 			profitInt = int(self.amntbet * self.multiplier - self.amntbet) 
 			moneyToAdd = int(self.amntbet + profitInt)
-			profit = f"**{profitInt}** (+**{int(profitInt * (multi - 1))}**)"
+			profit = f"**{profitInt:,}** (+**{int(profitInt * (multi - 1)):,}**)"
 
 			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, (moneyToAdd + (profitInt * (multi - 1))))
 
 		else: # if game crashes without them doing /done
 			profitInt = -self.amntbet
 			moneyToAdd = 0
-			profit = f"**{profitInt}**"
+			profit = f"**{profitInt:,}**"
 			embed.color = nextcord.Color(0xff2020)
 
-		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		
 
-		embed.add_field(name = f"Crashed at", value = f"{str(self.multiplier)}x", inline=True)
-
-		embed.add_field(name = "Profit", value = f"{profit}", inline=True)
+		embed.add_field(name = f"Crashed at", value = f"{str(self.multiplier)}x", inline=False)
 
 		if not self.crash:
-			embed.add_field(name = f"Would've crashed at {self.crashNum}", value="_ _", inline=False)
-		embed.add_field(name = "Credits",
-							value = f"You have {balance} credits", inline=False)
+			embed.add_field(name = f"Would've crashed at", value=f"{self.crashNum}x", inline=False)
+		embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
 
-		priorBal = balance - profitInt
-		minBet = priorBal * 0.05
-		minBet = int(math.ceil(minBet / 10.0) * 10.0)
-		if self.amntbet >= minBet:
-			xp = random.randint(50, 500)
-			embed.set_footer(text=f"Earned {xp} XP!")
-			await self.bot.get_cog("XP").addXP(interaction, xp)
-		else:
-			embed.set_footer(text=f"You have to bet your minimum to earn xp.")
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
+		embed = await DB.calculateXP(self, interaction, balance - profitInt, self.amntbet, embed)
 
-		# await botMsg.edit(embed=embed)
+		await interaction.send(embed=embed)
 
 		await self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, 2)
-
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Crsh", profitInt)
-
-		print(f"self.crash is {self.crash}")
-		
-		await interaction.send(embed=embed)
 
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def crash(self, interaction:Interaction, bet): # actual command
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-
 		bet = await self.bot.get_cog("Economy").GetBetAmount(interaction, bet)
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, bet):
-			await self.bot.get_cog("Economy").notEnoughMoney(interaction)
-			return
+			raise Exception("tooPoor")
 
 
 		self.amntbet = round(bet)

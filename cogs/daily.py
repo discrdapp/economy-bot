@@ -1,18 +1,9 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import sqlite3
-import asyncio
+import json, time, math
 
-import json
-import time
-import math
-
-import config
 from db import DB
 
 class Daily(commands.Cog):
@@ -25,34 +16,32 @@ class Daily(commands.Cog):
 	async def daily(self, interaction:Interaction):
 		userId = interaction.user.id
 
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-		else:
-			with open(r"rewards.json", 'r') as f:
-				rewards = json.load(f)
+		with open(r"rewards.json", 'r') as f:
+			rewards = json.load(f)
 
-			if (str(userId) in rewards) and ('daily' in rewards[f'{userId}']):
-				if rewards[f'{userId}']['daily'] > time.time():
-					waittime = rewards[f'{userId}']['daily'] - time.time()
-					await interaction.send(f"Please wait **{math.floor(waittime/3600)}h {math.floor((waittime/60) % 60)}m** to use this again!")
-					return
+		embed = nextcord.Embed(color=1768431)
+		if (str(userId) in rewards) and ('daily' in rewards[f'{userId}']):
+			if rewards[f'{userId}']['daily'] > time.time():
+				waittime = rewards[f'{userId}']['daily'] - time.time()
+				embed.description = f"Please wait **{math.floor(waittime/3600)}h {math.floor((waittime/60) % 60)}m** to use this again!"
+				await interaction.send(embed=embed)
+				return
 
-			elif not str(userId) in rewards:
-				rewards[f'{userId}'] = dict()
-			rewards[f'{userId}']['daily'] = time.time() + 86400
+		elif not str(userId) in rewards:
+			rewards[f'{userId}'] = dict()
+		rewards[f'{userId}']['daily'] = time.time() + 86400
 
-			with open(r"rewards.json", 'w') as f:
-				json.dump(rewards, f, indent=4)
+		with open(r"rewards.json", 'w') as f:
+			json.dump(rewards, f, indent=4)
 
 
 		dailyReward = await self.getDailyReward(interaction)
-		multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
 		extraMoney = int(dailyReward * (multiplier - 1))
 		await self.bot.get_cog("Economy").addWinnings(userId, dailyReward + extraMoney)
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed = nextcord.Embed(color=1768431)
-		embed.add_field(name = f"You got {dailyReward} (+{extraMoney}) {self.coin}", 
-						value = f"You have {balance} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney}", inline=False)
+		embed.add_field(name = f"You got {(dailyReward+extraMoney):,} {self.coin}", 
+						value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
 		await interaction.send(embed=embed)
 
 

@@ -1,16 +1,10 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
 from typing import Optional
 
 import sqlite3
-import asyncio
-
-from dataclasses import dataclass
 
 import emojiss as e
 import config
@@ -157,7 +151,7 @@ class Quests(commands.Cog):
 			await self.bot.get_cog("XP").addXP(interaction, 200)
 
 			await interaction.send(embed=nextcord.Embed(color=0x109D00, title="Quest Complete!", description=f"Your quest to {goal} in {self.realGameNamesDict[game]} is now complete!" +
-				f"\n5000{self.coin} and 200 XP has been added to your account!\n"))
+				f"\n5,000{self.coin} and 200 XP has been added to your account!\n"))
 			DB.update("UPDATE Quests SET ActiveQuest = NULL, " + questType + " = 0 WHERE DiscordID = ? and ActiveQuest = ?;", [user.id, activeQuest])
 
 

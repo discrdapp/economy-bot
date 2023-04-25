@@ -24,10 +24,11 @@ class Achievements(commands.Cog):
 		self.realGameNamesDict = {"Slt": "Slots", "BJ": "Blackjack", "Crsh": "Crash", "Rltte": "Roulette", "CF": "Coinflip", "RPS": "Rock-Paper-Scissors"}
 		self.quests = ["Games", "Wins", "Profit"]
 
-	async def AddAchievementProgress(self, interaction:Interaction, user: nextcord.Member, game, type, profit):
+	async def AddAchievementProgress(self, interaction:Interaction, user: nextcord.Member, game, questType, profit):
 		if game:
-
+			pass
 		else:
+			pass
 
 		if self.IsAchievementComplete(self.goals[f'{questType}'], questType, user, activeQuest):
 			goal = self.GetGoal(questType)
@@ -41,12 +42,11 @@ class Achievements(commands.Cog):
 	async def IsAchievementComplete(self, goal, questType, user: nextcord.Member, activeQuest):
 		pass
 
-	async def GiveAchievement(self, interaction:Interaction, user: nextcord.Member, name, level=0:int):
+	async def GiveAchievement(self, interaction:Interaction, user: nextcord.Member, name, level:int=0):
 		# if not have achievement
-
 		pass
 
-	async def HasAchievement(self, user: nextcord.Member, name, level=0:int):
+	async def HasAchievement(self, user: nextcord.Member, name, level:int=0):
 		pass
 
 

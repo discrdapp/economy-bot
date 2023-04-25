@@ -10,15 +10,9 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import cooldowns
-import asyncio
-from random import randrange
+import cooldowns, asyncio
 from random import randint
-import math
 
 from db import DB
 
@@ -35,14 +29,11 @@ class bj(commands.Cog):
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)	
 	async def blackjack(self, interaction:Interaction, amntbet):
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
-			await self.bot.get_cog("Economy").notEnoughMoney(interaction)
-			return
+			raise Exception("tooPoor")
+			
 		# generate the starting cards
 		dFirstHand, dFirstNum = await self.dealer_first_turn(interaction)
 		
@@ -298,26 +289,26 @@ class bj(commands.Cog):
 		# 
 		#########################
 
-		multiplier = self.bot.get_cog("Economy").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
 
 		file = None
 		if winner == 1:
 			moneyToAdd = amntbet * 2 
 			profitInt = moneyToAdd - amntbet
 			result = "YOU WON"
-			profit = f"**{profitInt}** (+**{int(profitInt * (multiplier - 1))}**)"
+			profit = f"**{profitInt:,}** (+**{int(profitInt * (multiplier - 1))}**)"
 			
 			embed.color = nextcord.Color(0x23f518)
-			if player_num != 21:
-				file = nextcord.File("./images/bjwon.png", filename="image.png")
-			else:
+			if sum(player_num) == 21:
 				file = nextcord.File("./images/21.png", filename="image.png")
+			else:
+				file = nextcord.File("./images/bjwon.png", filename="image.png")
 
 		elif winner == -1:
 			moneyToAdd = 0 # nothing to add since loss
 			profitInt = -amntbet # profit = amntWon - amntbet; amntWon = 0 in this case
 			result = "YOU LOST"
-			profit = f"**{profitInt}**"
+			profit = f"**{profitInt:,}**"
 			file = nextcord.File("./images/bjlost.png", filename="image.png")
 
 		
@@ -325,7 +316,7 @@ class bj(commands.Cog):
 			moneyToAdd = amntbet # add back their bet they placed since it was pushed (tied)
 			profitInt = 0 # they get refunded their money (so they don't make or lose money)
 			result = "PUSHED"
-			profit = f"**{profitInt}**"
+			profit = f"**{profitInt:,}**"
 			file = nextcord.File("./images/bjpushed.png", filename="image.png")
 		
 		if file:
@@ -334,18 +325,16 @@ class bj(commands.Cog):
 		giveZeroIfNeg = max(0, profitInt) # will give 0 if profit is negative. 
 																				# we don't want it subtracting anything, only adding
 		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
-		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed.set_field_at(2, name = f"**--- {result} ---**", value = "_ _", inline=False)
-		embed.add_field(name="Profit", value=f"{profit}{coin}", inline=True)
-		embed.add_field(name="Credits", value=f"**{balance}**{coin}", inline=True)
 
-		priorBal = balance - profitInt + (giveZeroIfNeg * (multiplier - 1))
-		embed = await DB.calculateXP(self, interaction, priorBal, amntbet, embed)
+		embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
+
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
+		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed)
 
 		await interaction.send(content=f"{interaction.user.mention}", file=file, embed=embed)
 
 		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 1)	
-
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "BJ", profitInt)
 
 def setup(bot):

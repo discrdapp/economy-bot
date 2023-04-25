@@ -2,21 +2,12 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import sqlite3
-import asyncio
-import random
-import time
-import datetime
-import config
+import sqlite3, datetime, json
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 from math import floor
 
-import json
-
+import config
 from db import DB
 
 actualGame = ["Slt", "BJ", "Crsh", "RLTTE", "CF", "RPS"]
@@ -133,9 +124,6 @@ class Totals(commands.Cog):
 	
 	@profile.subcommand()
 	async def view(self, interaction:Interaction):
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-
 		totals = DB.fetchOne("SELECT Profit, Games FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 		profit = totals[0]
 		games = totals[1]
@@ -147,7 +135,7 @@ class Totals(commands.Cog):
  
 		requiredXP = self.XPtoLevelUp[level]
 
-		crates, keys = await self.bot.get_cog("Economy").getInventory(interaction.user)
+		crates, keys = self.bot.get_cog("Inventory").getInventory(interaction.user)
 
 
 		with open(r"profiles.json", 'r') as f:
@@ -174,11 +162,11 @@ class Totals(commands.Cog):
 		# embed.add_field(name = "User", value = f"{interaction.user.name}", inline=True)
 		# embed.add_field(name = "Level", value = f"{level}", inline=True)
 		# embed.add_field(name = "Balance", value = f"{balance}", inline=True)
-		embed.add_field(name = "XP / Next Level", value = f"{xp} / {requiredXP}", inline=True)
-		embed.add_field(name = "Profit", value = f"{profit}", inline=True)
-		embed.add_field(name = "Games Played", value = f"{games}", inline=True)
-		embed.add_field(name = "Crates", value = f"{crates}", inline=True)
-		embed.add_field(name = "Keys", value = f"{keys}", inline=True)
+		embed.add_field(name = "XP / Next Level", value = f"{xp:,} / {requiredXP:,}", inline=True)
+		embed.add_field(name = "Profit", value = f"{profit:,}", inline=True)
+		embed.add_field(name = "Games Played", value = f"{games:,}", inline=True)
+		embed.add_field(name = "Crates", value = f"{crates:,}", inline=True)
+		embed.add_field(name = "Keys", value = f"{keys:,}", inline=True)
 
 		img = Image.open(f"./images/writingbackgrounds/{background}")
 
@@ -209,8 +197,8 @@ class Totals(commands.Cog):
 		font_type = ImageFont.truetype('arial.ttf',25)
 		draw = ImageDraw.Draw(img)
 		draw.text(xy=(100,100), text=f"{interaction.user.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript.ttf',55))
-		draw.text(xy=(420,160), text=f"Level {level}", fill=tuple(textColor), font=font_type)
-		draw.text(xy=(100,160), text=f"Balance: {balance}", fill=tuple(textColor), font=font_type)
+		draw.text(xy=(420,160), text=f"Level {level:,}", fill=tuple(textColor), font=font_type)
+		draw.text(xy=(100,160), text=f"Balance: {balance:,}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,230), text=f"Badges", fill=tuple(textColor), font=font_type)
 		img.save("images/profile.png")
 		file = nextcord.File("images/profile.png", filename="image.png")
@@ -327,9 +315,6 @@ class Totals(commands.Cog):
 
 	@nextcord.slash_command()
 	async def badges(self, interaction:Interaction):
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-
 		getRow = DB.fetchOne("SELECT E.Credits, E.Level, T.Profit, T.Games FROM Economy E INNER JOIN Totals T ON E.DiscordID = T.DiscordID WHERE E.DiscordID = ?;", [interaction.user.id])
 		
 		games = getRow[3]
@@ -377,10 +362,7 @@ class Totals(commands.Cog):
 
 
 	@nextcord.slash_command()
-	async def stats(self, interaction:Interaction):
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-		
+	async def stats(self, interaction:Interaction):		
 		getRow = DB.fetchOne("SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 
 		creditsSpent = getRow[0]

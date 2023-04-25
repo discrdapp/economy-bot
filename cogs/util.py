@@ -1,14 +1,8 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import cooldowns
-import asyncio
-import random
-
+import cooldowns, asyncio, random
 
 class Util(commands.Cog):
 	def __init__(self, bot):
@@ -25,53 +19,50 @@ class Util(commands.Cog):
 		except asyncio.TimeoutError:
 			raise Exception("timeoutError")
 		return msg
-	
-	@nextcord.slash_command(name="aatest")
-	async def atest(self, interaction:Interaction):
-		getInput = await self.getChoice(interaction)
-		await interaction.send(f"User chose {getInput.content}")
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5400, bucket=cooldowns.SlashBucket.author)
 	async def work(self, interaction:Interaction):
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Work")
 
 		job = random.choice(self.jobs)
 		pay = random.randrange(6000, 20001)
-
-		await interaction.send(f"You worked as a {job} and earned {pay}<:coins:585233801320333313>")
-
 		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay)
+
+		embed.description = f"You worked as a {job} and earned {pay:,}<:coins:585233801320333313>"
+		await interaction.send(embed=embed)
 
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 20, bucket=cooldowns.SlashBucket.author)
 	async def rob(self, interaction:Interaction, *, member: nextcord.Member):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Rob")
 		if interaction.user == member:
-			await interaction.send("Trying to rob yourself? That doesn't make sense. :joy:")
+			embed.description = "Trying to rob yourself? That doesn't make sense. :joy:"
+			await interaction.send(embed=embed)
 			return
 			
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		if not await self.bot.get_cog("Economy").accCheck(member):
 			await self.bot.get_cog("Economy").StartPlaying(interaction, member)
 
 		bal1 = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if bal1 < 500:
-			await interaction.send(f"{interaction.user}, you need at least 500<:coins:585233801320333313> to rob.")
+			embed.description = f"{interaction.user}, you need at least 500<:coins:585233801320333313> to rob."
+			await interaction.send(embed=embed)
 			return
 		
 		bal2 = await self.bot.get_cog("Economy").getBalance(member)
 		if bal2 < 500:
-			await interaction.send(f"{member.mention} needs at least 500<:coins:585233801320333313> to be robbed.")
+			embed.description = f"{member.mention} needs at least 500<:coins:585233801320333313> to be robbed."
+			await interaction.send(embed=embed)
 			return
 
 		choice = random.randrange(0, 10)
 		# amnt = random.range(500, 5000)
 
 		if choice > 7: # 30% chance
-			await interaction.send(f"{member.mention} caught you red-handed! But they decided to forgive you... No money has been robbed!")
+			embed.description = f"{member.mention} caught you red-handed! But they decided to forgive you... No money has been robbed!"
+			await interaction.send(embed=embed)
 			return
 
 		coin = "<:coins:585233801320333313>"
@@ -96,16 +87,18 @@ class Util(commands.Cog):
 			amnt = random.randrange(500, 25001)
 
 		if choice <= 4: # 0 - 4		(50%)
-			message = f"While {member.mention} was sleeping, you took {amnt}{coin} out of their pockets."
+			message = f"While {member.mention} was sleeping, you took {amnt:,}{coin} out of their pockets."
 		else: # 5, 6, or 7			(30%)
-			message = f"As you walk past {member.mention}, you try to pick pocket them, but they notice. They beat you up and steal {amnt}{coin} from you instead."
+			message = f"As you walk past {member.mention}, you try to pick pocket them, but they notice. They beat you up and steal {amnt:,}{coin} from you instead."
 
 
 		await self.bot.get_cog("Economy").addWinnings(robber.id, amnt)
 		await self.bot.get_cog("Economy").addWinnings(robbee.id, -amnt)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		await interaction.send(message + f"\nYour new balance is {balance}{coin}")
+
+		embed.description = f"{message}\nYour new balance is {balance:,}{coin}"
+		await interaction.send(embed=embed)
 
 
 

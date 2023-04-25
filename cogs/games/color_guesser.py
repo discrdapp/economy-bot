@@ -1,11 +1,7 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
-import asyncio
 import random
 
 class CG(commands.Cog):
@@ -43,8 +39,8 @@ class CG(commands.Cog):
 		# take out credits and create list of users who don't have enough credits (or have not typed .start)
 		msg = ""
 		for user in users:
-			if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-				await self.bot.get_cog("Economy").start(interaction, interaction.user)
+			if not await self.bot.get_cog("Economy").accCheck(user):
+				await self.bot.get_cog("Economy").start(interaction, user)
 			if not await self.bot.get_cog("Economy").subtractBet(user, amntbet):
 				usersToRemove.append(user)
 				msg += f"{user.mention}\n"

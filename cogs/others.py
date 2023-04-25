@@ -1,14 +1,9 @@
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
-from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-from nextcord.ext.commands import has_permissions, MissingPermissions
 
 import cooldowns
-from typing import Optional
-
-import json
+import config
 
 class Others(commands.Cog):
 	def __init__(self, bot):
@@ -17,7 +12,7 @@ class Others(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_guild_join(self, guild):
-		ch = self.bot.get_channel(790282431860047882)
+		ch = self.bot.get_channel(config.channelToNotifyOfServerAddingBot)
 		await ch.send(f"Added to {guild.name}")
 
 		channels = guild.text_channels
@@ -26,10 +21,10 @@ class Others(commands.Cog):
 		if not general: general = next((x for x in channels if 'chat' in x.name.lower()), None)
 		if not general: general = next((x for x in channels if 'chit' in x.name.lower()), None)
 		if not general: general = next((x for x in channels if 'lobby' in x.name.lower()), None)
-		if not general: general = filter(lambda x: 'talk' in x.name.lower(), channels)
-		if not general: general = filter(lambda x: 'commands' in x.name.lower(), channels)
-		if not general: general = filter(lambda x: 'cmd' in x.name.lower(), channels)
-		if not general: general = filter(lambda x: 'bot' in x.name.lower(), channels)
+		if not general: general = next((x for x in channels if 'talk' in x.name.lower()), None)
+		if not general: general = next((x for x in channels if 'commands' in x.name.lower()), None)
+		if not general: general = next((x for x in channels if 'cmd' in x.name.lower()), None)
+		if not general: general = next((x for x in channels if 'bot' in x.name.lower()), None)
 
 		if not general:
 			return
@@ -43,7 +38,7 @@ class Others(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_guild_remove(self, guild):
-		ch = self.bot.get_channel(790282431860047882)
+		ch = self.bot.get_channel(config.channelToNotifyOfServerAddingBot)
 		await ch.send(f"Removed from {guild.name}")
 
 	@nextcord.slash_command()
@@ -59,22 +54,26 @@ class Others(commands.Cog):
 
 	@nextcord.slash_command()
 	async def claim(self, interaction:Interaction):
-		if interaction.guild.id != 585226670361804827:
+		embed = nextcord.Embed(color=1768431)
+		if interaction.guild.id != config.adminServerID:
+			embed.description = "You must join the support server to use this! The server is listed in /help"
+			await interaction.send(embed=embed)
 			return
-		if not await self.bot.get_cog("Economy").accCheck(interaction.user):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
+			
 		userId = str(interaction.user.id)
 		with open("claimed.txt", "r") as claimedFile:
 			for line in claimedFile:
 				if userId in line:
-					await interaction.send("You have already claimed your reward!")
+					embed.description = "You have already claimed your reward!"
+					await interaction.send(embed=embed)
 					return
 		with open("claimed.txt", 'a') as claimedFile:
 			claimedFile.write(f"{userId}\n") 
 		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, 7500)
 
 		bal = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		await interaction.send(f"Successfully claimed reward! New balance is {bal}")
+		embed.description = f"Successfully claimed reward! New balance is {bal}"
+		await interaction.send(embed=embed)
 
 
 	def GetHelpMsg(self):
@@ -88,8 +87,8 @@ class Others(commands.Cog):
 							 + "`slots`, `coinflip`, `rps`, `colorguesser`, `rob`", inline = False)
 
 		embed.add_field(name = ":gear: Other Commands",
-					   value = "`credits`, `top`, `position`, `shop`, `stats`, `bank`, `claim`, `vote`, "
-							 + "`profile`, `level`, `rewards`, `crate`", inline=False)
+					   value = "`balance`, `top`, `position`, `shop`, `use`, `stats`, `bank`, `claim`, `vote`, "
+							 + "`profile`, `level`, `rewards`", inline=False)
 
 		embed.add_field(name = ":money_with_wings: Earn Money",
 					   value = "`work`, `daily`, `weekly`, `monthly`, `search`, and more coming soon...", inline=False)
@@ -106,24 +105,28 @@ class Others(commands.Cog):
 	@nextcord.slash_command(description="The Casino Help Command")
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
 	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
-	async def help(self, interaction:Interaction):#, option = nextcord.SlashOption(
-																# required=True,
-																# name="command", 
-																# choices=("bank",
-																# 		"roulette",
-																# 		"crash",
-																# 		"blackjack",
-																# 		# "colorguesser",
-																# 		"slots",
-																# 		"rockpaperscissors",
-																# 		"coinflip", 
-																# 		"balance", 
-																# 		"top", 
-																# 		"shop", 
-																# 		"stats", 
-																# 		"profile", 
-																# 		"level",
-																# 		"freemoney"))):
+	async def help(self, interaction:Interaction, 
+						option = nextcord.SlashOption(
+							required=False,
+							name="command", 
+							choices=("bank",
+									"roulette",
+									"crash",
+									"blackjack",
+									# "colorguesser",
+									"slots",
+									"rockpaperscissors",
+									"coinflip", 
+									"balance", 
+									"top", 
+									"shop", 
+									"stats", 
+									"profile", 
+									"level",
+									"freemoney"
+									)
+							)
+						):
 
 	# async def help(self, interaction:Interaction, option:Optional[str] = nextcord.SlashOption(required=False,
 												# name="choice", 
@@ -132,191 +135,70 @@ class Others(commands.Cog):
 													# "stats", "profile", "level", "freemoney"))):
 
 		# print(option)
-		# if not option:
-		await interaction.send(embed=self.GetHelpMsg())
-		return
+		if not option:
+			await interaction.send(embed=self.GetHelpMsg())
+			return
 
-		# embed = nextcord.Embed(color=1768431)
+		embed = nextcord.Embed(color=1768431)
 
-		# if option == "bank":
-		# 	helpMsg = "Store your credits in the bank"
-		# 	usageMsg = "**/bank <deposit/withdraw> <amount>**\n**/bank balance**"
-		# elif option == "roulette":
-		# 	helpMsg = "Bet on the characteristics that the number will land on"
-		# 	usageMsg = "**/roulette**"
-		# elif option == "crash":
-		# 	helpMsg = "Withdraw your funds before the stock market crashes!"
-		# 	usageMsg = "**/crash <bet>**"
-		# elif option == "blackjack":
-		# 	helpMsg = "Get your cards to 21 (without going over!) or beat the dealer to win!"
-		# 	usageMsg = "**/blackjack <bet>**"
-		# elif option == "colorguesser":
-		# 	helpMsg = "Play with friends. Everyone votes for a color the bot will pick."
-		# 	usageMsg = "**/colorguesser <bet>**"
-		# elif option == "slots":
-		# 	helpMsg = "Play the slots and try to get the same fruit!"
-		# 	usageMsg = "**/slots <bet>**"
-		# elif option == "rockpaperscissors":
-		# 	helpMsg = "Beat the computer in a classic game of Rock-Paper-Scissors"
-		# 	usageMsg = "**/rps <rock/paper/scissors> <bet>**"
-		# elif option == "coinflip":
-		# 	helpMsg = "Bet the side the coin will land on"
-		# 	usageMsg = "**/coinflip <heads/tails> <bet>**"
-		# elif option == "balance":
-		# 	helpMsg = "Look at your balance"
-		# 	usageMsg = "**/balance**"
-		# elif option == "top":
-		# 	helpMsg = "Show the users with the most money in the server!"
-		# 	usageMsg = "**/top**"
-		# elif option == "shop":
-		# 	helpMsg = "Buy something at the shop!"
-		# 	usageMsg = "**/shop**"
-		# elif option == "stats":
-		# 	helpMsg = "Check the statistics of the games you've played"
-		# 	usageMsg = "**/stats**"
-		# elif option == "profile":
-		# 	helpMsg = "View your profile"
-		# 	usageMsg = "**/profile**"
-		# elif option == "level":
-		# 	helpMsg = "Look at your level and your XP"
-		# 	usageMsg = "**/level**"
-		# elif option == "freemoney":
-		# 	helpMsg = "Look at all the ways to get free money!"
-		# 	usageMsg = "**/freemoney**"
-		# else:
-		# 	await interaction.send(embed=self.GetHelpMsg())
-		# 	return
+		if option == "bank":
+			helpMsg = "Store your credits in the bank"
+			usageMsg = "**/bank <deposit/withdraw> <amount>**\n**/bank balance**"
+		elif option == "roulette":
+			helpMsg = "Bet on the characteristics that the number will land on"
+			usageMsg = "**/roulette**"
+		elif option == "crash":
+			helpMsg = "Withdraw your funds before the stock market crashes!"
+			usageMsg = "**/crash <bet>**"
+		elif option == "blackjack":
+			helpMsg = "Get your cards to 21 (without going over!) or beat the dealer to win!"
+			usageMsg = "**/blackjack <bet>**"
+		elif option == "colorguesser":
+			helpMsg = "Play with friends. Everyone votes for a color the bot will pick."
+			usageMsg = "**/colorguesser <bet>**"
+		elif option == "slots":
+			helpMsg = "Play the slots and try to get the same fruit!"
+			usageMsg = "**/slots <bet>**"
+		elif option == "rockpaperscissors":
+			helpMsg = "Beat the computer in a classic game of Rock-Paper-Scissors"
+			usageMsg = "**/rps <rock/paper/scissors> <bet>**"
+		elif option == "coinflip":
+			helpMsg = "Bet the side the coin will land on"
+			usageMsg = "**/coinflip <heads/tails> <bet>**"
+		elif option == "balance":
+			helpMsg = "Look at your balance"
+			usageMsg = "**/balance**"
+		elif option == "top":
+			helpMsg = "Show the users with the most money in the server!"
+			usageMsg = "**/top**"
+		elif option == "shop":
+			helpMsg = "Buy something at the shop!"
+			usageMsg = "**/shop**"
+		elif option == "stats":
+			helpMsg = "Check the statistics of the games you've played"
+			usageMsg = "**/stats**"
+		elif option == "profile":
+			helpMsg = "View your profile"
+			usageMsg = "**/profile**"
+		elif option == "level":
+			helpMsg = "Look at your level and your XP"
+			usageMsg = "**/level**"
+		elif option == "freemoney":
+			helpMsg = "Look at all the ways to get free money!"
+			usageMsg = "**/freemoney**"
+		else:
+			await interaction.send(embed=self.GetHelpMsg())
+			return
 
-		# embed.add_field(name = "Help", value=f"{helpMsg}", inline=False)
-		# embed.add_field(name = "Usage", value=f"{usageMsg}", inline=False)
+		embed.add_field(name = "Help", value=f"{helpMsg}", inline=False)
+		embed.add_field(name = "Usage", value=f"{usageMsg}", inline=False)
 
-		# if option == "crash":
-		# 	embed.add_field(name = "Chances", value=f"1.0x is 30%\n1.2x is 20%\n1.4x - 1.6x is 30%\n1.6x - 2.4x is 10%\n2.4x - 10.0x is 10%", inline=False)
+		if option == "crash":
+			embed.add_field(name = "Chances", value=f"1.0x is 30%\n1.2x is 20%\n1.4x - 1.6x is 30%\n1.6x - 2.4x is 10%\n2.4x - 10.0x is 10%", inline=False)
 
 
-		# embed.set_footer(text=f"User: {interaction.user}")
-		# await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def bank(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Store your credits in the bank", inline=False)
-	# 	embed.add_field(name = "Usage", value="**.bank <deposit/withdraw> <amount>**\n**.bank balance**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def roulette(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Bet on the characteristics that the number will land on", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/roulette**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def crash(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Withdraw your funds before the stock market crashes!", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/crash <bet>**", inline=False)
-	# 	embed.add_field(name = "Chances", value=f"1.0x is 30%\n1.2x is 20%\n1.4x - 1.6x is 30%\n1.6x - 2.4x is 10%\n2.4x - 10.0x is 10%", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def blackjack(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Get your cards to 21 (without going over!) or beat the dealer to win!", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/blackjack <bet>**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def colorguesser(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Play with friends. Everyone votes for a color the bot will pick.", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/colorguesser <bet>**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def slots(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Play the slots and try to get the same fruit!", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/slots <bet>**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def rps(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Beat the computer in a classic game of Rock-Paper-Scissors", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/rps <rock/paper/scissors> <bet>**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def coinflip(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Bet the side the coin will land on", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/coinflip <heads/tails> <bet>**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def credits(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Look at your balance", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/credits**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def top(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Show the users with the most money in the server!", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/top**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def shop(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Buy something at the shop!", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/shop**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def stats(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Check the statistics of the games you've played", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/stats**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def profile(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="View your profile", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/profile**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def level(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Look at your level and your XP", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/level**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
-
-	# @help.subcommand()
-	# async def freemoney(self, interaction:Interaction):
-	# 	embed = nextcord.Embed(color=1768431)
-	# 	embed.add_field(name = "Help", value="Look at all the ways to get free money!", inline=False)
-	# 	embed.add_field(name = "Usage", value=f"**/freemoney**", inline=False)
-	# 	embed.set_footer(text=f"User: {interaction.user}")
-	# 	await interaction.send(embed=embed)
+		embed.set_footer(text=f"User: {interaction.user}")
+		await interaction.send(embed=embed)
 
 
 def setup(bot):
