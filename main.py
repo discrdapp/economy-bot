@@ -52,11 +52,15 @@ async def on_ready():
 
 @bot.event
 async def on_interaction(interaction: Interaction):
-	# if interaction.application_command.qualified_name == "delete":
-		# return
 	if not await bot.get_cog("Economy").accCheck(interaction.user):
 		await bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 
+	# if interaction.user.id != 547475078082985990:
+	# 	embed = nextcord.Embed(color=1768431, title=f"The Casino 2.0")
+	# 	embed.description = "Upgrading bot to 2.0!!! Please check back in a few hours."
+	# 	await interaction.send(embed=embed)
+	# 	return
+	
 	await bot.process_application_commands(interaction)
 
 
@@ -89,7 +93,7 @@ async def unload(ctx, extension):
 # manually reload a cog
 @bot.slash_command(guild_ids=[config.adminServerID])
 @commands.is_owner()
-async def reload(ctx, extension):
+async def reload(ctx, extension: str):
 	if extension == 'all':
 		lst = bot.extensions.copy()
 		for ext in lst:
