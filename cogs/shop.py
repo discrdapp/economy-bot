@@ -29,7 +29,7 @@ class MySource(menus.ListPageSource):
 		# print(f"offset is {offset} and len is {len(entries)}")
 		for x in range(0, len(entries)):
 			# print(f"here with x being {x}")
-			embed.add_field(name=f"{entries[x][1]}", value=f"ID {entries[x][0]} ─ {entries[x][4]} <:coins:585233801320333313>", inline=False)
+			embed.add_field(name=f"{entries[x][1]} ─ {entries[x][4]:,}<:coins:585233801320333313>", value=f"{entries[x][2]}", inline=False)
 		return embed
 
 class Shop(commands.Cog):
