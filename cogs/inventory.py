@@ -47,16 +47,26 @@ class Inventory(commands.Cog):
 		async def callback(interaction):
 			values = interaction.data['values']
 
+			newSource = []
 			if "Usable" in values:
-				newSource = self.getAllInventory(interaction.user, 'Usable')
-			elif "Collectible" in values:
-				newSource = self.getAllInventory(interaction.user, 'Usable')	
-			else:
-				newSource = self.getAllInventory(interaction.user)
+				newSource.extend(self.getAllInventory(interaction.user, 'Usable'))
+			if "Collectible" in values:
+				newSource.extend(self.getAllInventory(interaction.user, 'Collectible'))
+			if "Tool" in values:
+				newSource.extend(self.getAllInventory(interaction.user, 'Tool'))
+			if "Usable" not in values and "Collectible" not in values and "Tool" not in values:
+				newSource.extend(self.getAllInventory(interaction.user))
 
 			await pages.change_source(MySource(newSource))
 
-		a = Select(options=[nextcord.SelectOption(label="Usable"), nextcord.SelectOption(label="Collectible")])
+		options = [
+			nextcord.SelectOption(label="All"), 
+			nextcord.SelectOption(label="Usable"), 
+			nextcord.SelectOption(label="Collectible"),
+			nextcord.SelectOption(label="Tool")
+		]
+
+		a = Select(options=options, min_values=1, max_values=2)
 		a.callback = callback
 		pages.add_item(a)
 
