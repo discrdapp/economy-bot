@@ -11,13 +11,11 @@ import config
 class Lottery(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		self.SERVER_ID = 585226670361804827
-		self.CHANNEL_ID = 1091416872467038309
+		self.CHANNEL_ID = 881421294866927686
 		self.userTickets = list()
 		self.coin = "<:coins:585233801320333313>"
 		self.lotteryTask.start()
 		self.sendToChannels = [self.CHANNEL_ID]
-
 
 
 	@nextcord.slash_command()
@@ -51,10 +49,14 @@ class Lottery(commands.Cog):
 	@lottery.subcommand()
 	@has_permissions(administrator=True)
 	async def buy(self, interaction:Interaction, amnt:int=1):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Lottery")
+		if not self.lotteryTask.is_running():
+			embed.description = "The lottery is currently closed. Please check back soon..."
+			await interaction.send(embed=embed)
+			return
+
 		with open(r"lotteryChannels.json", 'r') as f:
 			channels = json.load(f)
-
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Lottery")
 
 		if str(interaction.guild.id) not in channels:
 			embed.description = "An Administrator must set the channel for the lottery announcements. This can be ANY TEXT channel.\n \
@@ -85,23 +87,37 @@ class Lottery(commands.Cog):
 	@lottery.subcommand()
 	@has_permissions(administrator=True)
 	async def channel(self, interaction:Interaction, channel: nextcord.TextChannel):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Lottery")
 		with open(r"lotteryChannels.json", 'r') as f:
 			channels = json.load(f)
 
-		if channel == 'remove' or channel == 'stop':
-			del channels[f"{interaction.guild.id}"]
-			await interaction.send("Removed your server from the list. This will go into effect after the current lottery ends.")
-
-		else:
-			channels[f"{interaction.guild.id}"] = channel.id
-			await interaction.send("Channel set successfully.\nYou can type `/lottery channel remove` to stop participating in the lottery.")
+		channels[f"{interaction.guild.id}"] = channel.id
+		embed.description = "Channel set successfully.\nYou can type `/lottery remove` to stop participating in the lottery."
+		await interaction.send(embed=embed)
 
 		with open(r"lotteryChannels.json", 'w') as f:
 			json.dump(channels, f, indent=4)
 
+	@lottery.subcommand()
+	@has_permissions(administrator=True)
+	async def remove(self, interaction:Interaction):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Lottery")
+		with open(r"lotteryChannels.json", 'r') as f:
+			channels = json.load(f)
 
-	# @tasks.loop(hours=4)
-	@tasks.loop(seconds=10)
+		if f"{interaction.guild.id}" in channels:
+			del channels[f"{interaction.guild.id}"]
+			embed.description = "Removed your server from the list. This will go into effect after the current lottery ends."
+		else:
+			embed.description = "Your server has already been removed or was never set up for our lottery. \
+								\nIf you believe this is an error, please open a ticket in our support server in the help menu."
+		await interaction.send(embed=embed)
+
+		with open(r"lotteryChannels.json", 'w') as f:
+			json.dump(channels, f, indent=4)
+
+	# @tasks.loop(seconds=10)
+	@tasks.loop(hours=4)
 	async def lotteryTask(self):
 		if not self.userTickets:
 			return
@@ -148,7 +164,9 @@ class Lottery(commands.Cog):
 		if self.lotteryTask.is_running():
 			await interaction.send("Lottery stopped")
 			self.lotteryTask.cancel()
-			await self.refundTickets(interaction)
+			await self.refundtickets(interaction)
+			self.userTickets.clear()
+			self.sendToChannels = [self.CHANNEL_ID]
 		else:
 			await interaction.send("Lottery is not running!", delete_after=3)
 
