@@ -221,16 +221,20 @@ class Economy(commands.Cog):
 			await interaction.send("You need at least 5,000 credits to use this command.")
 			return
 
+
+		await interaction.send("Command is temporarily down due to high increase in players...")
+		return
+
 		if option and option != "Balance":
 			if option == "Level":
 				sql = f"""SELECT DiscordID, Level
-					  	  FROM Economy ORDER BY Level DESC LIMIT 10"""
+					  	  FROM Economy ORDER BY Level DESC"""
 			elif option == "Profit":
 				sql = f"""SELECT DiscordID, Profit
-					  	  FROM Totals ORDER BY Profit DESC LIMIT 10"""
+					  	  FROM Totals ORDER BY Profit DESC"""
 		else:
 			sql = f"""SELECT DiscordID, Credits
-					  FROM Economy ORDER BY Credits DESC LIMIT 10"""
+					  FROM Economy ORDER BY Credits DESC"""
 		
 		data = DB.fetchAll(sql, None)
 
