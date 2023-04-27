@@ -198,7 +198,7 @@ class Shop(commands.Cog):
 			await interaction.send(embed=embed)
 			return
 
-		self.bot.get_cog("Economy").subtractInv(interaction.user.id, amnt)
+		self.bot.get_cog("Inventory").subtractInv(interaction.user.id, amnt)
 
 		crates = 0
 		keys = 0
