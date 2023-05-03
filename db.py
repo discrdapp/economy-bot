@@ -88,9 +88,19 @@ class DB(commands.Cog):
 	@staticmethod
 	async def addProfitAndBalFields(self, interaction, profit, embed):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed.add_field(name="Profit", value=f"{profit}{self.coin}", inline=True)
-		embed.add_field(name="Credits", value=f"**{balance:,}**{self.coin}", inline=True)
+		try:
+			embed.add_field(name="Profit", value=f"{profit:,}{self.coin}", inline=True)
+		except:
+			embed.add_field(name="Profit", value=f"{profit}{self.coin}", inline=True)
+		embed.add_field(name="Credits", value=f"{balance:,}{self.coin}", inline=True)
 		return embed
+
+buyableItems = DB.fetchAll('SELECT * FROM Items WHERE Buyable = 1;')
+buyableItemNames = DB.fetchAll("SELECT Name FROM Items WHERE Buyable = 1;")
+buyableItemNamesList = [item for sublist in buyableItemNames for item in sublist]
+usableItemNames = DB.fetchAll("SELECT Name FROM Items WHERE Type = 'Usable';")
+usableItemNamesList = [item for sublist in usableItemNames for item in sublist]
+	
 
 def setup(bot):
 	bot.add_cog(DB(bot))
