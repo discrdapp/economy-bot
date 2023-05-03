@@ -86,20 +86,24 @@ class Economy(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def balance(self, interaction:Interaction, user:nextcord.Member=None):
+		embed = nextcord.Embed(color=1768431)
 		if not user:
 			user = interaction.user
 			pronouns = "You"
 		else:
 			pronouns = "They"
+			if not await self.accCheck(user):
+				embed.description = "User has not registered yet. They need to play a game or use `/start` to register."
+				await interaction.send(embed=embed, ephemeral=True)
+				return
 
 		balance = await self.getBalance(user)
 		crates, keys = self.bot.get_cog("Inventory").getInventory(user)
 
-		embed = nextcord.Embed(color=1768431)
 		embed.add_field(name = "Credits", value = f"{pronouns} have **{balance:,}**{self.coin}", inline=False)
 		embed.add_field(name = "_ _\nCrates", value = f"{pronouns} have **{crates}** crates", inline=True)
 		embed.add_field(name = "_ _\nKeys", value = f"{pronouns} have **{keys}** keys", inline=True)
-		embed.set_footer(text=f"Use /vote, /search, /daily, and /work to get credits")
+		embed.set_footer(text="Use /vote, /search, /daily, and /work to get credits")
 		
 		await interaction.send(embed=embed)
 		
