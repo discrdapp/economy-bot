@@ -38,17 +38,18 @@ class Multipliers(commands.Cog):
 		
 		return True
 	
-	def addMultiplier(self, user, multiplierAmnt:int, expiration):
+	def addMultiplier(self, user, multiplierAmnt:int, expiration:datetime.datetime):
 		if self.hasMultiplier(user):
 			multiplier, expiration = self.getMultiplierAndExpiration(user)
 			if multiplier == multiplierAmnt:
                 # extend expiration
-				pass
+				return "Successfully extended multiplier!"
 			else:
 				return "ERROR: You cannot stack multipliers. You can only extend your current one's time."
 
-
-		DB.insert("INSERT INTO Multipliers(DiscordID, Multiplier, Expires) VALUES(user.id, multiplierAmnt, expiration)")
+		strExpiration = expiration.strftime('%Y-%d-%m %H:%M:%S')
+		DB.insert("INSERT INTO Multipliers(DiscordID, Multiplier, Expires) VALUES(?, ?, ?)", [user.id, multiplierAmnt, strExpiration])
+		return "Successfully added multiplier!"
 
 
 	def getMultiplier(self, user):
