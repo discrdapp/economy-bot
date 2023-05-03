@@ -24,8 +24,7 @@ class Admin(commands.Cog):
 		amntToReceive = math.floor(amnt * .95)
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amnt):
-			await interaction.send(f"**ERROR:** {interaction.user.mention}, you do not have enough credits to send that.")
-			return
+			raise Exception("tooPoor")
 
 		await self.bot.get_cog("Economy").addWinnings(user.id, amntToReceive)
 
@@ -56,11 +55,12 @@ class Admin(commands.Cog):
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def getmultipliers(self, interaction:Interaction):
-		multipliers = DB.fetchAll("SELECT DiscordID, Multiplier FROM Economy WHERE DiscordID == 547475078082985990;", None)
+		multipliers = DB.fetchAll("SELECT DiscordID, Multiplier, Expires FROM Multipliers;", None)
 
 		msg = "Multipliers are below:\n"
 		for multiplier in multipliers:
-			expireDate = datetime.datetime.strptime(multiplier[1], '%Y-%d-%m %H:%M:%S')
+			expireDate = datetime.datetime.strptime(multiplier[2], '%Y-%d-%m %H:%M:%S')
+			multiplierValue = multiplier[1]
 			if expireDate > datetime.datetime.now():
 				seconds = (expireDate - datetime.datetime.now()).total_seconds()
 				
@@ -78,7 +78,7 @@ class Admin(commands.Cog):
 				seconds = round(seconds)
 				timeLeft += f"{seconds} seconds"
 
-				msg += f"ID: {multiplier[0]}'s expires at {expireDate}. They have {timeLeft} left."
+				msg += f"ID: {multiplier[0]}'s expires at {expireDate}. {timeLeft} left. {multiplierValue}x multiplier."
 
 
 		# print(f"datetime is {datetime.now()}")
