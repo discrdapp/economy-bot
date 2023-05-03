@@ -10,8 +10,10 @@ class TTT(commands.Cog):
 
 	@nextcord.slash_command(description="Play TicTacToe with a friend!")
 	async def tictactoe(self, interaction:Interaction, member: nextcord.Member=None):
+		await interaction.channel.send("Down until further notice.")
+		return
 		""" Play Tic-Tac-Toe with a friend! """
-		channel = interaction.message.channel
+		channel = interaction.channel
 
 		if self.game_in_progress:
 			return
