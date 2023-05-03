@@ -4,8 +4,9 @@ from nextcord import Interaction
 
 from random import randint
 import cooldowns
+import datetime
 
-from db import DB
+from db import DB, buyableItems, buyableItemNamesList, usableItemNamesList
 
 
 ################
@@ -14,6 +15,7 @@ from db import DB
 #	Collectible
 #	Usable
 #	Upgrade
+#	Tool
 
 
 class MySource(menus.ListPageSource):
@@ -36,7 +38,7 @@ class Shop(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 		self.coin = "<:coins:585233801320333313>"
-		self.items = DB.fetchAll('SELECT * FROM Items WHERE Buyable = 1;')
+		self.items = buyableItems
 
 		self.itemsDict = dict()
 		for item in self.items:
@@ -65,21 +67,13 @@ class Shop(commands.Cog):
 		)
 		await pages.start(interaction=interaction)
 
-	def GetUsableItemNames():
-		itemNameList = DB.fetchAll('SELECT Name FROM Items WHERE Type = "Usable" and Buyable = 1;')
-		return [item for sublist in itemNameList for item in sublist]
-
-	def GetItemNames():
-		itemNameList = DB.fetchAll('SELECT Name FROM Items WHERE Buyable = 1;')
-		return [item for sublist in itemNameList for item in sublist]
-
 	@shop.subcommand()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def buy(self, interaction:Interaction, 
 						itemSelected = nextcord.SlashOption(
 										required=True,
 										name="item", 
-										choices=GetItemNames()), 
+										choices=buyableItemNamesList), 
 						amnt:int=1):
 		for item in self.items:
 			if item[1] == itemSelected:
@@ -157,11 +151,17 @@ class Shop(commands.Cog):
 						itemSelected = nextcord.SlashOption(
 								required=True,
 								name="item", 
-								choices=GetUsableItemNames()),
+								choices=usableItemNamesList),
 						amnt:int=1):
 
 		if itemSelected == "Crate":
 			await self.useCrate(interaction, amnt)
+		elif itemSelected == "Voter Chip":
+			# '%Y-%d-%m %H:%M:%S'
+			msg = self.bot.get_cog("Multipliers").addMultiplier(interaction.user, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=90))
+			await interaction.send(msg)
+		else:
+			print(itemSelected)
 
 
 
