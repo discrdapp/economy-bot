@@ -72,7 +72,7 @@ class Others(commands.Cog):
 		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, 7500)
 
 		bal = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed.description = f"Successfully claimed reward! New balance is {bal}"
+		embed.description = f"Successfully claimed reward! New balance is {bal:,}{self.coin}"
 		await interaction.send(embed=embed)
 
 
