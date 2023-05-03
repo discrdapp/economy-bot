@@ -14,8 +14,12 @@ class Bank(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_ready(self):
-		print("Interest has started up.")
-		self.bankInterest.start()
+		if not self.bankInterest.is_running():
+			self.bankInterest.start()
+	
+	def cog_unload(self):
+		if self.bankInterest.is_running():
+			self.bankInterest.cancel()
 
 	# 5 hours ahead
 	# midnight is 5:00 AM
@@ -47,11 +51,7 @@ class Bank(commands.Cog):
 		amnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, amnt)
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amnt):
-			embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
-			embed.set_thumbnail(url=interaction.user.avatar)
-			embed.description = "You do not have enough to do that."
-			await interaction.send(embed=embed)
-			return
+			raise Exception("tooPoor")
 
 		DB.update("UPDATE Economy SET Bank = Bank + ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
 
