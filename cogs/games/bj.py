@@ -16,6 +16,8 @@ from random import randint
 
 from db import DB
 
+import asyncio
+
 class bj(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
@@ -322,9 +324,8 @@ class bj(commands.Cog):
 		if file:
 			embed.set_thumbnail(url="attachment://image.png")
 
-		giveZeroIfNeg = max(0, profitInt) # will give 0 if profit is negative. 
-																				# we don't want it subtracting anything, only adding
-		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
+		if moneyToAdd > 0:
+			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (moneyToAdd * (multiplier - 1)))
 		embed.set_field_at(2, name = f"**--- {result} ---**", value = "_ _", inline=False)
 
 		embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
