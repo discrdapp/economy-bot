@@ -61,7 +61,7 @@ class ErrorHandling(commands.Cog):
 				return
 
 			if err == "tooPoor":
-				embed.description = "You do not have enough credits to do that or you are trying to bet an amount less than 1."
+				embed.description = "You do not have enough credits to do that (or you are trying to use an amount less than 1)"
 				await interaction.send(embed=embed)
 				return
 
@@ -102,8 +102,8 @@ class ErrorHandling(commands.Cog):
 			return 
 		except Exception as e:
 			pass
-			
-			
+
+
 		# if interaction.application_command is not None and not isinstance(error, commands.CommandOnCooldown) and not isinstance(error, CallableOnCooldown):
 		# 	interaction.application_command.reset_cooldown(interaction)
 
