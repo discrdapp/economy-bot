@@ -98,13 +98,15 @@ class Inventory(commands.Cog):
 
 	def checkInventoryFor(self, user: nextcord.user, itemName: str, amnt: int=1):
 		if amnt == 1:
-			crates = DB.fetchOne("SELECT 1 FROM Inventory WHERE DiscordID = ? AND Item = ?;", [user.id, itemName])
+			isInInventory = DB.fetchOne("SELECT 1 FROM Inventory WHERE DiscordID = ? AND Item = ?;", [user.id, itemName])
 		else:
-			crates = DB.fetchOne("SELECT 1 FROM Inventory WHERE DiscordID = ? AND Item = ? AND Quantity >= ?;", [user.id, itemName, amnt])
+			isInInventory = DB.fetchOne("SELECT 1 FROM Inventory WHERE DiscordID = ? AND Item = ? AND Quantity >= ?;", [user.id, itemName, amnt])
 		
-		if crates: return True
+		if isInInventory: return True
 		else: return False
 
+	def removeItemFromInventory(self, user: nextcord.user, itemName: str, amnt: int=1):
+		DB.update("UPDATE Inventory SET Quantity = Quantity - ? WHERE DiscordID = ? AND Item = '?';", [amnt, user.id, itemName])
 
 	def subtractInv(self, discordid: int, amnt: int): # called when people open crates (subtracts them from inv.)
 		DB.update("UPDATE Inventory SET Quantity = Quantity - ? WHERE DiscordID = ? AND Item = 'Crate';", [amnt, discordid])
