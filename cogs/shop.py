@@ -158,7 +158,12 @@ class Shop(commands.Cog):
 			await self.useCrate(interaction, amnt)
 		elif itemSelected == "Voter Chip":
 			# '%Y-%d-%m %H:%M:%S'
+			if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, "Voter Chip", amnt):
+				await interaction.send("You don't have enough Voter Chips to do that!")
+				return
+
 			msg = self.bot.get_cog("Multipliers").addMultiplier(interaction.user, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=90))
+			self.bot.get_cog("Inventory").removeFromInventory(interaction.user, "Voter Chip", amnt)
 			await interaction.send(msg)
 		else:
 			print(itemSelected)
