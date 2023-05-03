@@ -60,8 +60,8 @@ async def on_interaction(interaction: Interaction):
 	# 	embed.description = "Upgrading bot to 2.0!!! Please check back in a few hours."
 	# 	await interaction.send(embed=embed)
 	# 	return
-	
-	await bot.process_application_commands(interaction)
+	if interaction.application_command and interaction.application_command.qualified_name != "roulette":
+		await bot.process_application_commands(interaction)
 
 
 # manually load a cog
