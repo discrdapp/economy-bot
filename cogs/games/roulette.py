@@ -96,7 +96,11 @@ class Roulette(commands.Cog):
 		self.totalBet = 0
 		
 		modal = GetBets()
-		await interaction.response.send_modal(modal)
+		try:
+			await interaction.response.send_modal(modal)
+		except Exception as e:
+			print(e)
+			print(type(e))
 
 		nums = ""
 		numCount = 0
