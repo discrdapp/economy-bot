@@ -11,54 +11,70 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import cooldowns, asyncio
+import cooldowns
 from random import randint
 
 from db import DB
 
 import asyncio
 
-class bj(commands.Cog):
-	def __init__(self, bot):
+class Button(nextcord.ui.Button['Blackjack']):
+	def __init__(self, label, style):
+		super().__init__(label=label, style=style)
+	
+	async def callback(self, interaction: nextcord.Interaction):
+		assert self.view is not None
+		view: Blackjack = self.view
+
+		if view.ownerId != interaction.user.id:
+			await interaction.send("This is not your game!", ephemeral=True)
+			return
+
+		if self.label == "Hit":
+			await view.hit(interaction)
+		elif self.label == "Stand":
+			await view.stand(interaction)
+		
+		await view.msg.edit(f"{interaction.user.mention}", embed=view.embed, view=view)
+		await interaction.response.defer()
+
+class Blackjack(nextcord.ui.View):
+	def __init__(self, bot, id, cards, amntbet):
+		super().__init__()
 		self.bot = bot
-		self.cards = ["♣ A", "♣ 2", "♣ 3", "♣ 4", "♣ 5", "♣ 6", "♣ 7", "♣ 8", "♣ 9", "♣ 10", "♣ Jack", "♣ Queen", "♣ King",
-					  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
-					  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
-					  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
 		self.coin = "<:coins:585233801320333313>"
 
-	@nextcord.slash_command(description="Play BlackJack!")
-	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)	
-	async def blackjack(self, interaction:Interaction, amntbet):
-		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
-		
-		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
-			raise Exception("tooPoor")
-			
+		self.cards = cards
+		self.pCARD = list()
+		self.pCardSuit = list()
+		self.pCardNum = list()
+
+		self.ownerId = id
+
+		self.dealerNum = list()
+		self.dealerHand = list()
+
+		self.embed = None
+		self.msg = None
+
+		self.amntbet = amntbet
+
+	async def Start(self, interaction):
 		# generate the starting cards
-		dFirstHand, dFirstNum = await self.dealer_first_turn(interaction)
+		await self.dealer_first_turn(interaction)
 		
-		# collect player input for player's hand
-		player_hand, player_num, embed = await self.player_turn(dFirstHand, dFirstNum, interaction)
-		# generate dealer's hand
-		dealer_hand, dealer_num = await self.dealer_turn(dFirstHand, dFirstNum, interaction)
+		self.add_item(Button(label="Hit", style=nextcord.ButtonStyle.green))
+		self.add_item(Button(label="Stand", style=nextcord.ButtonStyle.red))
+
+		self.embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack")
+		file = nextcord.File("./images/bj.png", filename="image.png")
+		self.embed.set_thumbnail(url="attachment://image.png")
 		
-		winner = await self.compare_between(player_num, dealer_num, interaction)
-		
-		await self.displayWinner(interaction, winner, player_hand, player_num, dealer_hand, dealer_num, amntbet, embed.copy()) 
+		await self.player_first_turn(interaction)
 
-
-
-	async def player_turn(self, dCard, dCardNum, interaction):
-		author = interaction.user
-		pCARD = []
-		pCardSuit = []
-		pCardNum = []
-
+	async def player_first_turn(self, interaction):
 		pDrawnCard = await self.take_card()
-
-		pCARD.append(pDrawnCard)
+		self.pCARD.append(pDrawnCard)
 
 		pDrawnCard = pDrawnCard.split()
 
@@ -67,86 +83,101 @@ class bj(commands.Cog):
 			pDrawnCard[1] = "10"
 		elif pDrawnCard[1] == "A":
 			pDrawnCard[1] = "11"
-		pCardNum.append(int(pDrawnCard[1]))
+		self.pCardNum.append(int(pDrawnCard[1]))
 
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack")
-		file = nextcord.File("./images/bj.png", filename="image.png")
-		# embed.set_thumbnail(url="attachment://image.png")
-		botMsg = await interaction.send(f"{author.mention}", embed=embed)
-		try:
-			botMsg = await botMsg.fetch()
-		except:
-			pass
-		ans = "hit"
-		while (ans.lower() == "h") or (ans.lower() == "hit"):
-			
-			# player draws a card 
-			pDrawnCard = await self.take_card()
-			pCARD.append((pDrawnCard))
+		# player draws a card 
+		pDrawnCard = await self.take_card()
+		self.pCARD.append(pDrawnCard)
 
-			# splits the number and the suit 
-			pDrawnCard = pDrawnCard.split()
+		# splits the number and the suit 
+		pDrawnCard = pDrawnCard.split()
 
-			# converts to number
-			if pDrawnCard[1] == "Jack" or pDrawnCard[1] == "Queen" or pDrawnCard[1] == "King":
-				pDrawnCard[1] = "10"
-			elif pDrawnCard[1] == "A":
-				pDrawnCard[1] = "11"
+		# converts to number
+		if pDrawnCard[1] == "Jack" or pDrawnCard[1] == "Queen" or pDrawnCard[1] == "King":
+			pDrawnCard[1] = "10"
+		elif pDrawnCard[1] == "A":
+			pDrawnCard[1] = "11"
 
-			# adds the card to the player's hand
-			pCardNum.append(int(pDrawnCard[1]))
+		# adds the card to the player's hand
+		self.pCardNum.append(int(pDrawnCard[1]))
 
-			pCardNum = await self.eval_ace(pCardNum)
+		# checks if player has an ace
+		self.pCardNum = await self.eval_ace(self.pCardNum)
 
-			# used to make display for all p cards
-			pTotal = ""
-			for x in pCARD:
-				pTotal += f"{x} "
+		# used to make display for all p cards
+		pTotal = ""
+		for x in self.pCARD:
+			pTotal += f"{x} "
 
-			# used to make display for all d cards
-			dTotal = ""
-			for x in dCard:
-				dTotal += f"{x} "
+		# used to make display for all d cards
+		dTotal = ""
+		for x in self.dealerHand:
+			dTotal += f"{x} "
 
-			# if game just started, it will add all the fields; if player "hit", it will update the embed for player's cards
-			try:
-				embed.set_field_at(0, name = f"{author.name}'s CARD:", value = f"{pTotal}\n**Score**: {sum(pCardNum)}", inline=True)
-			except:
-				embed.add_field(name = f"{author.name}'s CARD:", value = f"{pTotal}\n**Score**: {sum(pCardNum)}", inline=True)
-				embed.add_field(name = f"{self.bot.user.name}' CARD", value = f"{dCard[0]}\n**Score**: {dCardNum[0]}\n", inline=True)
-				embed.add_field(name = "_ _", value = "**Options:** hit or stay", inline=False)
 
-			embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+		self.embed.add_field(name = f"{interaction.user.name}'s CARD:", value = f"{pTotal}\n**Score**: {sum(self.pCardNum)}", inline=True)
+		self.embed.add_field(name = f"{self.bot.user.name}' CARD", value = f"{self.dealerHand[0]}\n**Score**: {self.dealerNum[0]}\n", inline=True)
+		self.embed.add_field(name = "_ _", value = "**Options:** hit or stay", inline=False)
+		self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
 
-			# ends game if player busted or has 21
-			if (await self.is_bust(pCardNum) or await self.is_blackjack(pCardNum)):
-				break
-			await botMsg.edit(content=f"{author.mention}", embed=embed)
+		botMsg = await interaction.send(f"{interaction.user.mention}", embed=self.embed, view=self)
+		self.msg = await botMsg.fetch()
 
-			userSettings = self.bot.get_cog("Settings").getUserSettings(author)
-			# emojis = userSettings[str(author.id)]["blackjack"]["emojis"]
 
-			# if emojis == "\u2705":
-			def is_me_reaction(reaction, user):
-				return user == author
+	async def hit(self, interaction):
+		# player draws a card 
+		pDrawnCard = await self.take_card()
+		self.pCARD.append(pDrawnCard)
 
-			await botMsg.add_reaction("🇭") 
-			await botMsg.add_reaction("🇸")
-			try:
-				reaction, user = await self.bot.wait_for('reaction_add', check=is_me_reaction, timeout=45)
-			except asyncio.TimeoutError:
-				raise Exception("timeoutError")
+		# splits the number and the suit 
+		pDrawnCard = pDrawnCard.split()
 
-			if str(reaction) == "🇭": 
-				ans = "hit"
-			elif str(reaction) == "🇸": 
-				ans = "stay"
-			else:
-				raise Exception("timeoutError")
+		# converts to number
+		if pDrawnCard[1] == "Jack" or pDrawnCard[1] == "Queen" or pDrawnCard[1] == "King":
+			pDrawnCard[1] = "10"
+		elif pDrawnCard[1] == "A":
+			pDrawnCard[1] = "11"
 
-			await botMsg.clear_reactions()
+		# adds the card to the player's hand
+		self.pCardNum.append(int(pDrawnCard[1]))
+		
+		# checks if player has an ace
+		self.pCardNum = await self.eval_ace(self.pCardNum)
 
-		return pCARD, pCardNum, embed
+		# used to make display for all p cards
+		pTotal = ""
+		for x in self.pCARD:
+			pTotal += f"{x} "
+
+		# used to make display for all d cards
+		dTotal = ""
+		for x in self.dealerHand:
+			dTotal += f"{x} "
+
+		self.embed.set_field_at(0, 
+			name = f"{interaction.user.name}'s CARD:", 
+			value = f"{pTotal}\n**Score**: {sum(self.pCardNum)}", 
+			inline=True)
+
+		self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+
+		# ends game if player busted or has 21
+		if (await self.is_bust(self.pCardNum) or await self.is_blackjack(self.pCardNum)):
+			await self.EndGame(interaction)
+			return 
+
+	async def stand(self, interaction):
+		# generate dealer's hand
+		await self.dealer_turn(interaction)
+		await self.EndGame(interaction)
+
+
+	async def EndGame(self, interaction):
+		for child in self.children:
+			child.disabled = True
+		self.stop()
+		winner = await self.compare_between(interaction)
+		await self.displayWinner(interaction, winner) 
 
 
 	async def take_card(self):
@@ -189,11 +220,8 @@ class bj(commands.Cog):
 		return None
 
 	async def dealer_first_turn(self, interaction:Interaction):
-		dCARD = []
-		dCardNum = []
-
 		dDrawnCard = await self.take_card()
-		dCARD.append(dDrawnCard)
+		self.dealerHand.append(dDrawnCard)
 
 		dDrawnCard = dDrawnCard.split()
 
@@ -202,19 +230,19 @@ class bj(commands.Cog):
 		elif dDrawnCard[1] == "A":
 			dDrawnCard[1] = "11"
 
-		dCardNum.append(int(dDrawnCard[1]))
+		self.dealerNum.append(int(dDrawnCard[1]))
 
-		dCardNum = await self.eval_ace(dCardNum)
+		self.dealerNum = await self.eval_ace(self.dealerNum)
 		
-		return dCARD, dCardNum
+		
 
-	async def dealer_turn(self, dCARD, dCardNum, interaction):
+	async def dealer_turn(self, interaction):
 		# d will keep drawing until card values sum > 16
-		while sum(dCardNum) <= 16:
+		while sum(self.dealerNum) <= 16:
 			# grabs a card
 			dDrawnCard = await self.take_card()
 			# adds it to his hand
-			dCARD.append(dDrawnCard)
+			self.dealerHand.append(dDrawnCard)
 
 			# splits suit and number
 			dDrawnCard = dDrawnCard.split()
@@ -224,19 +252,18 @@ class bj(commands.Cog):
 			elif dDrawnCard[1] == "A":
 				dDrawnCard[1] = "11"
 
-			dCardNum.append(int(dDrawnCard[1]))
+			self.dealerNum.append(int(dDrawnCard[1]))
 
-			dCardNum = await self.eval_ace(dCardNum)
-		return dCARD, dCardNum
+			self.dealerNum = await self.eval_ace(self.dealerNum)
 
 
-	async def compare_between(self, player_hand, dealer_hand, interaction):
-		total_player = sum(player_hand)
-		total_dealer = sum(dealer_hand)
-		player_bust = await self.is_bust(player_hand)
-		dealer_bust = await self.is_bust(dealer_hand)
-		player_blackjack = await self.is_blackjack(player_hand)
-		dearler_blackjack = await self.is_blackjack(dealer_hand)
+	async def compare_between(self, interaction):
+		total_player = sum(self.pCardNum)
+		total_dealer = sum(self.dealerNum)
+		player_bust = await self.is_bust(self.pCardNum)
+		dealer_bust = await self.is_bust(self.dealerNum)
+		player_blackjack = await self.is_blackjack(self.pCardNum)
+		dearler_blackjack = await self.is_blackjack(self.dealerNum)
 
 		# when p bust.
 		if player_bust:
@@ -262,22 +289,20 @@ class bj(commands.Cog):
 			else:
 				return 0
 
-	async def displayWinner(self, interaction:Interaction, winner, player_hand, player_num, dealer_hand, dealer_num, amntbet, embed):
+	async def displayWinner(self, interaction:Interaction, winner):
 		pTotal = ""
-		for x in player_hand:
+		for x in self.pCARD:
 			pTotal += f"{x} "
 
 		dTotal = ""
-		for x in dealer_hand:
+		for x in self.dealerHand:
 			dTotal += f"{x} "
 
 
 		#self.embed.add_field(name = f"{author.name}'s' CARD:", value = f"{pTotal}\n**Score**: {sum(player_num)}", inline=True)
 
-		coin = "<:coins:585233801320333313>"
-
-		embed.set_field_at(1, name = f"{self.bot.user.name}' CARD", value = f"{dTotal}\n**Score**: {sum(dealer_num)}", inline=True)
-		embed.color = nextcord.Color(0xff2020)
+		self.embed.set_field_at(1, name = f"{self.bot.user.name}' CARD", value = f"{dTotal}\n**Score**: {sum(self.dealerNum)}", inline=True)
+		self.embed.color = nextcord.Color(0xff2020)
 		result = ""
 
 
@@ -295,48 +320,71 @@ class bj(commands.Cog):
 
 		file = None
 		if winner == 1:
-			moneyToAdd = amntbet * 2 
-			profitInt = moneyToAdd - amntbet
+			moneyToAdd = self.amntbet * 2 
+			profitInt = moneyToAdd - self.amntbet
 			result = "YOU WON"
 			profit = f"**{profitInt:,}** (+**{int(profitInt * (multiplier - 1))}**)"
 			
-			embed.color = nextcord.Color(0x23f518)
-			if sum(player_num) == 21:
+			self.embed.color = nextcord.Color(0x23f518)
+			if sum(self.pCardNum) == 21:
 				file = nextcord.File("./images/21.png", filename="image.png")
 			else:
 				file = nextcord.File("./images/bjwon.png", filename="image.png")
 
 		elif winner == -1:
 			moneyToAdd = 0 # nothing to add since loss
-			profitInt = -amntbet # profit = amntWon - amntbet; amntWon = 0 in this case
+			profitInt = -self.amntbet # profit = amntWon - amntbet; amntWon = 0 in this case
 			result = "YOU LOST"
 			profit = f"**{profitInt:,}**"
 			file = nextcord.File("./images/bjlost.png", filename="image.png")
 
 		
 		elif winner == 0:
-			moneyToAdd = amntbet # add back their bet they placed since it was pushed (tied)
+			moneyToAdd = self.amntbet # add back their bet they placed since it was pushed (tied)
 			profitInt = 0 # they get refunded their money (so they don't make or lose money)
 			result = "PUSHED"
 			profit = f"**{profitInt:,}**"
 			file = nextcord.File("./images/bjpushed.png", filename="image.png")
 		
 		if file:
-			embed.set_thumbnail(url="attachment://image.png")
+			self.embed.set_thumbnail(url="attachment://image.png")
 
 		if moneyToAdd > 0:
 			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (moneyToAdd * (multiplier - 1)))
-		embed.set_field_at(2, name = f"**--- {result} ---**", value = "_ _", inline=False)
+		self.embed.set_field_at(2, name = f"**--- {result} ---**", value = "_ _", inline=False)
 
-		embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
+		self.embed = await DB.addProfitAndBalFields(self, interaction, profit, self.embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed)
+		self.embed = await DB.calculateXP(self, interaction, balance - profitInt, self.amntbet, self.embed)
 
-		await interaction.send(content=f"{interaction.user.mention}", file=file, embed=embed)
+		# await interaction.send(content=f"{interaction.user.mention}", file=file, embed=self.embed)
 
-		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 1)	
+		await self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, 1)	
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "BJ", profitInt)
+
+
+class bj(commands.Cog):
+	def __init__(self, bot):
+		self.bot = bot
+		self.cards = ["♣ A", "♣ 2", "♣ 3", "♣ 4", "♣ 5", "♣ 6", "♣ 7", "♣ 8", "♣ 9", "♣ 10", "♣ Jack", "♣ Queen", "♣ King",
+					  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
+					  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
+					  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
+
+	@nextcord.slash_command(description="Play BlackJack!")
+	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)	
+	async def blackjack(self, interaction:Interaction, amntbet):
+		print(len(self.cards))
+		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
+		
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
+			raise Exception("tooPoor")
+		
+		view = Blackjack(self.bot, interaction.user.id, self.cards, amntbet)
+		await view.Start(interaction)
+
 
 def setup(bot):
 	bot.add_cog(bj(bot))
