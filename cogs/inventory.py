@@ -1,11 +1,14 @@
 import nextcord
-from nextcord.ext import commands, menus
+from nextcord.ext import commands, menus, application_checks
 from nextcord import Interaction
-from nextcord.ui import View, Select
+from nextcord.ui import Select
 
+from random import randint
+import datetime
 from cooldowns import cooldown, SlashBucket
 
-from db import DB
+import config
+from db import DB, allItemNamesList, usableItemNamesList
 
 class MySource(menus.ListPageSource):
 	def __init__(self, data):
@@ -26,6 +29,19 @@ class Inventory(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 		self.coin = "<:coins:585233801320333313>"
+	
+	@nextcord.slash_command(guild_ids=[config.adminServerID])
+	@application_checks.is_owner()
+	async def giveitem(self, interaction:Interaction, 
+		    user: nextcord.Member,
+			itemSelected = nextcord.SlashOption(
+								required=True,
+								name="item", 
+								choices=allItemNamesList),
+			amnt: int=1):
+		
+		self.addItemToInventory(interaction.user.id, amnt, itemSelected)
+		
 	
 	@nextcord.slash_command()
 	@cooldown(1, 5, bucket=SlashBucket.author)
@@ -70,11 +86,37 @@ class Inventory(commands.Cog):
 		a.callback = callback
 		pages.add_item(a)
 
-
-
-
 		test = await pages.start(interaction=interaction, ephemeral=True)
 	
+	@nextcord.slash_command()
+	@cooldown(1, 5, bucket=SlashBucket.author)
+	async def use(self, interaction:Interaction, 
+						itemSelected = nextcord.SlashOption(
+								required=True,
+								name="item", 
+								choices=usableItemNamesList),
+						amnt:int=1):
+
+		if amnt < 1:
+			raise Exception("valueError")
+
+		if itemSelected == "Crate":
+			await self.bot.get_cog("Shop").useCrate(interaction, amnt)
+			return
+
+		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, itemSelected, amnt):
+			raise Exception("itemNotFoundInInventory")
+
+
+		if itemSelected == "Voter Chip":
+			msg = self.bot.get_cog("Multipliers").addMultiplier(interaction.user, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=150))
+			self.bot.get_cog("Inventory").removeItemFromInventory(interaction.user, "Voter Chip", amnt)
+			await interaction.send(msg)
+		elif itemSelected == "Magic 8 Ball":
+			amnt = randint(5000, 50000)
+			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amnt)
+
+	# returns a list of items in the inventory
 	def getAllInventory(self, user: nextcord.user, itemType:str=None):
 		if itemType:
 			return DB.fetchAll("SELECT Item, Quantity, Type, Description \
@@ -85,6 +127,7 @@ class Inventory(commands.Cog):
 		     				FROM Inventory LEFT JOIN Items ON Inventory.Item = Items.Name \
 		     				WHERE DiscordID = ?;", [user.id])
 
+	# returns the amount of crates and keys a user has
 	def getInventory(self, user: nextcord.user): # grabs all the crates and keys from database
 		crates = DB.fetchOne("SELECT Quantity FROM Inventory WHERE DiscordID = ? AND Item = 'Crate';", [user.id])
 		keys = DB.fetchOne("SELECT Quantity FROM Inventory WHERE DiscordID = ? AND Item = 'Key';", [user.id])
@@ -96,25 +139,30 @@ class Inventory(commands.Cog):
 
 		return crates, keys
 
+	# checks if user has an item in their inventory
 	def checkInventoryFor(self, user: nextcord.user, itemName: str, amnt: int=1):
-		if amnt == 1:
-			isInInventory = DB.fetchOne("SELECT 1 FROM Inventory WHERE DiscordID = ? AND Item = ?;", [user.id, itemName])
-		else:
-			isInInventory = DB.fetchOne("SELECT 1 FROM Inventory WHERE DiscordID = ? AND Item = ? AND Quantity >= ?;", [user.id, itemName, amnt])
+		if amnt < 1:
+			raise ValueError("valueError")
+		isInInventory = DB.fetchOne("SELECT 1 FROM Inventory WHERE DiscordID = ? AND Item = ? AND Quantity >= ?;", [user.id, itemName, amnt])
 		
 		if isInInventory: return True
 		else: return False
 
 	def removeItemFromInventory(self, user: nextcord.user, itemName: str, amnt: int=1):
-		DB.update("UPDATE Inventory SET Quantity = Quantity - ? WHERE DiscordID = ? AND Item = '?';", [amnt, user.id, itemName])
+		if amnt < 1:
+			raise ValueError("valueError")
+		DB.update("UPDATE Inventory SET Quantity = Quantity - ? WHERE DiscordID = ? AND Item = ?;", [amnt, user.id, itemName])
 
+	# called when people open crates (subtracts them from inv.)
 	def subtractInv(self, discordid: int, amnt: int): # called when people open crates (subtracts them from inv.)
 		DB.update("UPDATE Inventory SET Quantity = Quantity - ? WHERE DiscordID = ? AND Item = 'Crate';", [amnt, discordid])
 		DB.update("UPDATE Inventory SET Quantity = Quantity - ? WHERE DiscordID = ? and Item = 'Key';", [amnt, discordid])
 	
 
 	def addItemToInventory(self, discordId: int, amnt: int, itemName: str):
+		# if user doesnt have item being added, add it to their inventory
 		DB.insert('INSERT OR IGNORE INTO Inventory(DiscordID, Item, Quantity) VALUES (?, ?, 0);', [discordId, itemName])
+		# update quantity of item in inventory
 		DB.update('UPDATE Inventory SET Quantity = Quantity + ? WHERE DiscordID = ? AND Item = ?;', [amnt, discordId, itemName])
 
 
