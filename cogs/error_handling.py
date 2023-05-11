@@ -20,7 +20,7 @@ class ErrorHandling(commands.Cog):
 	async def on_application_command_error(self, interaction:Interaction, error):
 		commandName = interaction.application_command.qualified_name.title()
 
-		embed = nextcord.Embed(title=f"{self.bot.user.name} | {commandName} ERROR", color=0xFF0000)
+		embed = nextcord.Embed(title=f"{self.bot.user.name} | {commandName} | ERROR", color=0xFF0000)
 		error = getattr(error, 'original', error)
 
 		if "missing permissions" in str(error).lower() or "send message" in str(error).lower() or "missing access" in str(error).lower():
@@ -60,6 +60,11 @@ class ErrorHandling(commands.Cog):
 				await interaction.send(embed=embed)
 				return
 
+			if err == "itemNotFoundInInventory":
+				embed.description = "You do not have that item in your inventory"
+				await interaction.send(embed=embed)
+				return
+
 			if err == "tooPoor":
 				embed.description = "You do not have enough credits to do that (or you are trying to use an amount less than 1)"
 				await interaction.send(embed=embed)
@@ -90,11 +95,11 @@ class ErrorHandling(commands.Cog):
 				await ch.send(f"Further info\n{commandName} ")
 			except Exception as e:
 				await ch.send(f"error with further infooooo: {e}")
-			
 
 
 			embed.set_thumbnail(url=interaction.user.avatar)
 			embed.set_footer(text=interaction.user)
+			embed.description = "An error has occured. The developers have been notified. Please try again later."
 
 
 		try:
@@ -102,10 +107,6 @@ class ErrorHandling(commands.Cog):
 			return 
 		except Exception as e:
 			pass
-
-
-		# if interaction.application_command is not None and not isinstance(error, commands.CommandOnCooldown) and not isinstance(error, CallableOnCooldown):
-		# 	interaction.application_command.reset_cooldown(interaction)
 
 def setup(bot):
 	bot.add_cog(ErrorHandling(bot))
