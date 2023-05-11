@@ -48,7 +48,7 @@ class Admin(commands.Cog):
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def resetmultipliers(self, interaction:Interaction):
-		DB.update(f"UPDATE Economy SET Multiplier = '2023-18-04 20:21:00';")
+		DB.update(f"DELETE FROM Multipliers;")
 		await interaction.send(f"All multipliers have been reset.\nUpdated all rows.")
 
 
