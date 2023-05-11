@@ -145,37 +145,6 @@ class Shop(commands.Cog):
 			await self.bot.get_cog("Economy").balance(interaction)
 
 
-	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
-	async def use(self, interaction:Interaction, 
-						itemSelected = nextcord.SlashOption(
-								required=True,
-								name="item", 
-								choices=usableItemNamesList),
-						amnt:int=1):
-
-		if itemSelected == "Crate":
-			await self.useCrate(interaction, amnt)
-		elif itemSelected == "Voter Chip":
-			# '%Y-%d-%m %H:%M:%S'
-			if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, "Voter Chip", amnt):
-				await interaction.send("You don't have enough Voter Chips to do that!")
-				return
-
-			msg = self.bot.get_cog("Multipliers").addMultiplier(interaction.user, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=90))
-			self.bot.get_cog("Inventory").removeFromInventory(interaction.user, "Voter Chip", amnt)
-			await interaction.send(msg)
-		else:
-			print(itemSelected)
-
-
-
-
-	# @nextcord.slash_command()
-	# async def crate(self, interaction:Interaction):
-	# 	pass
-
-
 	# @crate.subcommand()
 	async def useCrate(self, interaction:Interaction, amnt: int):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crates")
