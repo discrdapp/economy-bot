@@ -37,7 +37,7 @@ class Vote(commands.Cog):
 		self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, 1, 'Voter Chip')
 		
 		embed.add_field(name=f"Thanks for Voting {numOfVotes} {times}!", value=f"{moneyToAdd}{self.coin} has been added to your account and you received your Voter Chip!")
-		embed.footer("/use to use your Voter Chip")
+		embed.set_footer("/use to use your Voter Chip")
 		msg = await interaction.send(embed=embed)
 		msg = await msg.fetch()
 		await msg.add_reaction("❤️")
