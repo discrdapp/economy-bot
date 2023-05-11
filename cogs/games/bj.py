@@ -65,20 +65,20 @@ class Button(nextcord.ui.Button['Blackjack']):
 			await interaction.response.send_modal(self.modal)
 			await self.modal.wait()
 
-			await interaction.edit(content=f"{interaction.user.mention}\nChecking for blackjack")
+			await interaction.edit_original_message(content=f"{interaction.user.mention}\nChecking for blackjack")
 			await asyncio.sleep(0.6)
-			await interaction.edit(content=f"{interaction.user.mention}\nChecking for blackjack.")
+			await interaction.edit_original_message(content=f"{interaction.user.mention}\nChecking for blackjack.")
 			await asyncio.sleep(0.6)
-			await interaction.edit(content=f"{interaction.user.mention}\nChecking for blackjack..")
+			await interaction.edit_original_message(content=f"{interaction.user.mention}\nChecking for blackjack..")
 			await asyncio.sleep(0.6)
-			await interaction.edit(content=f"{interaction.user.mention}\nChecking for blackjack...")
+			await interaction.edit_original_message(content=f"{interaction.user.mention}\nChecking for blackjack...")
 			await asyncio.sleep(0.6)
 			if view.dealerNum[1] == 10: # checks if dealer's second card is a 10
-				await interaction.edit(content=f"{interaction.user.mention}\nChecking for blackjack... Protected by insurance!")
+				await interaction.edit_original_message(content=f"{interaction.user.mention}\nChecking for blackjack... Protected by insurance!")
 				await view.displayWinner(999)
 				return
 			else:
-				await interaction.edit(content=f"{interaction.user.mention}\nDealer does not have blackjack... game will continue")
+				await interaction.edit_original_message(content=f"{interaction.user.mention}\nDealer does not have blackjack... game will continue")
 		if self.label == "Double Down":
 			if not await self.bot.get_cog("Economy").subtractBet(interaction.user, self.view.amntbet):
 				await interaction.send("You don't have enough credits for that bet", ephemeral=True)
@@ -125,10 +125,10 @@ class Blackjack(nextcord.ui.View):
 
 		self.amntbet = amntbet
 
-		self.insurance = Button(bot, label="Insurance", style=nextcord.ButtonStyle.blurple, row=1, disabled=True)
-		self.add_item(self.insurance)
 		self.doubleDown = Button(bot, label="Double Down", style=nextcord.ButtonStyle.blurple, row=1)
 		self.add_item(self.doubleDown)
+		self.insurance = Button(bot, label="Insurance", style=nextcord.ButtonStyle.blurple, row=1, disabled=True)
+		self.add_item(self.insurance)
 
 		self.insuranceBet = None
 	
@@ -305,12 +305,12 @@ class Blackjack(nextcord.ui.View):
 	def dealer_first_turn(self):
 		# dDrawnCard = "♦ A"
 		for x in range(0, 2):
-			if x == 0:
-				dDrawnCard = "♦ A"
-			else:
-				dDrawnCard = "♦ 10"
+			# if x == 0:
+			# 	dDrawnCard = "♦ A"
 			# else:
-				# dDrawnCard = self.take_card()
+			# 	dDrawnCard = "♦ 10"
+			# else:
+			dDrawnCard = self.take_card()
 			self.dealerHand.append(dDrawnCard)
 
 			dDrawnCard = dDrawnCard.split()
@@ -426,14 +426,8 @@ class Blackjack(nextcord.ui.View):
 			if self.is_blackjack(self.pCardNum):
 				profitInt = moneyToAdd - self.insuranceBet
 			else:
-				if moneyToAdd > self.amntbet:
-					profitInt = moneyToAdd - self.amntbet - self.insuranceBet
-				else:
-					profitInt = self.amntbet - moneyToAdd - self.insuranceBet
-			
-
-
-
+				profitInt = moneyToAdd - self.amntbet - self.insuranceBet
+				
 			result = "DEALER 21 ON HAND, BUT WON INSURANCE"
 			profit = f"**{profitInt:,}** (+**{int(profitInt * (multiplier - 1))}**)"
 
