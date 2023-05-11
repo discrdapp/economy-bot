@@ -31,7 +31,7 @@ class Multipliers(commands.Cog):
 		expires = DB.fetchOne("SELECT Expires FROM Multipliers WHERE DiscordID = ?;", [user.id])
 		if not expires:
 			return False
-		expireDate = datetime.datetime.strptime(expires, '%Y-%d-%m %H:%M:%S')
+		expireDate = datetime.datetime.strptime(expires[0], '%Y-%d-%m %H:%M:%S')
 		if expireDate < datetime.datetime.now():
 			DB.delete("DELETE FROM Multipliers WHERE DiscordID = ?;", [user.id])
 			return False
@@ -40,9 +40,12 @@ class Multipliers(commands.Cog):
 	
 	def addMultiplier(self, user, multiplierAmnt:int, expiration:datetime.datetime):
 		if self.hasMultiplier(user):
-			multiplier, expiration = self.getMultiplierAndExpiration(user)
+			multiplier, currExpiration = self.getMultiplierAndExpiration(user, False)
 			if multiplier == multiplierAmnt:
                 # extend expiration
+				expirationSecondsLeft = (expiration - datetime.datetime.now()).total_seconds()
+				newTime = currExpiration + datetime.timedelta(seconds=expirationSecondsLeft)
+				DB.update("UPDATE Multipliers SET Expires = ? WHERE DiscordID = ? and Multiplier = ?;", [newTime.strftime('%Y-%d-%m %H:%M:%S'), user.id, multiplierAmnt])
 				return "Successfully extended multiplier!"
 			else:
 				return "ERROR: You cannot stack multipliers. You can only extend your current one's time."
@@ -68,7 +71,7 @@ class Multipliers(commands.Cog):
 
 		return 1.0
 
-	def getMultiplierAndExpiration(self, user):
+	def getMultiplierAndExpiration(self, user, returnExpirationAsString=True):
 		multipliers = DB.fetchOne("SELECT Multiplier, Expires FROM Multipliers WHERE DiscordID == ?;", [user.id])
 		if not multipliers: 
 			return 1.0, None
@@ -81,7 +84,10 @@ class Multipliers(commands.Cog):
 			print(f"multiplier {multiplier} is of type {type(multiplier)}")
 			seconds = (expireDate - datetime.datetime.now()).total_seconds()
 
-			return multiplier, self.convertSecondsToTimeStr(seconds)
+			if returnExpirationAsString:
+				return multiplier, self.convertSecondsToTimeStr(seconds)
+			else:
+				return multiplier, expireDate
 
 		return 1.0, None
 
