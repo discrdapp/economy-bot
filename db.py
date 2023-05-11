@@ -95,6 +95,8 @@ class DB(commands.Cog):
 		embed.add_field(name="Credits", value=f"{balance:,}{self.coin}", inline=True)
 		return embed
 
+allItemNames = DB.fetchAll('SELECT Name FROM Items;')
+allItemNamesList = [item for sublist in allItemNames for item in sublist]
 buyableItems = DB.fetchAll('SELECT * FROM Items WHERE Buyable = 1;')
 buyableItemNames = DB.fetchAll("SELECT Name FROM Items WHERE Buyable = 1;")
 buyableItemNamesList = [item for sublist in buyableItemNames for item in sublist]
