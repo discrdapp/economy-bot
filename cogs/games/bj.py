@@ -263,16 +263,16 @@ class Blackjack(nextcord.ui.View):
 
 
 	def take_card(self):
-		# get arbitrary card from 2 to 11.
-		randNum = randint(0, len(self.cards)-1)
-		drawnCard = self.cards.pop(randNum)
-
 		# if all 52 cards have been used, reset the deck
 		if len(self.cards) == 0:
 			self.cards = ["♣ A", "♣ 2", "♣ 3", "♣ 4", "♣ 5", "♣ 6", "♣ 7", "♣ 8", "♣ 9", "♣ 10", "♣ Jack", "♣ Queen", "♣ King",
 						  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
 						  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
 						  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
+
+		randNum = randint(0, len(self.cards)-1)
+		drawnCard = self.cards.pop(randNum)
+
 		return drawnCard
 
 
