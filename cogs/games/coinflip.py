@@ -1,5 +1,3 @@
-# economy-related stuff like betting and gambling, etc.
-
 import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
