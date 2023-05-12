@@ -59,7 +59,6 @@ class Slots(commands.Cog):
 			result = "YOU WON"
 			profit = f"**{moneyToAdd:,}** (**+{int(moneyToAdd * (multiplier - 1)):,}**)"
 			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (moneyToAdd * (multiplier - 1)))
-			print(f"added {moneyToAdd + (moneyToAdd * (multiplier - 1))}")
 
 		else: # if no match
 			moneyToAdd = amntbet
