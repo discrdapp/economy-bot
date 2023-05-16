@@ -8,20 +8,75 @@ import cooldowns, asyncio, random
 
 from db import DB
 
-class Crash(commands.Cog):
-	def __init__(self, bot):
+class Button(nextcord.ui.Button):
+	def __init__(self, label, style):
+		super().__init__(label=label, style=style)
+	
+	async def callback(self, interaction: Interaction):
+		assert self.view is not None
+		view: Crash = self.view
+
+		if view.task is not None and view.multiplier != view.crashNum and interaction.user.id == view.userId:
+			view.task.cancel() # cancel task if there is a current task, and current multiplier number isn't the crashing number
+							   # and user issuing command is user who started the game
+			await view.finished(interaction)
+
+class View(nextcord.ui.View):
+	def __init__(self, bot, userId, amntbet):
+		super().__init__()
 		self.bot = bot
-		self.userId = ""
+		self.userId = userId
 		self.task = None
 		self.multiplier = 1.0
 		self.crashNum = 1.2
 		self.coin = "<:coins:585233801320333313>"
 		self.crash = False
-		self.amntbet = 0
+		self.amntbet = amntbet
 		self.embed = None
+		self.cashoutButton = Button("Cashout", nextcord.ButtonStyle.green)
+		self.botMsg = None
+
+	async def Start(self, interaction):
+		self.add_item(self.cashoutButton)
+		
+		pC = random.randint(1, 10)
+		if 1 <= pC <= 3:	self.crashNum = 1.2 								# 30%
+		elif 4 <= pC <= 5:	self.crashNum = 1.4									# 20% 
+		elif 6 <= pC <= 8:	self.crashNum = random.choice([1.6, 1.8])			# 30%
+		elif pC == 9:		self.crashNum = random.choice([1.8, 2.0, 2.2, 2.4])	# 10%
+		elif pC == 10:	 	
+			self.crashNum = round(random.uniform(2.6, 12.0), 1)					# 10%
+			if int(self.crashNum * 10) % 2 == 1: self.crashNum = round(self.crashNum + 0.1, 1)
+
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crash")
+		embed.set_footer(text="Use /done to stop")
+		embed.add_field(name = "Multiplier:", value = f"{str(self.multiplier)}x", inline=True)
+		embed.add_field(name = "Profit", value = f"{str(round(self.multiplier * self.amntbet - self.amntbet))}{self.coin}", inline=True)
+
+		self.botMsg = await interaction.send(embed=embed, view=self, ephemeral=True)
+
+		try:
+			if self.crashNum == 1.2:
+				self.crash = True
+				raise Exception
+			self.task = self.bot.loop.create_task(self.do_loop(interaction, embed)) # creates loop for the crash game
+			await self.task # performs the loop
+		except:
+			if self.crash:
+				await self.finished(interaction)
+			else:
+				embed.remove_footer()
+				await self.botMsg.edit(embed=embed)
+		finally:
+			# resets all the variables 
+			self.task = None
+			self.multiplier = 1.0
+			self.crashNum = 1.6
+			self.crash = False
+			self.embed = embed
 
 
-	async def do_loop(self, interaction:Interaction, botMsg, embed): # keeps the number going and edits the message, until it "crashes"
+	async def do_loop(self, embed): # keeps the number going and edits the message, until it "crashes"
 		await asyncio.sleep(2)
 		while True: # will keep going until crash
 			self.multiplier += 0.2
@@ -29,7 +84,7 @@ class Crash(commands.Cog):
 			#await self.bot.wait_for('message', check=is_stop, timeout=2)
 			embed.set_field_at(0, name = f"Multiplier", value = f"{str(self.multiplier)}x", inline=True)
 			embed.set_field_at(1, name = "Profit", value = f"{round(self.multiplier * self.amntbet - self.amntbet):,}{self.coin}", inline=True)
-			await botMsg.edit(embed=embed)
+			await self.botMsg.edit(embed=embed)
 			if self.multiplier == self.crashNum: # if the current multiplier number is the number to crash on 
 				self.crash = True
 				break
@@ -37,6 +92,8 @@ class Crash(commands.Cog):
 		self.task.cancel() # ends the task
 
 	async def finished(self, interaction:Interaction):
+		self.cashoutButton.disabled = True
+		await self.botMsg.edit(view=self)
 		embed = nextcord.Embed(color=0x23f518, title=f"{self.bot.user.name} | Crash")
 		multi = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
 		profitInt = 0
@@ -69,63 +126,24 @@ class Crash(commands.Cog):
 		await self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, 2)
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Crsh", profitInt)
 
+
+class Crash(commands.Cog):
+	def __init__(self, bot):
+		self.bot = bot
+
+
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
 	async def crash(self, interaction:Interaction, bet): # actual command
 		bet = await self.bot.get_cog("Economy").GetBetAmount(interaction, bet)
+		bet = round(bet)
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, bet):
 			raise Exception("tooPoor")
 
-
-		self.amntbet = round(bet)
-		self.userId = interaction.user.id
-		# self.crashNum = round(random.uniform(1.2, 2.4), 1)
-
-		pC = random.randint(1, 10)
-
-		if 1 <= pC <= 3:	self.crashNum = 1.2 								# 30%
-		elif 4 <= pC <= 5:	self.crashNum = 1.4									# 20% 
-		elif 6 <= pC <= 8:	self.crashNum = random.choice([1.6, 1.8])			# 30%
-		elif pC == 9:		self.crashNum = random.choice([1.8, 2.0, 2.2, 2.4])	# 10%
-		elif pC == 10:	 	
-			self.crashNum = round(random.uniform(2.6, 12.0), 1)					# 10%
-			if int(self.crashNum * 10) % 2 == 1: self.crashNum = round(self.crashNum + 0.1, 1)
-
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crash")
-		embed.set_footer(text="Use /done to stop")
-		embed.add_field(name = "Multiplier:", value = f"{str(self.multiplier)}x", inline=True)
-		embed.add_field(name = "Profit", value = f"{str(round(self.multiplier * self.amntbet - self.amntbet))}{self.coin}", inline=True)
-		botMsg = await interaction.send(embed=embed)
-
-		try:
-			if self.crashNum == 1.2:
-				self.crash = True
-				raise Exception
-			self.task = self.bot.loop.create_task(self.do_loop(interaction, botMsg, embed)) # creates loop for the crash game
-			await self.task # performs the loop
-		except:
-			if self.crash:
-				await self.finished(interaction)
-			else:
-				embed.remove_footer()
-				await botMsg.edit(embed=embed)
-		finally:
-			# resets all the variables 
-			self.task = None
-			self.multiplier = 1.0
-			self.crashNum = 1.6
-			self.crash = False
-			self.embed = embed
-
-
-	@nextcord.slash_command()
-	async def done(self, interaction:Interaction): # the command to stop the game before it "crashes"
-		if self.task is not None and self.multiplier != self.crashNum and interaction.user.id == self.userId:
-			self.task.cancel() # cancel task if there is a current task, and current multiplier number isn't the crashing number
-							   # and user issuing command is user who started the game
-			await self.finished(interaction)
+		view = View(self.bot, interaction.user.id, bet)
+		await view.Start(interaction)
 
 
 
