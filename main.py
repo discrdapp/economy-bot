@@ -8,26 +8,28 @@ bot = commands.Bot()
 bot.remove_command('help')
 
 extensions = ["db", 
-			  "cogs.admin", 
-			  "cogs.bank", 
 			  "cogs.games.bj",
 			  "cogs.games.coinflip",
-			  "cogs.games.color_guesser", 
-			  "cogs.games.crash",
+			  "cogs.games.color_guesser",
+			  "cogs.games.crash", 
+			  "cogs.games.dond",
+			  "cogs.games.lottery",
+			  "cogs.games.miner",
+			  "cogs.games.mines",
+			  "cogs.games.roulette", 
+			  "cogs.games.rps",
+			  "cogs.games.scratch", 
+			  "cogs.games.slots", 
+			  "cogs.admin", 
+			  "cogs.bank", 
 			  "cogs.daily",
 			  "cogs.economy", 
 			  "cogs.error_handling",
 			  "cogs.inventory",
-			  "cogs.games.lottery",
-			  "cogs.games.miner",
 			  "cogs.multipliers",
 			  "cogs.others", 
 			  "cogs.quests", 
-			  "cogs.games.roulette", 
-			  "cogs.games.rps",
-			  "cogs.games.scratch", 
 			  "cogs.shop", 
-			  "cogs.games.slots", 
 			  "cogs.totals",
 			  "cogs.ttt", 
 			  "cogs.user_settings", 
@@ -60,8 +62,8 @@ async def on_interaction(interaction: Interaction):
 	# 	embed.description = "Upgrading bot to 2.0!!! Please check back in a few hours."
 	# 	await interaction.send(embed=embed)
 	# 	return
-	if interaction.application_command and interaction.application_command.qualified_name != "roulette":
-		await bot.process_application_commands(interaction)
+	# if interaction.application_command and interaction.application_command.qualified_name != "roulette":
+	await bot.process_application_commands(interaction)
 
 
 # manually load a cog
