@@ -10,7 +10,7 @@ from db import DB
 
 class Economy(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 
 
@@ -141,7 +141,7 @@ class Economy(commands.Cog):
 			return
 
 		donatorReward = self.getDonatorReward(interaction.user.id)
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(donatorReward * (multiplier - 1))
 		await self.addWinnings(interaction.user.id, donatorReward + extraMoney)
 
@@ -175,6 +175,11 @@ class Economy(commands.Cog):
 
 
 	async def addWinnings(self, discordid, winnings): # add the amount won 
+		if winnings > 0:
+			multiplier = self.bot.get_cog("Multipliers").getMultiplier(discordid)
+			if multiplier > 1:
+				extraMoney = int(winnings * (multiplier - 1))
+				winnings += extraMoney
 		DB.update("UPDATE Economy SET Credits = Credits + ? WHERE DiscordID = ?;", [math.ceil(winnings), discordid])
 
 
