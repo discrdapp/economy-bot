@@ -174,8 +174,8 @@ class Economy(commands.Cog):
 			return False # return 0 if user trying to bet more $$$ than they have
 
 
-	async def addWinnings(self, discordid, winnings): # add the amount won 
-		if winnings > 0:
+	async def addWinnings(self, discordid, winnings, giveMultiplier=True): # add the amount won 
+		if winnings > 0 and giveMultiplier:
 			multiplier = self.bot.get_cog("Multipliers").getMultiplier(discordid)
 			if multiplier > 1:
 				extraMoney = int(winnings * (multiplier - 1))
