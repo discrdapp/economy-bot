@@ -14,7 +14,7 @@ import config
 
 class DB(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 
 	@staticmethod
@@ -86,12 +86,21 @@ class DB(commands.Cog):
 		return embed
 
 	@staticmethod
-	async def addProfitAndBalFields(self, interaction, profit, embed):
+	async def addProfitAndBalFields(self, interaction, profit:int, embed, redEmbed=False):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		try:
-			embed.add_field(name="Profit", value=f"{profit:,}{self.coin}", inline=True)
-		except:
-			embed.add_field(name="Profit", value=f"{profit}{self.coin}", inline=True)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
+
+		name = "Result"
+		if profit > 0 and redEmbed != True:
+			embed.color = nextcord.Color(0x23f518)
+		else:
+			embed.color = nextcord.Color(0xff2020)
+		if profit >= 0:
+			profit = int(float(profit) * (multiplier))
+			embed.add_field(name=name, value=f"+{profit:,} (+{int(profit * (multiplier - 1))}){self.coin}", inline=True)
+		else:
+			embed.add_field(name=name, value=f"{profit:,}{self.coin}", inline=True)
+
 		embed.add_field(name="Credits", value=f"{balance:,}{self.coin}", inline=True)
 		return embed
 
@@ -102,7 +111,7 @@ buyableItemNames = DB.fetchAll("SELECT Name FROM Items WHERE Buyable = 1;")
 buyableItemNamesList = [item for sublist in buyableItemNames for item in sublist]
 usableItemNames = DB.fetchAll("SELECT Name FROM Items WHERE Type = 'Usable';")
 usableItemNamesList = [item for sublist in usableItemNames for item in sublist]
-	
+
 
 def setup(bot):
 	bot.add_cog(DB(bot))
