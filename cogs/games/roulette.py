@@ -9,7 +9,7 @@ from db import DB
 
 class GetAmountToBet(nextcord.ui.TextInput):
 	def __init__(self):
-		super().__init__(label="Amount of credits to bet (FOR EACH ONE)", min_length=1, max_length=10, required=False, placeholder="1000")
+		super().__init__(label="Amount of credits to bet", min_length=1, max_length=10, required=True, placeholder="1000")
 class GetNumberBet(nextcord.ui.TextInput):
 	def __init__(self):
 		super().__init__(label = "Number to bet on", min_length = 1, max_length = 2, required=False, placeholder = "0 - 36")
@@ -24,83 +24,171 @@ class GetHighLowBet(nextcord.ui.TextInput):
 		super().__init__(label = "Bet on high or low", min_length = 3, max_length = 4, required=False, placeholder = "HIGH or LOW")
 
 
-class GetBets(nextcord.ui.Modal):
-	def __init__(self):
-		super().__init__("Your pet", timeout=60)
-		self.number = GetNumberBet()
-		self.add_item(self.number)
+class Button(nextcord.ui.Button):
+	def __init__(self, bot, label, style, row, acceptableResponses=None):
+		super().__init__(label=label, style=style, row=row)
 
-		self.color = GetColorBet()
-		self.add_item(self.color)
+		self.bot:commands.bot.Bot = bot
+		self.acceptableResponses = acceptableResponses
+		self.option = None
+		self.bet = None
+		
+	async def callback(self, interaction: Interaction):
+		assert self.view is not None
+		view: View = self.view
+		if self.label == "Spin":
+			view.stop()
+			return
+		
+		modal = Modal(self.label)
+		await interaction.response.send_modal(modal=modal)
 
-		self.parity = GetParityBet()
-		self.add_item(self.parity)
+		await modal.wait()
 
-		self.highlow = GetHighLowBet()
-		self.add_item(self.highlow)
+		value = modal.children[0].value
+		bet = modal.children[1].value
 
+		if not value or not bet:
+			return
+		
+		value = value.lower()
+		if value not in self.acceptableResponses:
+			await interaction.send("Did not provide correct choice. Please try again", ephemeral=True)
+			return
+
+		if value.isdigit(): # for number betting
+			value = int(value) # convert to number
+
+			if value > 36 or value < 0:
+				await interaction.send("Number must be between 0 and 36. Please try again", ephemeral=True)
+				return
+
+		if not bet.isdigit():
+			await interaction.send("Did not provide number for bet. Please try again", ephemeral=True)
+			return
+		bet = int(bet)
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, bet):
+			await interaction.send("You don't have enough credits for that bet", ephemeral=True)
+			return
+		
+		self.option = value
+		self.bet = bet
+
+		self.disabled = True
+		view.ProcessBets()
+
+		# numberBet = ""
+		# highLowBet = ""
+		# colorBet = ""
+		# parityBet = ""
+		# if view.number.bet:
+		# 	numberBet = f"{view.displayNumberBet} {view.number.bet}{view.coin}"
+		# if view.highOrLow.bet:
+		# 	highLowBet = f"{view.displayHighLowBet} {view.highOrLow.bet}{view.coin}"
+		# if view.color.bet:
+		# 	colorBet = f"{view.displayColorBet} {view.color.bet}{view.coin}"
+		# if view.parity.bet:
+		# 	parityBet = f"{view.displayParityBet} {view.parity.bet}{view.coin}"
+		# view.embed.set_field_at(0, name="Picks", 
+		# 	  value=f"Number bet: {numberBet}\n \
+		# 	  High/low bet: {highLowBet}\n \
+		# 	  Color bet: {colorBet}\n \
+		# 	  Parity bet: {parityBet}",inline=True)
+		view.embed.set_field_at(0, name="Picks", value=view.getFullBetsDisplay(), inline=True)
+
+		await interaction.edit_original_message(embed=view.embed, view=view)
+
+
+class Modal(nextcord.ui.Modal):
+	def __init__(self, modalType):
+		super().__init__(title="Place your bet", timeout=60)
+		if modalType == "Number":
+			self.add_item(GetNumberBet())
+		elif modalType == "Color":
+			self.add_item(GetColorBet())
+		elif modalType == "Parity":
+			self.add_item(GetParityBet())
+		elif modalType == "High or Low":
+			self.add_item(GetHighLowBet())
 		self.betamnt = GetAmountToBet()
+		
 		self.add_item(self.betamnt)
 
 	async def callback(self, interaction: nextcord.Interaction):
 		self.stop()
 		# await interaction.send(f"{self.number.value} {self.color.value} {self.parity.value} {self.highlow.value} {self.betamnt.value} ")
 
-class Roulette(commands.Cog):
-	def __init__(self, bot):
-		self.bot = bot
-		self.previousNums = []
+class View(nextcord.ui.View):
+	def __init__(self, bot, previousNums):
+		super().__init__()
+		self.bot:commands.bot.Bot = bot
+		self.previousNums = previousNums
 		self.coin = "<:coins:585233801320333313>"
+
+		self.add_item(Button(bot = self.bot, label = "Spin", style = nextcord.ButtonStyle.green, row=0))
+		self.number = Button(bot = self.bot, label = "Number", style = nextcord.ButtonStyle.blurple, row=1, acceptableResponses=[str(x) for x in range(0,37)])
+		self.highOrLow = Button(bot = self.bot, label = "High or Low", style = nextcord.ButtonStyle.blurple, row=1, acceptableResponses=["high", "low"])
+		self.color = Button(bot = self.bot, label = "Color", style = nextcord.ButtonStyle.blurple, row=1, acceptableResponses=["red", "black", "green"])
+		self.parity = Button(bot = self.bot, label = "Parity", style = nextcord.ButtonStyle.blurple, row=1, acceptableResponses=["odd", "even"])
+		
+		self.add_item(self.number)
+		self.add_item(self.highOrLow)
+		self.add_item(self.color)
+		self.add_item(self.parity)
+
+		self.msg = None
+		self.embed = None
 		self.totalBet = 0
 
-	async def ProcessBets(self, interaction, amntBet, numberBet, parityBet, colorBet, highLowBet):
-		if not amntBet or not amntBet.isdigit() or int(amntBet) <= 0 or (numberBet == "" and parityBet == "" and colorBet == "" and highLowBet == ""):
-			return None, None, None, None
-		amntBet = int(amntBet)
+		self.displayNumberBet = ""
+		self.displayParityBet = ""
+		self.displayColorBet = ""
+		self.displayHighLowBet = ""
 
-		displayNumberBet = None
-		displayParityBet = None
-		displayColorBet = None
-		displayHighLowBet = None
+	def ProcessBets(self):
+		self.totalBet = 0
+		if self.number.option:
+			self.totalBet += self.number.bet
+			self.displayNumberBet = self.getNumEmoji(self.number.option)
+		if self.parity.option:
+			self.totalBet += self.parity.bet
+			self.displayParityBet = "1⃣" if self.parity.option == "odd" else "2⃣"
+		if self.color.option:
+			self.totalBet += self.color.bet
+			if self.color.option == "red": self.displayColorBet = ":heart:"
+			elif self.color.option == "black": self.displayColorBet = ":black_heart:"
+			else: self.displayColorBet = ":green_heart:"
+		if self.highOrLow.option:
+			self.totalBet += self.highOrLow.bet
+			self.displayHighLowBet = "⬆" if self.highOrLow.option == "high" else "⬇"
+		
+	def getFullBetsDisplay(self):
+		numberBet = ""
+		highLowBet = ""
+		colorBet = ""
+		parityBet = ""
+		if self.number.option:
+			numberBet = f"{self.displayNumberBet} {self.number.bet}{self.coin}"
+		if self.highOrLow.option:
+			highLowBet = f"{self.displayHighLowBet} {self.highOrLow.bet}{self.coin}"
+		if self.color.option:
+			colorBet = f"{self.displayColorBet} {self.color.bet}{self.coin}"
+		if self.parity.option:
+			parityBet = f"{self.displayParityBet} {self.parity.bet}{self.coin}"
+		return f"Number bet: {numberBet}\n \
+			  High/low bet: {highLowBet}\n \
+			  Color bet: {colorBet}\n \
+			  Parity bet: {parityBet}"
 
-		if numberBet:
-			self.totalBet += amntBet
-			if not numberBet.isdigit() or int(numberBet) < 0 or int(numberBet) > 36:
-				raise Exception("valueError")
-			displayNumberBet = self.getNumEmoji(numberBet)
-		if parityBet:
-			self.totalBet += amntBet
-			if parityBet.lower() != "odd" and parityBet.lower() != "even":
-				raise Exception("valueError")
-			displayParityBet = "1⃣" if parityBet == "odd" else "2⃣"
-		if colorBet:
-			self.totalBet += amntBet
-			if colorBet.lower() != "red" and colorBet.lower() != "black" and colorBet.lower() != "green":
-				raise Exception("valueError")
-			if colorBet == "red": displayColorBet = ":heart:"
-			elif colorBet == "black": displayColorBet = ":black_heart:"
-			else: displayColorBet = ":green_heart:"
-		if highLowBet:
-			self.totalBet += amntBet
-			if highLowBet.lower() != "high" and highLowBet.lower() != "low":
-				raise Exception("valueError")
-			displayHighLowBet = "⬆" if highLowBet == "high" else "⬇"
 
-		return displayNumberBet, displayHighLowBet, displayColorBet, displayParityBet
-
-
-
-	@nextcord.slash_command(description="Play Roulette!")
-	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
-	async def roulette(self, interaction:Interaction):
+	async def Start(self, interaction):
 		self.totalBet = 0
 		
-		modal = GetBets()
-		try:
-			await interaction.response.send_modal(modal)
-		except Exception as e:
-			print(e)
-			print(type(e))
+		# modal = GetBets()
+		# try:
+		# 	await interaction.response.send_modal(view=View())
+		# except Exception as e:
+		# 	return
 
 		nums = ""
 		numCount = 0
@@ -114,35 +202,25 @@ class Roulette(commands.Cog):
 
 			numCount += 1
 
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Roulette")
-		embed.add_field(name="Picks",
+		self.embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Roulette")
+		self.embed.add_field(name="Picks",
 						value=f"Number bet: \nHigh/low bet: \nColor bet: \nParity bet: ",
 						inline=True)
-		embed.add_field(name="Previous Numbers", value=f"{nums}_ _", inline=True)
-		msg = await interaction.send(file=nextcord.File('images/roulette/roulette.png'), embed=embed)
+		self.embed.add_field(name="Previous Numbers", value=f"{nums}_ _", inline=True)
+		self.msg = await interaction.send(file=nextcord.File('images/roulette/roulette.png'), embed=self.embed, view=self)
 
-		await modal.wait()
 
-		amntBet = modal.betamnt.value
-		numberBet = modal.number.value
-		parityBet = modal.parity.value
-		colorBet = modal.color.value
-		highLowBet = modal.highlow.value
+		await self.wait()
 
-		displayNumberBet, displayHighLowBet, displayColorBet, displayParityBet = await self.ProcessBets(interaction, amntBet, numberBet, parityBet, colorBet, highLowBet)
+		for child in self.children:
+			if not child.disabled:
+				child.disabled = True
+		
+		await self.msg.edit(view=self)
 
-		if not amntBet or not amntBet.isdigit():
-			amntBet = 0
-		else:
-			amntBet = int(amntBet)
-		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, self.totalBet):
-			raise Exception("tooPoor")
+		await self.Spin(interaction)
 
-		if amntBet: amntBet = int(amntBet)
-		if parityBet: parityBet = parityBet.lower()
-		if colorBet: colorBet = colorBet.lower()
-		if highLowBet: highLowBet = highLowBet.lower()
-
+	async def Spin(self, interaction):
 		n = random.randrange(0, 37)
 
 		roulette = Image.open('images/roulette/roulette.png')
@@ -179,35 +257,34 @@ class Roulette(commands.Cog):
 		winnings = ""
 
 		moneyToAdd = 0
-		if numberBet == n:
+		if self.number.option == n:
 			winnings += "\nYou guessed the number! You won 35x your bet!"
-			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntBet * 35)
-			moneyToAdd += amntBet * 35
+			moneyToAdd += self.highOrLow.bet * 35
 
-		if displayHighLowBet == highLowResult:
+		if self.displayHighLowBet == highLowResult:
 			winnings += "\nYou guessed the high/low! You won 2x your bet!"
-			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntBet * 2)
-			moneyToAdd += amntBet * 2
+			moneyToAdd += self.highOrLow.bet * 2
 
-		if displayColorBet == colorResult and displayColorBet != ":green:":
+		if self.displayColorBet == colorResult and self.displayColorBet != ":green:":
 			winnings += "\nYou guessed the color! You won 2x your bet!"
-			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntBet * 2)
-			moneyToAdd += amntBet * 2
-		elif displayColorBet == colorResult:
+			moneyToAdd += self.color.bet * 2
+		elif self.displayColorBet == colorResult:
 			winnings += "\nYou guessed the color green! You won 35x your bet!"
-			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntBet * 35)
-			moneyToAdd += amntBet * 35
+			moneyToAdd += self.color.bet * 35
 
-		if displayParityBet == parityResult:
+		if self.displayParityBet == parityResult:
 			winnings += "\nYou guessed the parity! You won 2x your bet!"
-			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntBet * 2)
-			moneyToAdd += amntBet * 2
+			moneyToAdd += self.parity.bet * 2
+
+		if moneyToAdd > 0:
+			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd)
 
 
 		amntSpent = self.totalBet
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		if moneyToAdd > amntSpent:
-			result = f"You won a grand total of {moneyToAdd} (+{moneyToAdd * (multiplier - 1)}){self.coin} after betting {amntSpent}{self.coin}\n**Profit:** {moneyToAdd - amntSpent}{self.coin}"
+			# \n**Profit:** {moneyToAdd - amntSpent}{self.coin}
+			result = f"You won a grand total of {moneyToAdd} (+{moneyToAdd * (multiplier - 1)}){self.coin} after betting {amntSpent}{self.coin}"
 		elif moneyToAdd < amntSpent:
 			if moneyToAdd > 0:
 				result = f"You got back {moneyToAdd:,}{self.coin} after betting {amntSpent:,}{self.coin}"
@@ -217,7 +294,7 @@ class Roulette(commands.Cog):
 			result = "You didn't lose or win anything!"
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		if numberBet or highLowBet or colorBet or parityBet:
+		if self.number.bet or self.highOrLow.bet or self.color.bet or self.parity.bet:
 			priorBal = balance + amntSpent - moneyToAdd
 			# minBet = priorBal * 0.05
 			# minBet = int(math.ceil(minBet / 10.0) * 10.0)
@@ -227,22 +304,29 @@ class Roulette(commands.Cog):
 			# 	await self.bot.get_cog("XP").addXP(interaction, xp)
 			# else:
 			# 	embed.set_footer(text=f"You have to bet your minimum to earn xp.")
-			embed = await DB.calculateXP(self, interaction, priorBal, amntSpent, embed)
+			self.embed = await DB.calculateXP(self, interaction, priorBal, amntSpent, self.embed)
 		else:
 			
-			embed.set_footer(text="No bets were placed, no XP was earned.")
-		embed.set_field_at(0, name="Picks", 
-			value=f"Number bet: {displayNumberBet}\nHigh/low bet: {displayHighLowBet}\nColor bet: {displayColorBet}\nParity bet: {displayParityBet}")
-		embed.set_field_at(1, name="Outcome:",
-							value=f"{msg.content}Number: {emojiNum}\nHigh/low: {highLowResult}\nColor: {colorResult}\nParity: {parityResult}")
-		embed.add_field(name="-----------------------------------------------------------------",
-						value=f"{winnings}\n{result}\n**Credits:** {balance:,}{self.coin}", inline=False)
-		await msg.edit(embed=embed, file=nextcord.File('images/roulette/temproulette.png'))
+			self.embed.set_footer(text="No bets were placed, no XP was earned.")
+		self.embed.set_field_at(0, name="Picks", 
+			value=self.getFullBetsDisplay())
+		self.embed.set_field_at(1, name="Outcome:",
+							value=f"Number: {emojiNum}\nHigh/low: {highLowResult}\nColor: {colorResult}\nParity: {parityResult}")
+		self.embed.add_field(name="-----------------------------------------------------------------",
+						value=f"{winnings}\n{result}", inline=False)
+		
+		if moneyToAdd > amntSpent:
+			self.embed = await DB.addProfitAndBalFields(self, interaction, moneyToAdd - amntSpent, self.embed)
+		else:
+			self.embed = await DB.addProfitAndBalFields(self, interaction, -amntSpent + moneyToAdd, self.embed)
+		await self.msg.edit(embed=self.embed, file=nextcord.File('images/roulette/temproulette.png'))
 		await self.bot.get_cog("Totals").addTotals(interaction, amntSpent, moneyToAdd + (moneyToAdd * (multiplier - 1)), 3)
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Rltte", moneyToAdd - amntSpent)
 		if len(self.previousNums) == 8:  # display only 8 previous numbers
 			self.previousNums.pop()
 		self.previousNums.insert(0, f"{colorResult} {str(n)}")  # insert the resulting color and number
+
+
 
 	def getColorPos(self, color):
 		if color == "red":
@@ -335,6 +419,18 @@ class Roulette(commands.Cog):
 		else: "error"
 
 
+class Roulette(commands.Cog):
+	def __init__(self, bot):
+		self.bot:commands.bot.Bot = bot
+		self.previousNums = []
+		self.coin = "<:coins:585233801320333313>"
+		self.totalBet = 0
+
+	@nextcord.slash_command(description="Play Roulette!")
+	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
+	async def roulette(self, interaction:Interaction):
+		view = View(self.bot, self.previousNums)
+		await view.Start(interaction)
 
 def setup(bot):
 	bot.add_cog(Roulette(bot))
