@@ -144,7 +144,7 @@ class Lottery(commands.Cog):
 		self.sendToChannels.append(self.CHANNEL_ID)
 		self.userTickets.clear()
 
-		await self.bot.get_cog("Economy").addWinnings(winner.id, prizeAmount)
+		await self.bot.get_cog("Economy").addWinnings(winner.id, prizeAmount, False)
 
 	@lotteryTask.before_loop
 	async def before_lotteryTask(self):	
