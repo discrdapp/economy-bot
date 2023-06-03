@@ -7,7 +7,7 @@ import config
 
 class Others(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 
 	@commands.Cog.listener()
@@ -84,7 +84,7 @@ class Others(commands.Cog):
 		
 		embed.add_field(name = ":game_die: Game Commands", 
 						 value="`roulette`, `crash`, `blackjack`, " 
-							 + "`slots`, `coinflip`, `rps`, `colorguesser`, `rob`", inline = False)
+							 + "`slots`, `coinflip`, `rps`, `dond`, `mines`, `rob`", inline = False)
 
 		embed.add_field(name = ":gear: Other Commands",
 					   value = "`balance`, `top`, `position`, `shop`, `use`, `stats`, `bank`, `claim`, `vote`, "
@@ -116,7 +116,9 @@ class Others(commands.Cog):
 									# "colorguesser",
 									"slots",
 									"rockpaperscissors",
-									"coinflip", 
+									"coinflip",
+									"dond",
+									"mines", 
 									"balance", 
 									"top", 
 									"shop", 
@@ -134,7 +136,6 @@ class Others(commands.Cog):
 													# "slots", "rockpaperscissors", "coinflip", "credits", "shop", 
 													# "stats", "profile", "level", "freemoney"))):
 
-		# print(option)
 		if not option:
 			await interaction.send(embed=self.GetHelpMsg())
 			return
@@ -153,9 +154,9 @@ class Others(commands.Cog):
 		elif option == "blackjack":
 			helpMsg = "Get your cards to 21 (without going over!) or beat the dealer to win!"
 			usageMsg = "**/blackjack <bet>**"
-		elif option == "colorguesser":
-			helpMsg = "Play with friends. Everyone votes for a color the bot will pick."
-			usageMsg = "**/colorguesser <bet>**"
+		# elif option == "colorguesser":
+		# 	helpMsg = "Play with friends. Everyone votes for a color the bot will pick."
+		# 	usageMsg = "**/colorguesser <bet>**"
 		elif option == "slots":
 			helpMsg = "Play the slots and try to get the same fruit!"
 			usageMsg = "**/slots <bet>**"
@@ -165,6 +166,12 @@ class Others(commands.Cog):
 		elif option == "coinflip":
 			helpMsg = "Bet the side the coin will land on"
 			usageMsg = "**/coinflip <heads/tails> <bet>**"
+		elif option == "dond":
+			helpMsg = "Play Deal or No Deal!\n**NOTE: This game is a WIP.**"
+			usageMsg = "**/dond <bet>**"
+		elif option == "mines":
+			helpMsg = "Play Roobet Mines! Select number of bombs and try finding spaces that don't have one!\n**NOTE: This game is a WIP.**"
+			usageMsg = "**/mines <bet>**"
 		elif option == "balance":
 			helpMsg = "Look at your balance"
 			usageMsg = "**/balance**"
