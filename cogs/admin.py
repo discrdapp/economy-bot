@@ -54,6 +54,12 @@ class Admin(commands.Cog):
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
+	async def addmultiplier(self, interaction, user:nextcord.Member, multiplier:float, duration:int):
+		msg = self.bot.get_cog("Multipliers").addMultiplier(user.id, multiplier, datetime.datetime.now() + datetime.timedelta(seconds=duration))
+		await interaction.send(msg)
+
+	@nextcord.slash_command(guild_ids=[config.adminServerID])
+	@application_checks.is_owner()
 	async def getmultipliers(self, interaction:Interaction):
 		multipliers = DB.fetchAll("SELECT DiscordID, Multiplier, Expires FROM Multipliers;", None)
 
