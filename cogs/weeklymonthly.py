@@ -6,7 +6,7 @@ import json, time, math
 
 class WeeklyMonthly(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.levelReward = [550, 1500, 3000, 7500, 13500, 18500, 24000, 29000, 35000, 42000, 50000]
 		self.coin = "<:coins:585233801320333313>"
 
@@ -36,7 +36,7 @@ class WeeklyMonthly(commands.Cog):
 
 
 		weeklyReward = 12500
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(weeklyReward * (multiplier - 1))
 		await self.bot.get_cog("Economy").addWinnings(userId, weeklyReward + extraMoney)
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
@@ -73,7 +73,7 @@ class WeeklyMonthly(commands.Cog):
 
 
 		monthlyReward = 36000
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(monthlyReward * (multiplier - 1))
 		await self.bot.get_cog("Economy").addWinnings(userId, monthlyReward + extraMoney)
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)

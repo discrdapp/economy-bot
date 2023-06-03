@@ -10,7 +10,7 @@ import config
 
 class Lottery(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.CHANNEL_ID = 881421294866927686
 		self.userTickets = list()
 		self.coin = "<:coins:585233801320333313>"

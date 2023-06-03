@@ -24,7 +24,7 @@ def log(discordID, creditsSpent, creditsWon, gameNumber, bal): # Logs what credi
 
 class Totals(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		# self.bot.user.name = self.bot.user.name
 		self.gameBadge = 250
 		self.balBadge = 10000

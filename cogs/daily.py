@@ -8,7 +8,7 @@ from db import DB
 
 class Daily(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.levelReward = [550, 1500, 3000, 7500, 13500, 18500, 24000, 29000, 35000, 42000, 50000]
 		self.coin = "<:coins:585233801320333313>"
 
@@ -36,7 +36,7 @@ class Daily(commands.Cog):
 
 
 		dailyReward = await self.getDailyReward(interaction)
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(dailyReward * (multiplier - 1))
 		await self.bot.get_cog("Economy").addWinnings(userId, dailyReward + extraMoney)
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)

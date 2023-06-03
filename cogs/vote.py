@@ -8,7 +8,7 @@ import json
 
 class Vote(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command(description="Vote")

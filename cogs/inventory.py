@@ -27,7 +27,7 @@ class MySource(menus.ListPageSource):
 
 class Inventory(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 	
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
@@ -109,7 +109,7 @@ class Inventory(commands.Cog):
 
 
 		if itemSelected == "Voter Chip":
-			msg = self.bot.get_cog("Multipliers").addMultiplier(interaction.user, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=150))
+			msg = self.bot.get_cog("Multipliers").addMultiplier(interaction.user.id, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=150))
 			self.bot.get_cog("Inventory").removeItemFromInventory(interaction.user, "Voter Chip", amnt)
 			await interaction.send(msg)
 		elif itemSelected == "Magic 8 Ball":

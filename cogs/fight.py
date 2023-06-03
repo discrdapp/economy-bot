@@ -20,7 +20,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 class Fight(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.embed = nextcord.Embed(color=0x24ecf7, title="Pit Boss' Wrestling | FIGHT!")
 		self.p1Health, self.p2Health = 100, 100
 		self.p1Armor, self.p2Armor = 100, 100
@@ -133,7 +133,6 @@ class Fight(commands.Cog):
 					self.embed.add_field(name="HEALED", value=f"{player[1]} tried to use a health potion, but realized he has none.")
 				await asyncio.sleep(3)
 
-			#print(act)
 			users = [author, member]
 			if turnNum % 2 == 0:
 				await self.createImg(player, opponent)
@@ -155,7 +154,6 @@ class Fight(commands.Cog):
 
 			dead = self.checkGameOver(player, opponent)
 			if dead:
-				#print("broke")
 				break # will break once player is dead
 
 		await interaction.send(f"{dead} has been killed!")

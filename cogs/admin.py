@@ -12,7 +12,7 @@ from db import DB
 
 class Admin(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 
 	def isOwner(self, theid):
 		return theid == config.botOwnerDiscordID
@@ -79,9 +79,6 @@ class Admin(commands.Cog):
 				timeLeft += f"{seconds} seconds"
 
 				msg += f"ID: {multiplier[0]}'s expires at {expireDate}. {timeLeft} left. {multiplierValue}x multiplier."
-
-
-		# print(f"datetime is {datetime.now()}")
 
 
 		await interaction.send(msg)

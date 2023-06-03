@@ -17,7 +17,7 @@ from db import DB
 
 class Achievements(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 		self.games = ["Slt", "BJ", "Crsh", "Rltte", "CF", "RPS"]
 		self.realGameNames = ["Slots", "Blackjack", "Crash", "Roulette", "Coinflip", "Rock-Paper-Scissors"]

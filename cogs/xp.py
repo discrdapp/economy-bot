@@ -8,7 +8,7 @@ from db import DB
 
 class XP(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		# self.XPtoLevelUp = [5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000]
 		self.XPtoLevelUp = []
 		# self.levelReward = []
@@ -30,7 +30,7 @@ class XP(commands.Cog):
 		progress = round((xp / requiredXP) * 100)
 		totalXP = getRow[1]
 
-		multiplier, expiration = self.bot.get_cog("Multipliers").getMultiplierAndExpiration(interaction.user)
+		multiplier, expiration = self.bot.get_cog("Multipliers").getMultiplierAndExpiration(interaction.user.id)
 
 		coin = "<:coins:585233801320333313>"
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
@@ -64,7 +64,7 @@ class XP(commands.Cog):
 
 			embed = nextcord.Embed(color=1768431, title="Level Up!")
 			file = nextcord.File("./images/levelup.png", filename="image.png")
-			multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
+			multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 
 			credits = (level+1)*5000
 

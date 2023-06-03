@@ -6,7 +6,7 @@ import asyncio, json
 
 class Settings(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 
 	def getUserSettings(self, user):
 		with open("settings.json", encoding="utf-8") as f:

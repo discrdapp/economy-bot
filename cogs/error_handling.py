@@ -13,7 +13,7 @@ from difflib import get_close_matches
 
 class ErrorHandling(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		bot.event(self.on_application_command_error)
 
 	# @commands.Cog.listener()

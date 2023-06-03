@@ -4,7 +4,7 @@ from nextcord import Interaction
 
 class TTT(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.grid = []
 		self.game_in_progress = False
 
