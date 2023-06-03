@@ -8,7 +8,7 @@ from db import DB
 
 class Coinflip(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command()
@@ -77,22 +77,18 @@ class Coinflip(commands.Cog):
 
 		side = random.choice(["Heads", "Tails"]).lower()
 		
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 
 		embed = nextcord.Embed(color=0x23f518)
 		
 		if sidebet == side:
 			moneyToAdd = int(amntbet * 2)
 			profitInt = moneyToAdd - amntbet
-			profit = f"**{profitInt:,}** (**+{int(profitInt * (multiplier - 1))}**)"
-
 			file = nextcord.File("./images/coinwon.png", filename="image.png")
 
 		else:
 			moneyToAdd = 0
 			profitInt = moneyToAdd - amntbet
-			profit = f"**{profitInt:,}**"
-
 			file = nextcord.File("./images/coinlost.png", filename="image.png")
 			embed.color = nextcord.Color(0xff2020)
 			
@@ -103,7 +99,7 @@ class Coinflip(commands.Cog):
 		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
 		
 		
-		embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
+		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed)

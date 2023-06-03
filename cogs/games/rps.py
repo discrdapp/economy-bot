@@ -8,7 +8,7 @@ from db import DB
 
 class rps(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command()
@@ -59,14 +59,13 @@ class rps(commands.Cog):
 			winner = -1
 			file = nextcord.File("./images/rps/scissorslost.png", filename="image.png")
 
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		embed = nextcord.Embed(color=0xff2020)
 		embed.set_thumbnail(url="attachment://image.png")
 		if winner == 1:
 			moneyToAdd = amntbet * 2 
 			profitInt = moneyToAdd - amntbet
 			result = "YOU WON"
-			profit = f"**{profitInt:,}** (**+{int(profitInt * (multiplier - 1))}**)"
 			
 			embed.color = nextcord.Color(0x23f518)
 
@@ -74,21 +73,21 @@ class rps(commands.Cog):
 			moneyToAdd = 0 # nothing to add since loss
 			profitInt = -amntbet # profit = amntWon - amntbet; amntWon = 0 in this case
 			result = "YOU LOST"
-			profit = f"**{profitInt:,}**"
 
 		
 		elif winner == 0:
 			moneyToAdd = amntbet # add back their bet they placed since it was pushed (tied)
 			profitInt = 0 # they get refunded their money (so they don't make or lose money)
 			result = "PUSHED"
-			profit = f"**{profitInt:,}**"
 
 		embed.add_field(name=f"{self.bot.user.name}' Casino | RPS", value=f"**{interaction.user.name}** picked **{userchoice}** \n**Pit Boss** picked **{botChoice}**",inline=False)
 		giveZeroIfNeg = max(0, profitInt) # will give 0 if profit is negative. 
 																				# we don't want it subtracting anything, only adding
 		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
 		
-		embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
+		embed.add_field(name=f"**--- {result} ---**", value="_ _", inline=False)
+		
+		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed)

@@ -8,7 +8,7 @@ from db import DB
 
 class Slots(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command(description="Pay to play the slots!")
@@ -48,7 +48,7 @@ class Slots(commands.Cog):
 
 		#slotmachine = f"**[ {a} {b} {c} ]\n{interaction.user.name}**,"
 		embed.color = nextcord.Color(0x23f518)
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 
 		if (a == b == c) or ((a == b) or (a == c) or (b == c)):
 			if (a == b == c): # if all match
@@ -57,19 +57,17 @@ class Slots(commands.Cog):
 				moneyToAdd = int(amntbet * 1.5) # you win 150% your bet
 			
 			result = "YOU WON"
-			profit = f"**{moneyToAdd:,}** (**+{int(moneyToAdd * (multiplier - 1)):,}**)"
 			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (moneyToAdd * (multiplier - 1)))
 
 		else: # if no match
-			moneyToAdd = amntbet
+			moneyToAdd = -amntbet
 			result = "YOU LOST"
-			profit = f"**{moneyToAdd:,}**"
 
 			embed.color = nextcord.Color(0xff2020)
 
 		embed.add_field(name=f"**--- {result} ---**", value="_ _", inline=False)
 
-		embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
+		embed = await DB.addProfitAndBalFields(self, interaction, moneyToAdd, embed)
 		embed = await DB.calculateXP(self, interaction, priorBal, amntbet, embed)
 
 		await botMsg.edit(embed=embed)
