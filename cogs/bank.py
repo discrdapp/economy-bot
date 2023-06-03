@@ -85,7 +85,7 @@ class Bank(commands.Cog):
 
 		DB.update("UPDATE Economy SET Bank = Bank - ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
 
-		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amnt)
+		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amnt, False)
 
 
 		embed.description = f"Successfully withdrew {amnt:,}{self.coin}!"
