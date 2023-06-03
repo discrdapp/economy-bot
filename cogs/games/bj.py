@@ -26,7 +26,7 @@ class Insurance(nextcord.ui.Modal):
 		super().__init__(title="Insurance")
 		self.add_item(CreditsToBet())
 		self.view = view
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 
 	async def callback(self, interaction: Interaction):
 		if interaction.user.id != self.view.ownerId:
@@ -48,7 +48,7 @@ class Insurance(nextcord.ui.Modal):
 
 class Button(nextcord.ui.Button['Blackjack']):
 	def __init__(self, bot, label, style, row=0, disabled=False):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		super().__init__(label=label, style=style, row=row, disabled=disabled)
 		self.modal = None
 	
@@ -84,15 +84,12 @@ class Button(nextcord.ui.Button['Blackjack']):
 				await interaction.send("You don't have enough credits for that bet", ephemeral=True)
 				return
 			self.view.amntbet *= 2
-			await view.hit()
-			if not view.is_bust(view.pCardNum) and not view.is_blackjack(view.pCardNum):
-				await view.stand()
+			await view.hit(True)
 		if self.label == "Hit":
 			await view.hit()
 		elif self.label == "Stand":
-			for child in view.children:
-				child.disabled = True
 			await view.stand()
+			return
 
 		if not view.insurance.disabled:
 			view.insurance.disabled = True
@@ -107,7 +104,7 @@ class Button(nextcord.ui.Button['Blackjack']):
 class Blackjack(nextcord.ui.View):
 	def __init__(self, bot, id, cards, amntbet):
 		super().__init__(timeout=120)
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 
 		self.cards = cards
@@ -208,7 +205,7 @@ class Blackjack(nextcord.ui.View):
 			return 
 
 
-	async def hit(self):
+	async def hit(self, isDoubleDown=False):
 		# player draws a card 
 		pDrawnCard = self.take_card()
 		self.pCARD.append(pDrawnCard)
@@ -249,7 +246,12 @@ class Blackjack(nextcord.ui.View):
 		if (self.is_bust(self.pCardNum) or self.is_blackjack(self.pCardNum)):
 			if self.is_blackjack(self.pCardNum):
 				await self.stand()
+			else:
+				await self.EndGame()
 			return
+		if isDoubleDown:
+			await self.stand()
+
 
 	async def stand(self):
 		# generate dealer's hand
@@ -416,7 +418,7 @@ class Blackjack(nextcord.ui.View):
 		# 
 		#########################
 
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(user)
+		multiplier = self.bot.get_cog("Multipliers").getMultiplier(user.id)
 
 		file = None
 
@@ -429,7 +431,6 @@ class Blackjack(nextcord.ui.View):
 				profitInt = moneyToAdd - self.amntbet - self.insuranceBet
 				
 			result = "DEALER 21 ON HAND, BUT WON INSURANCE"
-			profit = f"**{profitInt:,}** (+**{int(profitInt * (multiplier - 1))}**)"
 
 			self.embed.color = nextcord.Color(0x23f518)
 			file = nextcord.File("./images/insurance.png", filename="image.png")
@@ -438,7 +439,6 @@ class Blackjack(nextcord.ui.View):
 			moneyToAdd = self.amntbet * 2 
 			profitInt = moneyToAdd - self.amntbet
 			result = "YOU WON"
-			profit = f"**{profitInt:,}** (+**{int(profitInt * (multiplier - 1))}**)"
 			
 			self.embed.color = nextcord.Color(0x23f518)
 			if sum(self.pCardNum) == 21:
@@ -450,7 +450,6 @@ class Blackjack(nextcord.ui.View):
 			moneyToAdd = 0 # nothing to add since loss
 			profitInt = -self.amntbet # profit = amntWon - amntbet; amntWon = 0 in this case
 			result = "YOU LOST"
-			profit = f"**{profitInt:,}**"
 			file = nextcord.File("./images/bjlost.png", filename="image.png")
 
 
@@ -458,7 +457,6 @@ class Blackjack(nextcord.ui.View):
 			moneyToAdd = self.amntbet # add back their bet they placed since it was pushed (tied)
 			profitInt = 0 # they get refunded their money (so they don't make or lose money)
 			result = "PUSHED"
-			profit = f"**{profitInt:,}**"
 			file = nextcord.File("./images/bjpushed.png", filename="image.png")
 
 		if file:
@@ -468,15 +466,17 @@ class Blackjack(nextcord.ui.View):
 			await self.bot.get_cog("Economy").addWinnings(user.id, moneyToAdd + (moneyToAdd * (multiplier - 1)))
 		self.embed.set_field_at(2, name = f"**--- {result} ---**", value = "_ _", inline=False)
 
-		self.embed = await DB.addProfitAndBalFields(self, self.interaction, profit, self.embed)
+		self.embed = await DB.addProfitAndBalFields(self, self.interaction, moneyToAdd, self.embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(user)
 		self.embed = await DB.calculateXP(self, self.interaction, balance - profitInt, self.amntbet, self.embed)
 
 		# if winner == 999:
-		await self.interaction.send(content=f"{user.mention}", file=file, embed=self.embed)
+		# await self.interaction.send(content=f"{user.mention}", file=file, embed=self.embed)
 
 		# await interaction.send(content=f"{interaction.user.mention}", file=file, embed=self.embed)
+
+		await self.msg.edit(embed=self.embed, view=None)
 
 		await self.bot.get_cog("Totals").addTotals(self.interaction, self.amntbet, moneyToAdd, 1)	
 		await self.bot.get_cog("Quests").AddQuestProgress(self.interaction, user, "BJ", profitInt)
@@ -484,7 +484,7 @@ class Blackjack(nextcord.ui.View):
 
 class bj(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.cards = ["♣ A", "♣ 2", "♣ 3", "♣ 4", "♣ 5", "♣ 6", "♣ 7", "♣ 8", "♣ 9", "♣ 10", "♣ Jack", "♣ Queen", "♣ King",
 					  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
 					  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
