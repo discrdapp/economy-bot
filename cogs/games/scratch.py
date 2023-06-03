@@ -9,7 +9,7 @@ from random import randint
 
 class Scratch(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 
 
