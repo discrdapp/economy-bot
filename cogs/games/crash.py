@@ -24,7 +24,7 @@ class Button(nextcord.ui.Button):
 class View(nextcord.ui.View):
 	def __init__(self, bot, userId, amntbet):
 		super().__init__()
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 		self.userId = userId
 		self.task = None
 		self.multiplier = 1.0
@@ -49,7 +49,6 @@ class View(nextcord.ui.View):
 			if int(self.crashNum * 10) % 2 == 1: self.crashNum = round(self.crashNum + 0.1, 1)
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crash")
-		embed.set_footer(text="Use /done to stop")
 		embed.add_field(name = "Multiplier:", value = f"{str(self.multiplier)}x", inline=True)
 		embed.add_field(name = "Profit", value = f"{str(round(self.multiplier * self.amntbet - self.amntbet))}{self.coin}", inline=True)
 
@@ -59,13 +58,12 @@ class View(nextcord.ui.View):
 			if self.crashNum == 1.2:
 				self.crash = True
 				raise Exception
-			self.task = self.bot.loop.create_task(self.do_loop(interaction, embed)) # creates loop for the crash game
+			self.task = self.bot.loop.create_task(self.do_loop(embed)) # creates loop for the crash game
 			await self.task # performs the loop
 		except:
 			if self.crash:
 				await self.finished(interaction)
 			else:
-				embed.remove_footer()
 				await self.botMsg.edit(embed=embed)
 		finally:
 			# resets all the variables 
@@ -95,28 +93,24 @@ class View(nextcord.ui.View):
 		self.cashoutButton.disabled = True
 		await self.botMsg.edit(view=self)
 		embed = nextcord.Embed(color=0x23f518, title=f"{self.bot.user.name} | Crash")
-		multi = self.bot.get_cog("Multipliers").getMultiplier(interaction.user)
+		multi = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		profitInt = 0
 		
 		if not self.crash: # if they /done it before it crashes 
 			profitInt = int(self.amntbet * self.multiplier - self.amntbet) 
 			moneyToAdd = int(self.amntbet + profitInt)
-			profit = f"**{profitInt:,}** (+**{int(profitInt * (multi - 1)):,}**)"
-
 			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, (moneyToAdd + (profitInt * (multi - 1))))
 
 		else: # if game crashes without them doing /done
 			profitInt = -self.amntbet
 			moneyToAdd = 0
-			profit = f"**{profitInt:,}**"
 			embed.color = nextcord.Color(0xff2020)
-
 
 		embed.add_field(name = f"Crashed at", value = f"{str(self.multiplier)}x", inline=False)
 
 		if not self.crash:
 			embed.add_field(name = f"Would've crashed at", value=f"{self.crashNum}x", inline=False)
-		embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
+		embed = await DB.addProfitAndBalFields(self, interaction, moneyToAdd, embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, self.amntbet, embed)
@@ -129,7 +123,7 @@ class View(nextcord.ui.View):
 
 class Crash(commands.Cog):
 	def __init__(self, bot):
-		self.bot = bot
+		self.bot:commands.bot.Bot = bot
 
 
 	@nextcord.slash_command()
