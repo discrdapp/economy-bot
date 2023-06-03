@@ -466,7 +466,7 @@ class Blackjack(nextcord.ui.View):
 			await self.bot.get_cog("Economy").addWinnings(user.id, moneyToAdd + (moneyToAdd * (multiplier - 1)))
 		self.embed.set_field_at(2, name = f"**--- {result} ---**", value = "_ _", inline=False)
 
-		self.embed = await DB.addProfitAndBalFields(self, self.interaction, moneyToAdd, self.embed)
+		self.embed = await DB.addProfitAndBalFields(self, self.interaction, profitInt, self.embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(user)
 		self.embed = await DB.calculateXP(self, self.interaction, balance - profitInt, self.amntbet, self.embed)
