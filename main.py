@@ -56,13 +56,10 @@ async def on_ready():
 async def on_interaction(interaction: Interaction):
 	if not await bot.get_cog("Economy").accCheck(interaction.user):
 		await bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
+		if interaction.data['name'] == 'blackjack':
+			await interaction.send("You can now play blackjack now that you're registered. Please run command again.", ephemeral=True)
+			return
 
-	# if interaction.user.id != 547475078082985990:
-	# 	embed = nextcord.Embed(color=1768431, title=f"The Casino 2.0")
-	# 	embed.description = "Upgrading bot to 2.0!!! Please check back in a few hours."
-	# 	await interaction.send(embed=embed)
-	# 	return
-	# if interaction.application_command and interaction.application_command.qualified_name != "roulette":
 	await bot.process_application_commands(interaction)
 
 
