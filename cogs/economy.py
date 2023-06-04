@@ -64,7 +64,7 @@ class Economy(commands.Cog):
 	async def rewards(self, interaction:Interaction):
 
 		dailyReward = await self.bot.get_cog("Daily").getDailyReward(interaction)
-		multiplier, expiration = self.bot.get_cog("Multipliers").getMultiplierAndExpiration(interaction.user)
+		multiplier, expiration = self.bot.get_cog("Multipliers").getMultiplierAndExpiration(interaction.user.id)
 
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name = "Daily", value = f"{dailyReward}{self.coin}", inline=True)
