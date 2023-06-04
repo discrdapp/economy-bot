@@ -29,7 +29,7 @@ class MinesButton(nextcord.ui.Button['MinesView']):
             currTimesAmnt = round(view.profit[view.spacesClicked-1], 2)
             currProfit = int(view.betamnt * currTimesAmnt)
             embed = nextcord.Embed(color=1768431, title=f"The Casino | Roobet Mines")
-            embed.description = f"Game finished.\nAmount won: {currProfit:,} ({currTimesAmnt:,}x)"
+            # embed.description = f"Game finished.\nAmount won: {currProfit:,} ({currTimesAmnt:,}x)"
             await view.Gameover(interaction, embed, currProfit)
             return
         
@@ -48,7 +48,7 @@ class MinesButton(nextcord.ui.Button['MinesView']):
             self.style = nextcord.ButtonStyle.success
 
             if view.spacesClicked == view.totalChecks:
-                embed.description = f"Game finished.\nAmount won: {currProfit:,} ({currTimesAmnt:,}x)"
+                # embed.description = f"Game finished.\nAmount won: {currProfit:,} ({currTimesAmnt:,}x)"
                 await view.Gameover(interaction, embed, currProfit)
                 return
 
@@ -56,7 +56,7 @@ class MinesButton(nextcord.ui.Button['MinesView']):
         if not msg:
             nextTimesAmnt = round(view.profit[view.spacesClicked], 2)
             nextProfit = int(view.betamnt * nextTimesAmnt)
-            msg = f"Current Amount to Withdraw: {currProfit:,} ({currTimesAmnt:,}x)\nNext Amount to Withdraw: {nextProfit:,} ({nextTimesAmnt:,}x)"
+            msg = f"Current Profit to Withdraw: {(currProfit-view.betamnt):,} ({currTimesAmnt:,}x)\nNext Profit: {nextProfit-view.betamnt:,} ({nextTimesAmnt:,}x)"
             embed.set_footer(text="Click one of the checkmarks to withdraw your winnings")
 
         embed.description = msg
@@ -112,10 +112,8 @@ class MinesView(nextcord.ui.View):
 
         if profit > 0:
             await self.bot.get_cog("Economy").addWinnings(self.ownerId, profit)
-        else:
-            profit = 0
         
-        embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
+        embed = await DB.addProfitAndBalFields(self, interaction, profit-self.betamnt, embed)
         embed = await DB.calculateXP(self, interaction, self.priorBal, self.betamnt, embed)
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -154,7 +152,12 @@ class Mines(commands.Cog):
         pass
 
     @mines.subcommand()
-    async def start(self, interaction:Interaction, betamnt:int, minecount:int = nextcord.SlashOption(required=True,name="choice", choices=[x+1 for x in range(24)])):
+    async def start(self, interaction:Interaction, betamnt:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
+                          minecount:int = nextcord.SlashOption(required=True,name="choice", choices=[x+1 for x in range(24)])):
+        if betamnt < 1000:
+            await interaction.send("Minimum bet is 1000", ephemeral=True)
+            return
+        
         priorbal = await self.bot.get_cog("Economy").getBalance(interaction.user)
         if not await self.bot.get_cog("Economy").subtractBet(interaction.user, betamnt):
             raise Exception("tooPoor")
@@ -163,7 +166,7 @@ class Mines(commands.Cog):
 
         nextProfit = int(betamnt * profit[0])
 
-        msg = f"Roobet Mines\nCurrent Amount to Withdraw: {betamnt:,} (1.00x)\nNext Amount to Withdraw: {nextProfit:,} ({profit[0]:,}x)"
+        msg = f"Roobet Mines\nCurrent Profit to Withdraw: 0 (1.00x)\nNext Profit: {(nextProfit-betamnt):,} ({profit[0]:,}x)"
         embed = nextcord.Embed(color=1768431, title=f"The Casino | Roobet Mines", description=msg)
         await interaction.send(embed=embed, view=MinesView(self.bot, interaction.user.id, minecount, profit, betamnt, priorbal))
 
