@@ -59,7 +59,6 @@ class rps(commands.Cog):
 			winner = -1
 			file = nextcord.File("./images/rps/scissorslost.png", filename="image.png")
 
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		embed = nextcord.Embed(color=0xff2020)
 		embed.set_thumbnail(url="attachment://image.png")
 		if winner == 1:
@@ -81,9 +80,7 @@ class rps(commands.Cog):
 			result = "PUSHED"
 
 		embed.add_field(name=f"{self.bot.user.name}' Casino | RPS", value=f"**{interaction.user.name}** picked **{userchoice}** \n**Pit Boss** picked **{botChoice}**",inline=False)
-		giveZeroIfNeg = max(0, profitInt) # will give 0 if profit is negative. 
-																				# we don't want it subtracting anything, only adding
-		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
+		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd)
 		
 		embed.add_field(name=f"**--- {result} ---**", value="_ _", inline=False)
 		

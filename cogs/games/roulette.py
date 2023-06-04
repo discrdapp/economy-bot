@@ -281,10 +281,9 @@ class View(nextcord.ui.View):
 
 
 		amntSpent = self.totalBet
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		if moneyToAdd > amntSpent:
 			# \n**Profit:** {moneyToAdd - amntSpent}{self.coin}
-			result = f"You won a grand total of {moneyToAdd} (+{moneyToAdd * (multiplier - 1)}){self.coin} after betting {amntSpent}{self.coin}"
+			result = f"You won a grand total of {moneyToAdd}{self.coin} after betting {amntSpent}{self.coin}"
 		elif moneyToAdd < amntSpent:
 			if moneyToAdd > 0:
 				result = f"You got back {moneyToAdd:,}{self.coin} after betting {amntSpent:,}{self.coin}"
@@ -320,7 +319,7 @@ class View(nextcord.ui.View):
 		else:
 			self.embed = await DB.addProfitAndBalFields(self, interaction, -amntSpent + moneyToAdd, self.embed)
 		await self.msg.edit(embed=self.embed, file=nextcord.File('images/roulette/temproulette.png'))
-		await self.bot.get_cog("Totals").addTotals(interaction, amntSpent, moneyToAdd + (moneyToAdd * (multiplier - 1)), 3)
+		await self.bot.get_cog("Totals").addTotals(interaction, amntSpent, moneyToAdd, 3)
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Rltte", moneyToAdd - amntSpent)
 		if len(self.previousNums) == 8:  # display only 8 previous numbers
 			self.previousNums.pop()

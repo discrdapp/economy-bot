@@ -418,8 +418,6 @@ class Blackjack(nextcord.ui.View):
 		# 
 		#########################
 
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(user.id)
-
 		file = None
 
 		if winner == 999: # won by insurance
@@ -463,7 +461,7 @@ class Blackjack(nextcord.ui.View):
 			self.embed.set_thumbnail(url="attachment://image.png")
 
 		if moneyToAdd > 0:
-			await self.bot.get_cog("Economy").addWinnings(user.id, moneyToAdd + (moneyToAdd * (multiplier - 1)))
+			await self.bot.get_cog("Economy").addWinnings(user.id, moneyToAdd)
 		self.embed.set_field_at(2, name = f"**--- {result} ---**", value = "_ _", inline=False)
 
 		self.embed = await DB.addProfitAndBalFields(self, self.interaction, profitInt, self.embed)

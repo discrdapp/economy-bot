@@ -48,7 +48,6 @@ class Slots(commands.Cog):
 
 		#slotmachine = f"**[ {a} {b} {c} ]\n{interaction.user.name}**,"
 		embed.color = nextcord.Color(0x23f518)
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 
 		if (a == b == c) or ((a == b) or (a == c) or (b == c)):
 			if (a == b == c): # if all match
@@ -57,24 +56,26 @@ class Slots(commands.Cog):
 				moneyToAdd = int(amntbet * 1.5) # you win 150% your bet
 			
 			result = "YOU WON"
-			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (moneyToAdd * (multiplier - 1)))
+			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd)
 
 		else: # if no match
-			moneyToAdd = -amntbet
+			moneyToAdd = 0
 			result = "YOU LOST"
 
 			embed.color = nextcord.Color(0xff2020)
 
+		profitInt = moneyToAdd - amntbet
+
 		embed.add_field(name=f"**--- {result} ---**", value="_ _", inline=False)
 
-		embed = await DB.addProfitAndBalFields(self, interaction, moneyToAdd, embed)
+		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
 		embed = await DB.calculateXP(self, interaction, priorBal, amntbet, embed)
 
 		await botMsg.edit(embed=embed)
 
 		if moneyToAdd > 0:
-			await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 0)
-			await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Slt", moneyToAdd)
+			await self.bot.get_cog("Totals").addTotals(interaction, amntbet, profitInt, 0)
+			await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Slt", profitInt)
 
 
 def setup(bot):

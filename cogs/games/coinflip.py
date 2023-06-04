@@ -76,8 +76,6 @@ class Coinflip(commands.Cog):
 
 
 		side = random.choice(["Heads", "Tails"]).lower()
-		
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 
 		embed = nextcord.Embed(color=0x23f518)
 		
@@ -94,9 +92,7 @@ class Coinflip(commands.Cog):
 			
 		embed.set_thumbnail(url="attachment://image.png")
 		embed.add_field(name=f"{self.bot.user.name} | Coinflip", value=f"The coin landed on {side}\n_ _",inline=False)
-		giveZeroIfNeg = max(0, profitInt) # will give 0 if profitInt is negative. 
-																		# we don't want it subtracting anything, only adding
-		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd + (giveZeroIfNeg * (multiplier - 1)))
+		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd)
 		
 		
 		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
