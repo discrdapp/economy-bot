@@ -394,8 +394,6 @@ class Totals(commands.Cog):
 
 	async def addTotals(self, interaction:Interaction, spent, won, game):
 		discordID = interaction.user.id
-		profit = won - spent
-		conn = sqlite3.connect(config.db)
 
 		if game == 0: gameName = "Slots"		  
 		elif game == 1: gameName = "Blackjack"
@@ -404,17 +402,19 @@ class Totals(commands.Cog):
 		elif game == 4: gameName = "Coinflip"
 		elif game == 5: gameName = "RPS"
 
-		sql = f"""UPDATE Totals
-				  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, {gameName} = {gameName} + {profit}
-				  WHERE DiscordID = '{interaction.user.id}';"""
-
-		cursor = conn.execute(sql)
-		conn.commit()
-
 		bal = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		log(discordID, spent, won, game, bal)
 
-		conn.close()
+		if won < 0:
+			won = 0
+		if spent < 0:
+			spent = 0
+		profit = won - spent
+
+		DB.update("""UPDATE Totals
+				  SET Paid = Paid + ?, Won = Won + ?, Profit = Profit + ?, Games = Games + 1, ? = ? + ?
+				  WHERE DiscordID = '?';""", [spent, won, profit, gameName, gameName, profit, interaction.user.id])
+
 
 def setup(bot):
 	bot.add_cog(Totals(bot))
