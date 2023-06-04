@@ -96,7 +96,6 @@ class DB(commands.Cog):
 		else:
 			embed.color = nextcord.Color(0xff2020)
 		if profit > 0:
-			profit = int(float(profit) * (multiplier))
 			embed.add_field(name=name, value=f"+{profit:,} (+{int(profit * (multiplier - 1))}){self.coin}", inline=True)
 		else:
 			embed.add_field(name=name, value=f"{profit:,}{self.coin}", inline=True)
