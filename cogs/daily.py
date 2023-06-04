@@ -36,12 +36,14 @@ class Daily(commands.Cog):
 
 
 		dailyReward = await self.getDailyReward(interaction)
-		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
-		extraMoney = int(dailyReward * (multiplier - 1))
-		await self.bot.get_cog("Economy").addWinnings(userId, dailyReward + extraMoney)
-		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed.add_field(name = f"You got {(dailyReward+extraMoney):,} {self.coin}", 
-						value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
+		# multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
+		# extraMoney = int(dailyReward * (multiplier - 1))
+		await self.bot.get_cog("Economy").addWinnings(userId, dailyReward)
+		# balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
+		# embed.add_field(name = f"You got {(dailyReward+extraMoney):,} {self.coin}", 
+						# value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
+		embed.description = f"You got {dailyReward:,} {self.coin}"
+		embed = await DB.addProfitAndBalFields(self, interaction, dailyReward, embed)
 		await interaction.send(embed=embed)
 
 
