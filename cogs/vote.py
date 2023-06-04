@@ -29,14 +29,18 @@ class Vote(commands.Cog):
 			await interaction.send("You have not voted yet.", embed=embed)
 			return
 
-		if numOfVotes == 1: times = "Time"
-		else: times = "Times"
+		if numOfVotes == 1: 
+			times = "Time"
+			chip = "Chip"
+		else: 
+			times = "Times"
+			chip = "Chips"
 
 		moneyToAdd = 8500 * numOfVotes
 		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd)
-		self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, 1, 'Voter Chip')
-		
-		embed.add_field(name=f"Thanks for Voting {numOfVotes} {times}!", value=f"{moneyToAdd}{self.coin} has been added to your account and you received your Voter Chip!")
+		self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, numOfVotes, 'Voter Chip')
+				
+		embed.add_field(name=f"Thanks for Voting {numOfVotes} {times}!", value=f"{moneyToAdd}{self.coin} has been added to your account and you received {numOfVotes} Voter {chip}!")
 		embed.set_footer(text="/use to use your Voter Chip")
 		msg = await interaction.send(embed=embed)
 		msg = await msg.fetch()
