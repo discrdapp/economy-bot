@@ -411,9 +411,17 @@ class Totals(commands.Cog):
 			spent = 0
 		profit = won - spent
 
-		DB.update("""UPDATE Totals
-				  SET Paid = Paid + ?, Won = Won + ?, Profit = Profit + ?, Games = Games + 1, ? = ? + ?
-				  WHERE DiscordID = '?';""", [spent, won, profit, gameName, gameName, profit, interaction.user.id])
+		# DB.update("""UPDATE Totals
+		# 		  SET Paid = Paid + ?, Won = Won + ?, Profit = Profit + ?, Games = Games + 1, ? = ? + ?
+		# 		  WHERE DiscordID = ?;""", [spent, won, profit, gameName, gameName, profit, interaction.user.id])
+		sql = f"""UPDATE Totals
+				  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, {gameName} = {gameName} + {profit}
+				  WHERE DiscordID = '{interaction.user.id}';"""
+
+		conn = sqlite3.connect(config.db)
+		cursor = conn.execute(sql)
+		conn.commit()
+		conn.close()
 
 
 def setup(bot):
