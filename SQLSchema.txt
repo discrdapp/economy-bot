@@ -45,6 +45,14 @@ CREATE TABLE "Items" (
         `Buyable` NUMERIC NOT NULL DEFAULT 0,
         PRIMARY KEY(ID)
 );
+CREATE TABLE "MinerBlocks" (
+        `ID`    INTEGER,
+        `Name`  TEXT,
+        `Value` INTEGER,
+        `Emoji` TEXT,
+        `RequiresPickaxeLevel`  INTEGER,
+        PRIMARY KEY(ID)
+);
 CREATE TABLE `Multipliers` (
         `DiscordID` INTEGER NOT NULL,
         `Multiplier`  REAL NOT NULL,
