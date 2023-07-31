@@ -169,6 +169,8 @@ class Economy(commands.Cog):
 		balance = await self.getBalance(user)
 		if amntbet <= balance and amntbet > 0:
 			DB.update("UPDATE Economy SET Credits = Credits - ? WHERE DiscordID = ?;", [amntbet, user.id])
+			
+			# add xp
 			return True # return 1 if user has enough $$$ to bet their amount entered
 		else:
 			return False # return 0 if user trying to bet more $$$ than they have

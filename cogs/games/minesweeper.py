@@ -2,25 +2,56 @@ import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
 
-from nextcord.ui import View, Select
-
 import random
 
-class Minesweeper(commands.Cog):
-	def __init__(self, bot):
-		self.bot = bot
+class TicTacToeButton(nextcord.ui.Select['TicTacToe']):
+	def __init__(self, options, placeholder):
+		super().__init__(options=options, placeholder=placeholder, min_values=1, max_values=1)
+	
+	# This function is called whenever this particular button is pressed
+	# This is part of the "meat" of the game logic
+	async def callback(self, interaction: nextcord.Interaction):
+		assert self.view is not None
+		view: TicTacToe = self.view
+
+		if super().placeholder.startswith("Select a letter"):
+			view.x = int(self.values[0])
+		else:
+			view.y = int(self.values[0])
+
+
+		# if view.optionsSelected == 1:
+		# 	view.optionsSelected = 0
+			
+		# 	x = view.children[0].values[0]
+		# 	y = view.children[1].values[0]
+
+		# 	view.RevealCell
+		# 	await interaction.response.edit_message(view=view)
+
+
+# This is our actual board View
+class TicTacToe(nextcord.ui.View):
+	def __init__(self, interaction, bot, minecount:int):
+		super().__init__()
+		self.bot:commands.bot.Bot = bot
+		
 		self.gridSize = 12
-		self.mineCount = 20
+		self.mineCount = minecount
 		self.mines = []
 		self.grid = []
 		self.selectCount = 0
 		self.view = None
 		self.revealed = []
-
-	def GenerateSelects(self):
+		self.flags = []
 		numOptions = []
-		for x in range(0, 12):
-			numOptions.append(nextcord.SelectOption(label=f"{x}", value=x))
+
+		self.x = None
+		self.y = None
+
+		self.optionsSelected = 0
+
+		self.ownerId = interaction.user.id
 
 		letterOptions = [
 			nextcord.SelectOption(label="A", value = 0),
@@ -36,12 +67,63 @@ class Minesweeper(commands.Cog):
 			nextcord.SelectOption(label="K", value = 10),
 			nextcord.SelectOption(label="L", value = 11)
 		]
-		x = Select(options=letterOptions)
-		y = Select(options=numOptions)
+		self.add_item(TicTacToeButton(letterOptions, "Select a letter"))
 
-		return x,y
+		for x in range(0, 12):
+			numOptions.append(nextcord.SelectOption(label=f"{x}", value=x))
+		self.add_item(TicTacToeButton(numOptions, "Select a number"))
+
+		self.GenerateBoard()
+		self.GenerateMines()
+		self.SetCounts()
+	
+	async def Start(self, interaction):
+		grid = self.draw_grid()
+		msg = await interaction.send(content=grid, view=self)
+		fetchMsg = await msg.fetch()
+
+		# TicTacToe(interaction, minecount)
+		def check(reaction, user):
+			return user == interaction.user and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '🚩')
+		
+		
+		while True:
+			self.x = None
+			self.y = None
+
+			await fetchMsg.add_reaction("✅")
+			await fetchMsg.add_reaction("🚩")
+			reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+
+			if not self.x or not self.y:
+				await interaction.send("You need to select a letter and a number!", ephemeral=True)
+				continue
+			elif (self.x, self.y) in self.revealed:
+				await interaction.send("You already revealed that cell!", ephemeral=True)
+				continue
+			else:
+				if (self.x, self.y) in self.flags:
+					self.flags.remove((self.x, self.y))
+				elif (self.x, self.y) not in self.revealed:
+					if str(reaction.emoji) == "✅":
+						if self.grid[self.x][self.y] == "*":
+							await self.GameOver(fetchMsg, False)
+							return
+						self.RevealCell(self.x, self.y)
+						if len(self.revealed) + self.mineCount >= self.gridSize*self.gridSize:
+							await self.GameOver(fetchMsg, True) 
+							return
+					elif str(reaction.emoji) == "🚩" and (self.x, self.y) not in self.revealed:
+							self.flags.append((self.x, self.y))
+
+			# embed.set_field_at(0, name="Minesweeper", value=self.draw_grid())
+
+			await fetchMsg.clear_reactions()
+			await fetchMsg.edit(content=self.draw_grid())
+
 
 	async def GameOver(self, msg, won=bool):
+		print(f"You won: {won}")
 		embed = nextcord.Embed(color=1768431, title=f"Mine")
 		embed.add_field(name="Minesweeper", value=self.draw_grid(True))
 
@@ -49,94 +131,6 @@ class Minesweeper(commands.Cog):
 		await msg.edit(embed=embed, view=None)
 		print("Gameover!")
 
-
-
-	@nextcord.slash_command()	
-	async def minesweeper(self, interaction:Interaction):
-		self.mines = []
-		self.grid = []
-		self.selectCount = 0
-		self.view = None
-		self.revealed = []
-		self.flags = []
-
-		embed = nextcord.Embed(color=1768431, title=f"Mine")
-
-		self.GenerateBoard()
-		self.GenerateMines()
-		self.SetCounts()
-
-		embed.add_field(name="Minesweeper", value=self.draw_grid())
-
-		# async def my_callback(interaction):
-		# 	self.selectCount += 1
-		# 	if self.selectCount > 1:
-		# 		self.view.stop()
-
-		def check(reaction, user):
-			return user == interaction.user and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '🚩')
-
-		async def ResetEmbed(fetchMsg):
-			self.selectCount = 0
-			self.view = View()
-
-			x, y = self.GenerateSelects()
-			self.view.add_item(x)
-			self.view.add_item(y)
-
-			# x.callback = my_callback
-			# y.callback = my_callback
-			if fetchMsg:
-				await fetchMsg.remove_reaction("✅", interaction.user)
-				await fetchMsg.remove_reaction("🚩", interaction.user)
-
-			return x, y
-
-		x, y = await ResetEmbed(None)
-
-		msg = await interaction.send(embed=embed, view=self.view)
-		fetchMsg = await msg.fetch()
-		await fetchMsg.add_reaction("✅")
-		await fetchMsg.add_reaction("🚩")
-
-
-		while True:
-			# await self.view.wait()
-			try:
-				reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
-			except Exception as e:
-				print(e)
-
-			if not x.values or not y.values:
-				await fetchMsg.remove_reaction("✅", interaction.user)
-				await fetchMsg.remove_reaction("🚩", interaction.user)
-				continue
-
-			xValue = int(x.values[0])
-			yValue = int(y.values[0])
-
-			if str(reaction.emoji) == "✅":
-				if self.grid[xValue][yValue] == "*":
-					await self.GameOver(fetchMsg, False)
-					return
-				if (xValue, yValue) in self.flags:
-					self.flags.remove((xValue, yValue))	
-				self.RevealCell(xValue, yValue)
-				if len(self.revealed) + self.mineCount >= self.gridSize*self.gridSize:
-					await self.GameOver(fetchMsg, True) 
-					return
-			elif str(reaction.emoji) == "🚩" and (xValue, yValue) not in self.revealed:
-				self.flags.append((xValue, yValue))
-			embed.set_field_at(0, name="Minesweeper", value=self.draw_grid())
-
-
-			x, y = await ResetEmbed(fetchMsg)
-
-			await msg.edit(embed=embed, view=self.view)
-
-
-
-		# Define the function to draw the grid
 	def draw_grid(self, isGameOver=False):
 		msg = "⬛"
 		for x in range(0, self.gridSize):
@@ -278,6 +272,16 @@ class Minesweeper(commands.Cog):
 		elif num == 14:return "🇴"
 		elif num == 15:return "🇵"
 
+	
+
+class Minesweeper(commands.Cog):
+	def __init__(self, bot):
+		self.bot:commands.bot.Bot = bot
+	
+	@nextcord.slash_command()
+	async def play(self, interaction, minecount:int = nextcord.SlashOption(required=True,name="Number of Mines", choices=[x for x in range(20, 141, 10)])):
+		ttt = TicTacToe(interaction, self.bot, minecount)
+		await ttt.Start(interaction)
 
 def setup(bot):
 	bot.add_cog(Minesweeper(bot))
