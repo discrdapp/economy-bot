@@ -3,6 +3,7 @@ from nextcord.ext import commands
 from nextcord import Interaction
 
 import config
+import ztoken
 
 bot = commands.Bot()
 bot.remove_command('help')
@@ -126,6 +127,6 @@ async def main():
 		except Exception as error:
 			print(f"{extension} could not be loaded. [{error}]")
 
-	await bot.start(config.token)
+	await bot.start(ztoken.token)
 
 bot.loop.run_until_complete(main())
