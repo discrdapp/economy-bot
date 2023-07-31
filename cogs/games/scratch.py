@@ -47,7 +47,6 @@ class ScratchTile(nextcord.ui.Button):
 			await view.EndGame(interaction, (view.matchingNums*view.amntbet) - view.amntbet)
 			return
 
-	
 
 class ScratchTicket(nextcord.ui.View):
 	def __init__(self, bot, amntbet, ownerId):
@@ -61,7 +60,6 @@ class ScratchTicket(nextcord.ui.View):
 		self.matchingNums = 0
 		self.ScratchTilesRemaining = 9
 
-		
 		self.GenerateTicket()
 	
 
@@ -75,9 +73,9 @@ class ScratchTicket(nextcord.ui.View):
 
 		if profit >= 0:
 			await self.bot.get_cog("Economy").addWinnings(self.ownerId, profit+self.amntbet)
-		
+
 		embed = nextcord.Embed(color=0xff2020)
-		embed = await DB.addProfitAndBalFields(self, interaction, profit+self.amntbet, embed)
+		embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
 
 		# Why don't we just calculate the XP in subtractBet
 		embed = await DB.calculateXP(self, interaction, balance, self.amntbet, embed)
@@ -90,17 +88,11 @@ class ScratchTicket(nextcord.ui.View):
 
 		# 50% chance of getting your money back
 		hasOneSameNumber = randint(0, 1)
-
-		# DEBUGGGGG
-		hasOneSameNumber = True
 		if hasOneSameNumber:
 			placeForNumber = randint(1, 9)
 
 			# 50% chance of making money (25% chance TOTAL)
 			hasTwoSameNumber = randint(0, 1)
-
-			# DEBUGGGGG
-			hasTwoSameNumber = True
 			if hasTwoSameNumber:
 				placeForNumber2 = randint(1, 9)
 				while placeForNumber == placeForNumber2:
@@ -108,9 +100,6 @@ class ScratchTicket(nextcord.ui.View):
 
 				# 50% chance of making money (12.5% chance TOTAL)
 				hasThreeSameNumber = randint(0, 1)
-
-				# DEBUGGGGG
-				hasThreeSameNumber = True
 				if hasThreeSameNumber:
 					placeForNumber3 = randint(1, 9)
 					while placeForNumber3 == placeForNumber or placeForNumber3 == placeForNumber2:
@@ -118,9 +107,6 @@ class ScratchTicket(nextcord.ui.View):
 
 					# 50% chance of making money (6.25% chance TOTAL)
 					hasFourSameNumber = randint(0, 1)
-
-					# DEBUGGGGG
-					hasFourSameNumber = True
 					if hasFourSameNumber:
 						placeForNumber4 = randint(1, 9)
 						while placeForNumber4 == placeForNumber or placeForNumber4 == placeForNumber2 or placeForNumber4 == placeForNumber3:
