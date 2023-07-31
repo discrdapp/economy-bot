@@ -3,9 +3,147 @@ from nextcord.ext import commands
 from nextcord import Interaction
 
 import cooldowns
-import asyncio
-
 from random import randint
+
+import config
+from db import DB
+
+
+class ScratchTile(nextcord.ui.Button):
+	def __init__(self, label, value, style, row, disabled=True):
+		super().__init__(label=label, style=style, row=row, disabled=disabled)
+		self.value = value
+	async def callback(self, interaction: nextcord.Interaction):
+		assert self.view is not None
+		view: ScratchTicket = self.view
+
+		if view.ownerId != interaction.user.id:
+			await interaction.send("This is not your game!", ephemeral=True)
+			return
+
+		self.disabled = True
+		
+		if self.label == "W1":
+			for child in view.children:
+				if child.label != "W1":
+					child.disabled = False
+			self.label = self.value
+			await interaction.edit(view=view)
+			return
+		
+		self.label = self.value
+			
+		if self.value == view.winningNumber:
+			self.style = nextcord.ButtonStyle.green
+			view.matchingNums += 1
+		else:
+			self.style = nextcord.ButtonStyle.red
+		
+		view.ScratchTilesRemaining -= 1
+
+		await interaction.edit(content=f"Current Profit: {(view.matchingNums*view.amntbet) - view.amntbet}", view=view)
+
+		if view.ScratchTilesRemaining == 0:
+			await view.EndGame(interaction, (view.matchingNums*view.amntbet) - view.amntbet)
+			return
+
+	
+
+class ScratchTicket(nextcord.ui.View):
+	def __init__(self, bot, amntbet, ownerId):
+		super().__init__(timeout=60)
+		self.bot:commands.bot.Bot = bot
+		self.coin = "<:coins:585233801320333313>"
+
+		self.amntbet = amntbet
+		self.ownerId = ownerId
+
+		self.matchingNums = 0
+		self.ScratchTilesRemaining = 9
+
+		
+		self.GenerateTicket()
+	
+
+	async def Start(self, interaction):
+		await interaction.send(content=f"Current Profit: -{self.amntbet}", view=self)
+	
+	async def EndGame(self, interaction, profit):
+		self.stop()
+
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
+
+		if profit >= 0:
+			await self.bot.get_cog("Economy").addWinnings(self.ownerId, profit+self.amntbet)
+		
+		embed = nextcord.Embed(color=0xff2020)
+		embed = await DB.addProfitAndBalFields(self, interaction, profit+self.amntbet, embed)
+
+		# Why don't we just calculate the XP in subtractBet
+		embed = await DB.calculateXP(self, interaction, balance, self.amntbet, embed)
+		await interaction.edit(content="", embed=embed, view=self)
+	
+	def GenerateTicket(self):
+		self.winningNumber = randint(10, 99)
+
+		hasOneSameNumber = hasTwoSameNumber = hasThreeSameNumber = hasFourSameNumber = False
+
+		# 50% chance of getting your money back
+		hasOneSameNumber = randint(0, 1)
+
+		# DEBUGGGGG
+		hasOneSameNumber = True
+		if hasOneSameNumber:
+			placeForNumber = randint(1, 9)
+
+			# 50% chance of making money (25% chance TOTAL)
+			hasTwoSameNumber = randint(0, 1)
+
+			# DEBUGGGGG
+			hasTwoSameNumber = True
+			if hasTwoSameNumber:
+				placeForNumber2 = randint(1, 9)
+				while placeForNumber == placeForNumber2:
+					placeForNumber2 = randint(1, 9)
+
+				# 50% chance of making money (12.5% chance TOTAL)
+				hasThreeSameNumber = randint(0, 1)
+
+				# DEBUGGGGG
+				hasThreeSameNumber = True
+				if hasThreeSameNumber:
+					placeForNumber3 = randint(1, 9)
+					while placeForNumber3 == placeForNumber or placeForNumber3 == placeForNumber2:
+						placeForNumber3 = randint(1, 9)
+
+					# 50% chance of making money (6.25% chance TOTAL)
+					hasFourSameNumber = randint(0, 1)
+
+					# DEBUGGGGG
+					hasFourSameNumber = True
+					if hasFourSameNumber:
+						placeForNumber4 = randint(1, 9)
+						while placeForNumber4 == placeForNumber or placeForNumber4 == placeForNumber2 or placeForNumber4 == placeForNumber3:
+							placeForNumber4 = randint(1, 9)
+		
+		count = 0
+		row = 1
+
+		self.add_item(ScratchTile(label="W1", value=self.winningNumber, style=nextcord.ButtonStyle.blurple, row=0, disabled=False))
+		for x in "ABC":
+			for y in range(1, 4):
+				count += 1
+				if  (hasOneSameNumber and count == placeForNumber) or \
+					(hasTwoSameNumber and count == placeForNumber2) or \
+					(hasThreeSameNumber and count == placeForNumber3 or \
+					(hasFourSameNumber and count == placeForNumber4)):
+					value = self.winningNumber
+				else:
+					value = randint(10, 99)
+				self.add_item(ScratchTile(label=f"{x}{y}", value=value, style=nextcord.ButtonStyle.gray, row=row))
+			row += 1
+		
+		
 
 class Scratch(commands.Cog):
 	def __init__(self, bot):
@@ -13,67 +151,19 @@ class Scratch(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 
-	@nextcord.slash_command(description="Play Scratch!", guild_ids=[585226670361804827])
+	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
-	async def scratch(self, interaction:Interaction, amntbet, skip:str=""):
-		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
+	async def scratch(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 100")):
+		if amntbet < 100:
+			await interaction.send("Minimum bet is 100", ephemeral=True)
+			return
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")
-
-		winningNumber = randint(9,91)
-		n = []
-		for _ in range(0, 9):
-			n.append(randint(winningNumber-5, winningNumber+5))
-		spots = {"W1": winningNumber, "A1": n[0], "A2": n[1], "A3": n[2], "B1": n[3], "B2": n[4], "B3": n[5], "C1": n[6], "C2": n[7], "C3": n[8]}
 		
-		if skip == "":
-			msg = ''
-			msg += "Winning number: W1\n"
-			msg += "A1\tA2\tA3\n"
-			msg += "B1\tB2\tB3\n"
-			msg += "C1\tC2\tC3\n"
-
-			msgSent = await interaction.send(msg)
-
-			count = 0
-
-			while count < 10:
-				def is_me(m):
-					if m.author.id == interaction.user.id and m.content.upper() in spots.keys():
-						return True
-				try:
-					scratchOff = await self.bot.wait_for('message', check=is_me, timeout=45)
-				except asyncio.TimeoutError:
-					raise Exception("timeoutError")
-
-				count += 1
-				content = scratchOff.content.upper()
-
-				msg = msg.replace(content, str(spots[content]))
-				await msgSent.edit(content=msg)
-
-				del spots[content]
-
-		if skip == "skip":
-			msg = ''
-			msg += f"Winning number: {winningNumber}\n"
-			msg += f"{n[0]}\t{n[1]}\t{n[2]}\n"
-			msg += f"{n[3]}\t{n[4]}\t{n[5]}\n"
-			msg += f"{n[6]}\t{n[7]}\t{n[8]}\n"
-
-			msgSent = await interaction.send(msg)
-
-		profit = 0
-		for num in n:
-			if winningNumber == num:
-				profit += amntbet
-
-		await interaction.send(f"You won {profit}{self.coin}")
-
-		if profit != 0:
-			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntbet + profit)
+		game = ScratchTicket(self.bot, amntbet, interaction.user.id)
+		await game.Start(interaction)
 
 
 def setup(bot):
