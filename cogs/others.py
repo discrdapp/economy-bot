@@ -84,16 +84,16 @@ class Others(commands.Cog):
 		
 		embed.add_field(name = ":game_die: Game Commands", 
 						 value="`roulette`, `crash`, `blackjack`, " 
-							 + "`slots`, `coinflip`, `rps`, `dond`, `mines`, `rob`", inline = False)
+							 + "`slots`, `coinflip`, `rps`, `dond`, `mines`, `scratch`, `rob`", inline = False)
 
 		embed.add_field(name = ":gear: Other Commands",
-					   value = "`balance`, `top`, `position`, `shop`, `use`, `stats`, `bank`, `claim`, `vote`, "
+					   value = "`balance`, `top`, `position`, `shop`, `use`, `stats`, `bank`, `claim`, "
 							 + "`profile`, `level`, `rewards`", inline=False)
 
 		embed.add_field(name = ":money_with_wings: Earn Money",
-					   value = "`work`, `daily`, `weekly`, `monthly`, `search`, and more coming soon...", inline=False)
+					   value = "`vote`, `work`, `daily`, `weekly`, `monthly`, `search`, `claim`", inline=False)
 
-		embed.add_field(name=":grey_question: ***NEW***  Quests", value=f"`quests` <-- IN BETA! REPORT ANY BUGS.")
+		embed.add_field(name=":grey_question: Quests", value=f"`quests`")
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `.claim` for free 7,500{self.coin}")
