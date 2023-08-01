@@ -32,7 +32,7 @@ class MinesButton(nextcord.ui.Button['MinesView']):
             # embed.description = f"Game finished.\nAmount won: {currProfit:,} ({currTimesAmnt:,}x)"
             await view.Gameover(interaction, embed, currProfit)
             return
-        
+
         view.spacesClicked += 1
         currTimesAmnt = round(view.profit[view.spacesClicked-1], 2)
         currProfit = int(view.betamnt * currTimesAmnt)
@@ -148,16 +148,16 @@ class Mines(commands.Cog):
         ]
 
     @nextcord.slash_command()
-    async def mines(self, interaction:Interaction, betamnt:int, minecount:int = nextcord.SlashOption(required=True,name="choice", choices=[x+1 for x in range(24)])):
+    async def mines(self, interaction:Interaction):
         pass
 
     @mines.subcommand()
     async def start(self, interaction:Interaction, betamnt:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
-                          minecount:int = nextcord.SlashOption(required=True,name="choice", choices=[x+1 for x in range(24)])):
+                          minecount:int = nextcord.SlashOption(required=True,name="minecount", choices=[x+1 for x in range(24)])):
         if betamnt < 1000:
             await interaction.send("Minimum bet is 1000", ephemeral=True)
             return
-        
+
         priorbal = await self.bot.get_cog("Economy").getBalance(interaction.user)
         if not await self.bot.get_cog("Economy").subtractBet(interaction.user, betamnt):
             raise Exception("tooPoor")
@@ -171,7 +171,7 @@ class Mines(commands.Cog):
         await interaction.send(embed=embed, view=MinesView(self.bot, interaction.user.id, minecount, profit, betamnt, priorbal))
 
     @mines.subcommand()
-    async def profits(self, interaction: Interaction, minecount:int = nextcord.SlashOption(required=True,name="choice", choices=[x+1 for x in range(24)])):
+    async def profits(self, interaction: Interaction, minecount:int = nextcord.SlashOption(required=True,name="minecount", choices=[x+1 for x in range(24)])):
         profit = self.profits[minecount-1]
         embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Roobet Mines", description=f"Profit Table for {minecount} Mines")
         for i in range(len(profit)):
