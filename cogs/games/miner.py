@@ -5,8 +5,6 @@ from nextcord import Interaction
 import cooldowns
 from random import randint
 
-import json
-
 from db import DB
 
 # class BlockList():
@@ -30,12 +28,24 @@ class Miner(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 		self.blocks = GetBlocks()
 
-	def getBackpackSize(self, interaction, file):
-		try:	
-			backpackLevel = file[f"{interaction.user.id}"]
-			return backpackLevel * 32
-		except:
-			return 32
+	def getInventory(self, userId, whatToGet=None):
+		if whatToGet:
+			inv = DB.fetchOne(f"SELECT {whatToGet} FROM MinerInventory WHERE DiscordID = ?;", [userId])[0]
+
+			if not inv:
+				DB.insert('INSERT INTO MinerInventory(DiscordID) VALUES (?);', [userId])
+				inv = DB.fetchOne(f"SELECT {whatToGet} FROM MinerInventory WHERE DiscordID = ?;", [userId])[0]
+		else:
+			inv = DB.fetchOne("SELECT * FROM MinerInventory WHERE DiscordID = ?;", [userId])
+
+			if not inv:
+				DB.insert('INSERT INTO MinerInventory(DiscordID) VALUES (?);', [userId])
+				inv = DB.fetchOne("SELECT * FROM MinerInventory WHERE DiscordID = ?;", [userId])
+		
+		return inv
+
+	def getBackpackSize(self, interaction:Interaction):
+		return DB.fetchOne('SELECT BackpackLevel FROM MinerInventory WHERE DiscordID = ?;', [interaction.user.id])[0]*32
 
 	@nextcord.slash_command()
 	# @commands.cooldown(1, 3, commands.BucketType.user)
@@ -54,20 +64,14 @@ class Miner(commands.Cog):
 			embed.description = "We're currently working on MINER 2.0. Please check back later!"
 			return
 
-		with open(r"miner.json", 'r') as f:
-			invFile = json.load(f)
+		inv = self.getInventory(interaction.user.id)
 
-		try:
-			inv = invFile[f"{interaction.user.id}"]
-		except:
-			# 32 is the inventory size
-			inv = [1, 1, 0, 0, 0, 0, 0, 0]
 
 		spaceUsed = 0
-		for item in inv[2:]:
+		for item in inv[3:]:
 			spaceUsed += item
 		# spaceLeft left is inventory size - the count
-		spaceLeft = self.getBackpackSize(interaction, inv) - spaceUsed
+		spaceLeft = self.getBackpackSize(interaction) - spaceUsed
 
 		if spaceLeft <= 0:
 			embed.description = "You need to sell your blocks before you can mine some more.\nType `/miner sell`"
@@ -91,78 +95,62 @@ class Miner(commands.Cog):
 		if amnt < spaceLeft: 
 			# if inventory has space for all the blocks
 			await interaction.send(f"Mined {amnt} {self.blocks[block][3]}!")
-			inv[block+2] += amnt
+			# inv[block+2] += amnt
+			amntToSetTo = inv[block+3] + amnt
 		else: 
 			# if inventory doesn't have space for all the blocks, fill it up
 			await interaction.send(f"Mined {spaceLeft} {self.blocks[block][3]}!")
-			inv[block+2] += spaceLeft
+			# inv[block+2] += spaceLeft
+			amntToSetTo = inv[block+3] + spaceLeft
 			await interaction.send("Your backpack is now full!", ephemeral=True)
 
-		invFile[f"{interaction.user.id}"] = inv
-		with open(r"miner.json", 'w') as f:
-			json.dump(invFile, f, indent=4)
+		blockName = self.blocks[block][1]
+		print(blockName)
+		DB.update(f"UPDATE MinerInventory SET {blockName} = ? WHERE DiscordID = ?;", [amntToSetTo, interaction.user.id])
 
 	@miner.subcommand()
-	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 60, bucket=cooldowns.SlashBucket.author)
 	async def sell(self, interaction:Interaction):
-		with open(r"miner.json", 'r') as f:
-			invFile = json.load(f)
-		try:
-			inv = invFile[f"{interaction.user.id}"]
-		except:
-			await interaction.send("You haven't mined yet. Type `/miner mine` to start", ephemeral=True)
-			return
-
-		if not inv[2] and not inv[2] and not inv[3] and not inv[4] and not inv[5]:
-			await interaction.send("Your inventory is empty.", ephemeral=True)
-			return
+		inv = self.getInventory(interaction.user.id)
 
 		count = -1
 		totalMoney = 0
 		sellMsg = ""
-		for item in inv[2:]:
+		for item in inv[3:]:
 			count += 1
 			if item == 0:
 				continue
 			sellMsg += f"Sold {item} {self.blocks[count][3]} for {item * self.blocks[count][2]}{self.coin}\n"
 			totalMoney += item * self.blocks[count][2]
 		
+		if totalMoney == 0:
+			await interaction.send("You have no blocks to sell! Use `/miner mine` to mine some blocks")
+			return
+		
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, totalMoney * multiplier)
 		sellMsg += f"Total earned: {totalMoney} (+{int(totalMoney * (1 - multiplier))}){self.coin}"
 		await interaction.send(sellMsg)
 
-		for x in range(2, len(inv)):
-			inv[x] = 0
-		invFile[f"{interaction.user.id}"] = inv
-
-		with open(r"miner.json", 'w') as f:
-			json.dump(invFile, f, indent=4)
+		DB.update(f"UPDATE MinerInventory SET Dirt = 0, Cobblestone = 0, Coal = 0, Iron = 0, Gold = 0, Emerald = 0, Diamond = 0 WHERE DiscordID = ?;", [interaction.user.id])
+		
 
 
 	@miner.subcommand()
 	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
 	async def backpack(self, interaction:Interaction):
-		with open(r"miner.json", 'r') as f:
-			invFile = json.load(f)
-
-		embed = nextcord.Embed(color=1768431)
-		try:
-			inv = invFile[f"{interaction.user.id}"]
-		except:
-			embed.description = "You haven't mined yet. Type `/miner mine` to start"
-			await interaction.send(embed=embed, ephemeral=True)
-			return
+		inv = self.getInventory(interaction.user.id)
 		
-		embed.description = f"Backpack ({sum(inv[2:])}/{inv[0]*32}):\n"
+		embed = nextcord.Embed(color=1768431)
+		embed.description = f"**Backpack ({sum(inv[3:])}/{self.getBackpackSize(interaction)}):**\n"
 		count = 0
-		for num in inv[2:]:	
-			if inv[1] >= self.blocks[count][4]: 
+		for num in inv[3:]:	
+			if inv[2] >= self.blocks[count][4]: 
 				embed.add_field(name="_ _", value=f"\t{num} {self.blocks[count][3]}\n")
 			
 			count += 1
 		
-		embed.set_footer(text="Upgrade your backpack to increase its size\nUpgrade your pickaxe to unlock more blocks")
+		embed.set_footer(text="/upgrade your backpack to increase its size\n/upgrade your pickaxe to unlock more blocks")
 		await interaction.send(embed=embed)
 
 	@miner.subcommand()
@@ -174,12 +162,10 @@ class Miner(commands.Cog):
 		# embed.add_field(name = "Usage", value="**/miner upgrade <pickaxe/backpack>**", inline=False)
 		# embed.set_footer(text=f"User: {interaction.user.name}")
 		# await interaction.send(embed=embed)
-		with open(r"miner.json", 'r') as f:
-			invFile = json.load(f)
 
 		if userchoice == "pickaxe":
-			invFile[f"{interaction.user.id}"][1] += 1
-			lvl = invFile[f"{interaction.user.id}"][1]
+			DB.update("UPDATE MinerInventory SET PickaxeLevel = PickaxeLevel + 1 WHERE DiscordID = ?;", [interaction.user.id])
+			lvl = self.getInventory(interaction.user.id, "PickaxeLevel")
 			embed.add_field(name = "⛏️ Pickaxe Level", value=f"`{lvl-1} -> {lvl}`", inline=False)
 			# await interaction.send(embed=embed, ephemeral=True)
 
@@ -192,30 +178,21 @@ class Miner(commands.Cog):
 			await interaction.send(embed=embed, ephemeral=True)
 
 		elif userchoice == "backpack":
-			invFile[f"{interaction.user.id}"][0] += 1
-			lvl = invFile[f"{interaction.user.id}"][0]
+			DB.update("UPDATE MinerInventory SET BackpackLevel = BackpackLevel + 1 WHERE DiscordID = ?;", [interaction.user.id])
+			lvl = self.getInventory(interaction.user.id, "BackpackLevel")
 			size = lvl * 32
 			embed.add_field(name = "Backpack Level", value=f"`{lvl-1} -> {lvl}`", inline=False)
 			embed.add_field(name = "Size", value=f"`{size-32} -> {size}`", inline=False)
 		
 			await interaction.send(embed=embed, ephemeral=True)
-
-		with open(r"miner.json", 'w') as f:
-			json.dump(invFile, f, indent=4)
 	
 	@miner.subcommand()
 	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
 	async def level(self, interaction:Interaction, userchoice = nextcord.SlashOption(required=True,name="item", choices=("pickaxe", "backpack"))):
 		if userchoice == "pickaxe":
-			with open(r"miner.json", 'r') as f:
-				invFile = json.load(f)
-
-			lvl = invFile[f"{interaction.user.id}"][1]
+			lvl = self.getInventory(interaction.user.id, "PickaxeLevel")
 		elif userchoice == "backpack":
-			with open(r"miner.json", 'r') as f:
-				invFile = json.load(f)
-
-			lvl = invFile[f"{interaction.user.id}"][0]
+			lvl = self.getInventory(interaction.user.id, "BackpackLevel")
 		
 		await interaction.send(f"{userchoice.title()} Level {lvl}", ephemeral=True)
 
