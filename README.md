@@ -1,6 +1,6 @@
 # Casino Bot
 
-This is a bot featuring gambling games such as blackjack and slots. 
+This is a bot featuring gambling games such as Blackjack, Roulette, Slots, Deal or No Deal, and Roobet Mines. 
 
 It contains an economy system with a shop as well as an XP/Level system giving you perks such as a daily level reward.
 
