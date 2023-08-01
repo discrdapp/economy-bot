@@ -1,9 +1,6 @@
 import nextcord
 from nextcord.ext import commands, application_checks
 from nextcord import Interaction
-# from nextcord import FFmpegPCMAudio 
-from nextcord import Member 
-# from nextcord.ext.commands import has_permissions, MissingPermissions
 
 import math, datetime
 
