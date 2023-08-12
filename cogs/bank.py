@@ -5,6 +5,8 @@ from nextcord import Interaction
 from datetime import time
 from math import floor
 
+import cooldowns
+
 from db import DB
 
 class Bank(commands.Cog):
@@ -30,6 +32,8 @@ class Bank(commands.Cog):
 		DB.update("UPDATE Economy SET Bank = round(Bank * 1.05) WHERE Bank > ? AND BANK < ?;", [10000, 2000000])
 		DB.update("UPDATE Economy SET Bank = Bank + 100000 WHERE Bank > ?;", [2000000])
 
+	cooldowns.define_shared_cooldown(1, 7, cooldowns.SlashBucket.author, cooldown_id="bank")
+
 
 	@nextcord.slash_command()
 	async def deposit(self, interaction:Interaction, amnt):
@@ -40,19 +44,23 @@ class Bank(commands.Cog):
 		await self._withdraw(interaction, amnt)
 
 	@nextcord.slash_command()
+	# @cooldowns.shared_cooldown("bank")
 	async def bank(self, interaction:Interaction):
 		pass
 
 	@bank.subcommand(name='deposit')
+	@cooldowns.shared_cooldown("bank")
 	async def _deposit(self, interaction:Interaction, amnt):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
 		embed.set_thumbnail(url=interaction.user.avatar)
 
 		amnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, amnt)
 
+		# remove credits from Credits
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amnt):
 			raise Exception("tooPoor")
 
+		# add credits to Bank
 		DB.update("UPDATE Economy SET Bank = Bank + ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
 
 		embed.description = f"Successfully deposited {amnt:,}{self.coin}!"
@@ -60,6 +68,7 @@ class Bank(commands.Cog):
 
 
 	@bank.subcommand(name='withdraw')
+	@cooldowns.shared_cooldown("bank")
 	async def _withdraw(self, interaction:Interaction, amnt):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
 		embed.set_thumbnail(url=interaction.user.avatar)
@@ -85,14 +94,15 @@ class Bank(commands.Cog):
 
 		DB.update("UPDATE Economy SET Bank = Bank - ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
 
-		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amnt, False)
-
+		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amnt, giveMultiplier=False, activityName="Withdraw", amntBet=0)
 
 		embed.description = f"Successfully withdrew {amnt:,}{self.coin}!"
+		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
 
 
 	@bank.subcommand(name='balance')
+	@cooldowns.shared_cooldown("bank")
 	async def balance(self, interaction:Interaction, user:nextcord.Member=None):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
 		if user:
