@@ -1,9 +1,8 @@
 import nextcord
-from nextcord.ext import commands 
-from nextcord import Interaction
+from nextcord.ext import commands
+from nextcord import Interaction 
 
-import cooldowns, asyncio, random
-
+import cooldowns, random, datetime, math
 
 
 class Button(nextcord.ui.Button):
@@ -20,9 +19,168 @@ class Util(commands.Cog):
 		self.bot:commands.bot.Bot = bot
 		self.jobs = ["Administrative Assistant", "Executive Assistant", "Marketing Manager", "Customer Service Representative", "Nurse Practitioner", "Software Engineer", "Sales Manager", "Data Entry Clerk", "Office Assistant", "Accounting Specialist", "Payroll Specialist", "Dentist", "Registered Nurse", "Pharmacist", "Computer Systems Analyst", "Physician", "Database Administrator", "Software Developer", "Physical Therapist", "Web Developer", "Dental Hygienist", "Occupational Therapist", "Veterinarian", "Computer Programmer", "School Psychologist", "Physical Therapist Assistant", "Interpreter & Translator", "Mechanical Engineer", "Veterinary Technologist & Technician", "Epidemiologist", "IT Manager", "Market Research Analyst", "Diagnostic Medical Sonographer", "Computer Systems Administrator", "Respiratory Therapist", "Medical Secretary", "Civil Engineer", "Substance Abuse Counselor", "Speech-Language Pathologist", "Landscaper & Groundskeeper", "Radiologic Technologist", "Cost Estimator", "Financial Advisor", "Marriage & Family Therapist", "Medical Assistant", "Lawyer", "Accountant", "Compliance Officer", "High School Teacher", "Clinical Laboratory Technician", "Maintenance & Repair Worker", "Bookkeeping, Accounting, & Audit Clerk", "Financial Manager", "Recreation & Fitness Worker", "Insurance Agent", "Elementary School Teacher", "Dental Assistant", "Management Analyst", "Home Health Aide", "Pharmacy Technician", "Construction Manager", "Public Relations Specialist", "Middle School Teacher", "Massage Therapist", "Paramedic", "Preschool Teacher", "Hairdresser", "Marketing Manager", "Patrol Officer", "School Counselor", "Executive Assistant", "Financial Analyst", "Personal Care Aide", "Clinical Social Worker", "Business Operations Manager", "Loan Officer", "Meeting, Convention & Event Planner", "Mental Health Counselor", "Nursing Aide", "Sales Representative", "Architect", "Sales Manager", "HR Specialist", "Plumber", "Real Estate Agent", "Glazier", "Art Director", "Customer Service Representative", "Logistician", "Auto Mechanic", "Bus Driver", "Restaurant Cook", "Child & Family Social Worker", "Administrative Assistant", "Receptionist", "Paralegal", "Cement Mason & Concrete Finisher", "Painter", "Sports Coach", "Teacher Assistant", "Brickmason & Blockmason", "Cashier", "Janitor", "Electrician", "Delivery Truck Driver", "Maid & Housekeeper", "Carpenter", "Security Guard", "Construction Worker", "Fabricator", "Telemarketer"]
 		# self.jobs = ["1", "2", "3", "4"]
+	
+	@nextcord.slash_command()
+	async def cooldown(self, interaction:Interaction):
+		msg = ""
+		for cmd in self.bot.get_all_application_commands():
+			try:
+				cooldown = cooldowns.get_shared_cooldown(cmd.qualified_name)
+			except:
+				continue
+			bucket = cooldown.get_bucket(interaction)
+
+			ctp = cooldown._get_cooldown_for_bucket(bucket=bucket)
+
+			if not ctp:
+				continue
+			
+			if not ctp.next_reset:
+				continue
+
+
+			resetInCST = ctp.next_reset - datetime.timedelta(hours=5)
+
+			diff = resetInCST - datetime.datetime.now()
+
+			totalSeconds = round(diff.total_seconds())
+
+			timeLeft = ""
+			if totalSeconds > 86400: # days
+				timeLeft += f"{math.floor(totalSeconds / 86400)}d"
+				totalSeconds = totalSeconds % 86400
+			if totalSeconds > 3600: # hours
+				timeLeft += f"{math.floor(totalSeconds / 3600)}h"
+				totalSeconds = totalSeconds % 3600
+			if totalSeconds > 60: # minutes
+				timeLeft += f"{math.floor(totalSeconds / 60)}m"
+				totalSeconds = totalSeconds % 60
+			timeLeft += f"{totalSeconds}s"
+
+			msg += f"{cmd.qualified_name.title()}: **{timeLeft}**\n"
+		
+		if not msg:
+			msg = "You currently have no commands on cooldown!"
+		
+		await interaction.send(msg)
+	
+	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 3000, bucket=cooldowns.SlashBucket.author, cooldown_id='dig')
+	async def dig(self, interaction:Interaction):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Dig")
+		
+		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, "Shovel"):
+			embed.description = "You need a Shovel to dig.\nYou can buy one from the /shop"
+			await interaction.send(embed=embed)
+			return
+		
+		# 33% chance to not get anything
+		if random.randint(0, 2) == 0:
+			response = random.choice(["You dug for hours, but your fatigue overtook your enthusiasm, and you found nothing.",
+						"As you dug, your shovel suddenly snapped, leaving you empty-handed and frustrated.",
+						"Despite your determination, the stubborn, compacted dirt resisted your efforts, yielding no results.",
+						"You made valiant attempts, but the hardness of the ground thwarted your digging, and you came up empty.",
+						"After a short while, you realized the task was more demanding than anticipated and abandoned your search empty-handed.",
+						"With each shovelful of earth, your energy waned until you decided to call it quits, having found nothing.",
+						"The promise of treasure didn't match the reality of digging through unyielding soil, resulting in a fruitless effort.",
+						"You gave it your all, but the tough ground defeated your attempts, and you had to stop with nothing to show.",
+						"Your hopes were dashed when your shovel encountered an impenetrable rock, leaving you with empty hands and a weary heart.",
+						"As time went on, your enthusiasm waned, and the empty holes in the ground told the story of your unfruitful efforts.",
+						"Despite your initial excitement, the lack of immediate success led to a feeling of discouragement and an empty hole.",
+						"The ground seemed to hide its treasures well, and despite your best efforts, your digging yielded no rewards.",
+						"Your determination was tested by the unforgiving soil, leaving you with sore muscles and nothing but a hole to show for it.",
+						"As the hours passed, your shovel's progress became slower, and eventually, you stopped, your hands empty and tired.",
+						"With great anticipation, you began to dig, but the reality of empty dirt reminded you that not all searches end in discovery."
+			])
+			embed.description = response
+			await interaction.send(embed=embed)
+		# 66% chance to get something
+		else:
+			pay = random.randrange(5000, 15000)
+			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay, giveMultiplier=False, activityName=f"Dig", amntBet=0)
+
+			embed.description = f"You were given {pay:,}<:coins:585233801320333313>"
+			embed.set_footer(text=f"Log ID: {logID}")
+			await interaction.send(embed=embed)
+
+			if random.randint(0, 1) == 0: # 33% chance to get a random item
+				await self.bot.get_cog("Inventory").GiveRandomItem(interaction)
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 5400, bucket=cooldowns.SlashBucket.author, cooldown_id="work")
+	@cooldowns.cooldown(1, 1800, bucket=cooldowns.SlashBucket.author, cooldown_id='beg')
+	async def beg(self, interaction:Interaction):
+
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Beg")
+
+		# 50% chance to not get anything
+		if random.randint(0, 1) == 0:
+			embed.description = random.choice(["You extended your hand, hoping for kindness, but the world seemed as tight-fisted as you felt.",
+									"Despite your heartfelt plea, the city's bustle drowned out your voice, and your cup remained empty.",
+									"Your request for help echoed in the urban chaos, but the only response was silence.",
+									"The coins didn't find their way to your palm, and your outstretched hand was met with indifference.",
+									"You reached out for aid, but your appeal was lost amidst the crowds and left unanswered.",
+									"The streets were unforgiving, and your beggar's plea went unnoticed, leaving you with empty hands.",
+									"Your plea faded into the noise of the city, and your attempt to elicit help ended in silence.",
+									"Despite your hope, your open hand returned empty, a reflection of the challenges you faced.",
+									"The urban rhythm continued, indifferent to your request for assistance, leaving you with nothing.",
+									"Your plea for help lingered for a moment, only to be carried away by the wind, unanswered."
+									"Despite your heartfelt plea, no one seemed willing to extend a helping hand when you needed it the most.",
+									"Just as you thought your luck had turned, a deceitful individual stole all the coins you had received.",
+									"The bustling city drowned out your beggar's call, and your efforts to seek assistance went unanswered.",
+									"The rhythm of the city carried on, indifferent to your plea for help, leaving you with empty hands.",
+									"You humbled yourself and asked for assistance, but your cup remained unfilled and your hopes dashed.",
+									"Doors of generosity remained closed, and your request for help left you with a feeling of isolation.",
+									"Despite your sign held high, the passersby continued on their way, leaving your cup untouched.",
+									"Fate seemed to conspire against you as you sought help, and your plea went unheard and unanswered.",
+									"The world moved on, barely noticing your plea, and you were left feeling invisible and alone.",
+									"Your attempt at begging led to an unfortunate encounter with a police officer who arrested you.",
+									"The generosity you hoped for was nowhere to be found, and your plea was met with silence.",
+									"A moment of vulnerability allowed a cunning individual to steal the meager coins you had gathered.",
+									"Your humble request for assistance echoed through the city, but the response was disappointing.",
+									"As you bared your need for help, the world's indifference left you feeling abandoned and unheard."
+			])
+			await interaction.send(embed=embed)
+		# 50% chance to get something
+		else:
+			pay = random.randrange(5000, 10000)
+			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay, giveMultiplier=False, activityName=f"Beg", amntBet=0)
+
+			embed.description = f"You were given {pay:,}<:coins:585233801320333313>"
+			embed.set_footer(text=f"Log ID: {logID}")
+			await interaction.send(embed=embed)
+
+			if random.randint(0, 2) == 0: # 16.5% chance to get a random item
+				await self.bot.get_cog("Inventory").GiveRandomItem(interaction)
+
+	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 3000, bucket=cooldowns.SlashBucket.author, cooldown_id='crime')
+	async def crime(self, interaction:Interaction):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Beg")
+
+		# 50% chance to not get anything
+		if random.randint(0, 1) == 0:
+			embed.description = random.choice(["You attempted a robbery and got caught!",
+				      "Attempting to scam someone, you got scammed yourself and broke even... don't scam again!", 
+				      "Successfully stole a bitcoin drive! No bitcoin was on it though...",
+				      "You jumped a homeless man, but got nothing because he's homeless... duh!"
+			])
+			await interaction.send(embed=embed)
+		# 50% chance to get something
+		else:
+			pay = random.randrange(5000, 15000)
+			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay, giveMultiplier=False, activityName=f"Beg", amntBet=0)
+
+			embed.description = f"You were given {pay:,}<:coins:585233801320333313>"
+			embed.set_footer(text=f"Log ID: {logID}")
+			await interaction.send(embed=embed)
+
+			if random.randint(0, 1) == 0: # 25% chance to get a random item
+				await self.bot.get_cog("Inventory").GiveRandomItem(interaction)
+
+
+
+	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 3600, bucket=cooldowns.SlashBucket.author, cooldown_id="work")
 	async def work(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Work")
 		embed.description = "What would you like to work as?"
@@ -49,17 +207,37 @@ class Util(commands.Cog):
 		if not view.job:
 			print("not defined...")
 			return
+		
+		# 25% chance of not getting anything from /work
+		if random.randint(0, 3) == 0:
+			embed.description = random.choice(["Despite your dedication, the expected paycheck didn't come through due to an unexpected payroll issue.",
+									"Your hard work yielded personal growth, but a sudden economic downturn impacted your compensation.",
+									"Your effort was commendable, yet a workplace error resulted in your paycheck being delayed or misplaced.",
+									"The fruits of your labor were overshadowed by budget cuts, leading to a smaller paycheck than anticipated.",
+									"Your work contributed to personal development, but organizational changes led to reduced hours and earnings.",
+									"You devoted yourself to your task, but your project's funding fell through, leaving your paycheck empty.",
+									"The task you tackled held promise, but an unexpected project cancellation left you without compensation.",
+									"Despite your dedication, an unforeseen company restructuring led to job losses, including your paycheck.",
+									"Your endeavors were valuable, yet unexpected market shifts resulted in reduced earnings for everyone.",
+									"Your hard work increased your skill set, but an unexpected change in job roles led to reduced compensation."
+			])
+			await interaction.send(embed=embed)
+		# 75% chance to get something
+		else:
+			pay = random.randrange(6000, 20001)
+			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay, giveMultiplier=False, activityName=f"Work", amntBet=0)
 
-		pay = random.randrange(6000, 20001)
-		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay)
+			aan = "an" if view.job[0].lower() in "aeiou" else "a"
+			embed.description = f"You worked as {aan} {view.job} and earned {pay:,}<:coins:585233801320333313>"
+			embed.set_footer(text=f"Log ID: {logID}")
+			await msg.edit(embed=embed, view=None)
 
-		aan = "an" if view.job[0].lower() in "aeiou" else "a"
-		embed.description = f"You worked as {aan} {view.job} and earned {pay:,}<:coins:585233801320333313>"
-		await msg.edit(embed=embed, view=None)
+			if random.randint(0, 2) == 0: # 24.75% chance to get a random item
+				await self.bot.get_cog("Inventory").GiveRandomItem(interaction)
 
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 20, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 20, bucket=cooldowns.SlashBucket.author, cooldown_id='rob')
 	async def rob(self, interaction:Interaction, *, member: nextcord.Member):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Rob")
 		if interaction.user == member:
@@ -71,21 +249,21 @@ class Util(commands.Cog):
 			await self.bot.get_cog("Economy").StartPlaying(interaction, member)
 
 		bal1 = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		if bal1 < 500:
-			embed.description = f"{interaction.user}, you need at least 500<:coins:585233801320333313> to rob."
+		if bal1 < 2500:
+			embed.description = f"{interaction.user}, you need at least 2500<:coins:585233801320333313> to rob."
 			await interaction.send(embed=embed)
 			return
 		
 		bal2 = await self.bot.get_cog("Economy").getBalance(member)
-		if bal2 < 500:
-			embed.description = f"{member.mention} needs at least 500<:coins:585233801320333313> to be robbed."
+		if bal2 < 2500:
+			embed.description = f"{member.mention} needs at least 2500<:coins:585233801320333313> to be robbed."
 			await interaction.send(embed=embed)
 			return
 
 		choice = random.randrange(0, 10)
 		# amnt = random.range(500, 5000)
 
-		if choice > 7: # 30% chance
+		if choice > 7: # 20% chance
 			embed.description = f"{member.mention} caught you red-handed! But they decided to forgive you... No money has been robbed!"
 			await interaction.send(embed=embed)
 			return
@@ -105,11 +283,11 @@ class Util(commands.Cog):
 		# bal is person getting robbed 
 		if robbedBal <= 100000:
 			thebal = int(robbedBal/4)
-			if thebal <= 500:
-				thebal = 501
-			amnt = random.randrange(500, thebal)
+			if thebal <= 2500:
+				thebal = 2501
+			amnt = random.randrange(2500, thebal)
 		else:
-			amnt = random.randrange(500, 25001)
+			amnt = random.randrange(2500, 25001)
 
 		if choice <= 4: # 0 - 4		(50%)
 			message = f"While {member.mention} was sleeping, you took {amnt:,}{coin} out of their pockets."
