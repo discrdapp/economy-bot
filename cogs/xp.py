@@ -20,7 +20,7 @@ class XP(commands.Cog):
 
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 1, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='level')
 	async def level(self, interaction:Interaction):
 		getRow = DB.fetchOne(f"SELECT XP, TotalXP, Level FROM Economy WHERE DiscordID = ?;", [interaction.user.id])
 		level = getRow[2]
