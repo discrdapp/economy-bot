@@ -7,6 +7,7 @@ from nextcord import Interaction
 import cooldowns, asyncio, random, math
 
 from db import DB
+from cogs.totals import log
 
 class Economy(commands.Cog):
 	def __init__(self, bot):
@@ -60,7 +61,7 @@ class Economy(commands.Cog):
 		raise commands.BadArgument(f'You entered {amntbet} for the amount you want to bet. Please enter a number instead.')
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='rewards')
 	async def rewards(self, interaction:Interaction):
 
 		dailyReward = await self.bot.get_cog("Daily").getDailyReward(interaction)
@@ -84,7 +85,7 @@ class Economy(commands.Cog):
 		
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='balance')
 	async def balance(self, interaction:Interaction, user:nextcord.Member=None):
 		embed = nextcord.Embed(color=1768431)
 		if not user:
@@ -108,7 +109,7 @@ class Economy(commands.Cog):
 		await interaction.send(embed=embed)
 		
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='search')
 	async def search(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431)
 		if await self.getBalance(interaction.user) < 300:
@@ -123,7 +124,7 @@ class Economy(commands.Cog):
 		await interaction.send(embed=embed)
 		
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='freemoney')
 	async def freemoney(self, interaction:Interaction):
 		prefix = "/"
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
@@ -131,7 +132,7 @@ class Economy(commands.Cog):
 		await interaction.send(embed=embed)
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='donator')
 	async def donator(self, interaction:Interaction):
 		if not self.isDonator(interaction.user.id):
 			embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
@@ -143,7 +144,7 @@ class Economy(commands.Cog):
 		donatorReward = self.getDonatorReward(interaction.user.id)
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(donatorReward * (multiplier - 1))
-		await self.addWinnings(interaction.user.id, donatorReward + extraMoney)
+		await self.addWinnings(interaction.user.id, donatorReward, True)
 
 		balance = await self.getBalance(interaction.user)
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
@@ -176,21 +177,33 @@ class Economy(commands.Cog):
 			return False # return 0 if user trying to bet more $$$ than they have
 
 
-	async def addWinnings(self, discordid, winnings, giveMultiplier=True): # add the amount won 
+	async def addWinnings(self, discordid, winnings, giveMultiplier=False, activityName=None, amntBet=None): # add the amount won 
 		if winnings > 0 and giveMultiplier:
 			multiplier = self.bot.get_cog("Multipliers").getMultiplier(discordid)
 			if multiplier > 1:
 				extraMoney = int(winnings * (multiplier - 1))
 				winnings += extraMoney
-		DB.update("UPDATE Economy SET Credits = Credits + ? WHERE DiscordID = ?;", [math.ceil(winnings), discordid])
+		if winnings != 0:
+			DB.update("UPDATE Economy SET Credits = Credits + ? WHERE DiscordID = ?;", [math.ceil(winnings), discordid])
+
+		gameID = None
+		if activityName and amntBet != None:
+			print("ADDING TO DB!")
+			balance = DB.fetchOne("SELECT Credits FROM Economy WHERE DiscordID = ?;", [discordid])[0]
+			gameID = log(discordid, amntBet, winnings, activityName, balance)
+			
+		return gameID
 
 
-	async def getBalance(self, user):
+
+
+	async def getBalance(self, user: nextcord.User):
 		balance = DB.fetchOne("SELECT Credits FROM Economy WHERE DiscordID = ?;", [user.id])[0]
 		return balance
 	
 
 	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 120, bucket=cooldowns.SlashBucket.author, cooldown_id='top')
 	async def top(self, interaction:Interaction, option = nextcord.SlashOption(
 																required=False,
 																name="option", 
@@ -221,6 +234,7 @@ class Economy(commands.Cog):
 
 
 	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 120, bucket=cooldowns.SlashBucket.author, cooldown_id='position')
 	async def position(self, interaction:Interaction, usr: nextcord.Member=None, option = nextcord.SlashOption(
 																required=False,
 																name="option", 
