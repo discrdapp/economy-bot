@@ -2,7 +2,7 @@ import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
 
-import random
+import random, cooldowns
 
 from cogs.economy import Economy
 from db import DB
@@ -22,9 +22,13 @@ class MinesButton(nextcord.ui.Button['MinesView']):
         assert self.view is not None
         view: MinesView = self.view
 
+        if view.gameover:
+            return
+
         if self.view.ownerId != interaction.user.id:
             await interaction.send("This is not your game!", ephemeral=True)
             return
+        # clicked already-revealed checkmark (to cashout)
         if self.emoji:
             currTimesAmnt = round(view.profit[view.spacesClicked-1], 2)
             currProfit = int(view.betamnt * currTimesAmnt)
@@ -39,6 +43,7 @@ class MinesButton(nextcord.ui.Button['MinesView']):
 
         embed = nextcord.Embed(color=1768431, title=f"The Casino | Roobet Mines")
         msg = None
+        # clicked bomb
         if self.myvalue == -1:
             embed.description = "Game finished."
             await view.Gameover(interaction, embed, 0)
@@ -47,6 +52,7 @@ class MinesButton(nextcord.ui.Button['MinesView']):
             self.emoji = '✅'
             self.style = nextcord.ButtonStyle.success
 
+            # if revealed all good spaces, they win!
             if view.spacesClicked == view.totalChecks:
                 # embed.description = f"Game finished.\nAmount won: {currProfit:,} ({currTimesAmnt:,}x)"
                 await view.Gameover(interaction, embed, currProfit)
@@ -86,6 +92,8 @@ class MinesView(nextcord.ui.View):
         self.totalChecks = len(self.board) * len(self.board[0]) - self.mineCount 
         self.spacesClicked = 0
         self.priorBal = priorbal
+        # prevent somehow calling gameover after game ended
+        self.gameover = False
 
         while mineCount > 0:
             y = random.randint(0, len(self.board)-1) 
@@ -99,7 +107,8 @@ class MinesView(nextcord.ui.View):
                 self.add_item(MinesButton(self.bot, x, y, self.board[y][x]))
 
     # This method checks for the board winner -- it is used by the TicTacToeButton
-    async def Gameover(self, interaction, embed, profit):
+    async def Gameover(self, interaction:Interaction, embed, moneyToAdd):
+        self.gameover = True
         for child in self.children:
             child.disabled = True
             if child.myvalue == -1:
@@ -110,11 +119,11 @@ class MinesView(nextcord.ui.View):
                 child.style = nextcord.ButtonStyle.success
         self.stop()
 
-        if profit > 0:
-            await self.bot.get_cog("Economy").addWinnings(self.ownerId, profit)
+        gameID = await self.bot.get_cog("Economy").addWinnings(self.ownerId, moneyToAdd, giveMultiplier=True, activityName="Mines", amntBet=self.betamnt)
         
-        embed = await DB.addProfitAndBalFields(self, interaction, profit-self.betamnt, embed)
-        embed = await DB.calculateXP(self, interaction, self.priorBal, self.betamnt, embed)
+        embed = await DB.addProfitAndBalFields(self, interaction, moneyToAdd-self.betamnt, embed)
+        embed = await DB.calculateXP(self, interaction, self.priorBal, self.betamnt, embed, gameID)
+        
         await interaction.response.edit_message(embed=embed, view=self)
 
 class Mines(commands.Cog):
@@ -152,6 +161,7 @@ class Mines(commands.Cog):
         pass
 
     @mines.subcommand()
+    @cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='mines')
     async def start(self, interaction:Interaction, betamnt:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
                           minecount:int = nextcord.SlashOption(required=True,name="minecount", choices=[x+1 for x in range(24)])):
         if betamnt < 1000:
