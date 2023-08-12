@@ -2,7 +2,7 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import json, time, math
+import json, time, math, cooldowns
 
 class WeeklyMonthly(commands.Cog):
 	def __init__(self, bot):
@@ -11,6 +11,7 @@ class WeeklyMonthly(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 604805, bucket=cooldowns.SlashBucket.author, cooldown_id='weekly')
 	async def weekly(self, interaction:Interaction):
 		userId = interaction.user.id
 
@@ -38,15 +39,17 @@ class WeeklyMonthly(commands.Cog):
 		weeklyReward = 12500
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(weeklyReward * (multiplier - 1))
-		await self.bot.get_cog("Economy").addWinnings(userId, weeklyReward + extraMoney)
+		logID = await self.bot.get_cog("Economy").addWinnings(userId, weeklyReward, giveMultiplier=True, activityName="Weekly Reward", amntBet=0)
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed.add_field(name = f"You got {(weeklyReward+extraMoney):,} {self.coin}", 
 						value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
+		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
 
 
 
 	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 2592005, bucket=cooldowns.SlashBucket.author, cooldown_id='monthly')
 	async def monthly(self, interaction:Interaction):
 		userId = interaction.user.id
 
@@ -75,11 +78,12 @@ class WeeklyMonthly(commands.Cog):
 		monthlyReward = 36000
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(monthlyReward * (multiplier - 1))
-		await self.bot.get_cog("Economy").addWinnings(userId, monthlyReward + extraMoney)
+		logID = await self.bot.get_cog("Economy").addWinnings(userId, monthlyReward, giveMultiplier=True, activityName="Monthly Reward", amntBet=0)
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = nextcord.Embed(color=1768431)
 		embed.add_field(name = f"You got {(monthlyReward+extraMoney):,} {self.coin}", 
 						value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
+		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
 
 def setup(bot):
