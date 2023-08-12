@@ -13,7 +13,7 @@ class Vote(commands.Cog):
 
 	@nextcord.slash_command(description="Vote")
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='vote')
 	async def vote(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Vote")
 		embed.set_thumbnail(url=interaction.user.avatar)
@@ -31,17 +31,19 @@ class Vote(commands.Cog):
 
 		if numOfVotes == 1: 
 			times = "Time"
+			votes = "Vote"
 			chip = "Chip"
 		else: 
 			times = "Times"
+			votes = "Votes"
 			chip = "Chips"
 
 		moneyToAdd = 8500 * numOfVotes
-		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd)
+		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName=f"{numOfVotes} {votes}", amntBet=0)
 		self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, numOfVotes, 'Voter Chip')
 				
 		embed.add_field(name=f"Thanks for Voting {numOfVotes} {times}!", value=f"{moneyToAdd}{self.coin} has been added to your account and you received {numOfVotes} Voter {chip}!")
-		embed.set_footer(text="/use to use your Voter Chip")
+		embed.set_footer(text=f"/use to use your Voter Chip\nLog ID {logID}")
 		msg = await interaction.send(embed=embed)
 		msg = await msg.fetch()
 		await msg.add_reaction("❤️")
