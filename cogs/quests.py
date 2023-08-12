@@ -147,11 +147,17 @@ class Quests(commands.Cog):
 		if self.IsQuestComplete(self.goals[f'{questType}'], questType, user, activeQuest):
 			goal = self.GetGoal(questType)
 
-			await self.bot.get_cog("Economy").addWinnings(user.id, 5000)
+			logID = await self.bot.get_cog("Economy").addWinnings(user.id, 5000, giveMultiplier=False, activityName="Quest", amntBet=0)
 			await self.bot.get_cog("XP").addXP(interaction, 200)
 
-			await interaction.send(embed=nextcord.Embed(color=0x109D00, title="Quest Complete!", description=f"Your quest to {goal} in {self.realGameNamesDict[game]} is now complete!" +
-				f"\n5,000{self.coin} and 200 XP has been added to your account!\n"))
+			embed = nextcord.Embed(color=0x109D00)
+			embed.title = "Quest Complete!"
+			embed.description = f"Your quest to {goal} in {self.realGameNamesDict[game]} is now complete!" + \
+				f"\n5,000{self.coin} and 200 XP has been added to your account!\n"
+			embed.set_footer(text=f"Log ID: {logID}")
+			await interaction.send(embed=embed)
+
+
 			DB.update("UPDATE Quests SET ActiveQuest = NULL, " + questType + " = 0 WHERE DiscordID = ? and ActiveQuest = ?;", [user.id, activeQuest])
 
 
