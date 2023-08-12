@@ -69,10 +69,11 @@ class Others(commands.Cog):
 					return
 		with open("claimed.txt", 'a') as claimedFile:
 			claimedFile.write(f"{userId}\n") 
-		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, 7500)
+		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, 7500, giveMultiplier=False, activityName="Claim", amntBet=0)
 
 		bal = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed.description = f"Successfully claimed reward! New balance is {bal:,}{self.coin}"
+		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
 
 
@@ -104,7 +105,7 @@ class Others(commands.Cog):
 
 	@nextcord.slash_command(description="The Casino Help Command")
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
-	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 20, bucket=cooldowns.SlashBucket.author, cooldown_id='help')
 	async def help(self, interaction:Interaction, 
 						option = nextcord.SlashOption(
 							required=False,
