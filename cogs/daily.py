@@ -6,6 +6,8 @@ import json, time, math
 
 from db import DB
 
+import cooldowns
+
 class Daily(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
@@ -13,6 +15,7 @@ class Daily(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 86401, bucket=cooldowns.SlashBucket.author, cooldown_id='daily')
 	async def daily(self, interaction:Interaction):
 		userId = interaction.user.id
 
@@ -38,11 +41,12 @@ class Daily(commands.Cog):
 		dailyReward = await self.getDailyReward(interaction)
 		# multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		# extraMoney = int(dailyReward * (multiplier - 1))
-		await self.bot.get_cog("Economy").addWinnings(userId, dailyReward)
+		logID = await self.bot.get_cog("Economy").addWinnings(userId, dailyReward, giveMultiplier=True, activityName="Daily Reward", amntBet=0)
 		# balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		# embed.add_field(name = f"You got {(dailyReward+extraMoney):,} {self.coin}", 
 						# value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
 		embed.description = f"You got {dailyReward:,} {self.coin}"
+		embed.set_footer(text=f"Log ID: {logID}")
 		embed = await DB.addProfitAndBalFields(self, interaction, dailyReward, embed)
 		await interaction.send(embed=embed)
 
