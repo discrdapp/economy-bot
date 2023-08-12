@@ -30,6 +30,7 @@ class ErrorHandling(commands.Cog):
 			a = datetime.timedelta(seconds=error.retry_after)
 			cooldown = str(a).split(".")[0]
 			embed.description = f"{commandName} is on cooldown. Please retry again in {cooldown}"
+			embed.set_footer(text="See all your cooldowns with /cooldown")
 
 		elif isinstance(error, commands.CheckFailure):
 			try:
