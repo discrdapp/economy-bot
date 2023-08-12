@@ -3,7 +3,7 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import sqlite3, datetime, json
+import sqlite3, datetime, json, cooldowns, uuid
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 from math import floor
 
@@ -12,15 +12,29 @@ from db import DB
 
 actualGame = ["Slt", "BJ", "Crsh", "RLTTE", "CF", "RPS"]
 
-def log(discordID, creditsSpent, creditsWon, gameNumber, bal): # Logs what credits have been spent where, by who, to who, why and the time which this has happened
-	#localtime = time.asctime(time.localtime(time.time()))
+def log(discordID, creditsSpent, creditsWon, activity, bal): # Logs what credits have been spent where, by who, to who, why and the time which this has happened
+	# #localtime = time.asctime(time.localtime(time.time()))
 	x = datetime.datetime.now()
-						#  MON DAY HOUR:MIN:SEC
-	localtime = x.strftime("%b %d %H:%M:%S")
-	logs = open("logs.txt", "a")
-	logs.write(f"{localtime} : {discordID} : {creditsSpent} : {creditsWon} : {bal} : {actualGame[gameNumber]}\n")
-	logs.flush()
-	logs.close()
+						#  MON DAY YY HOUR:MIN:SEC
+	localtime = x.strftime("%b/%d/%y %H:%M:%S")
+	# logs = open("logs.txt", "a")
+	# logs.write(f"{localtime} : {discordID} : {creditsSpent} : {creditsWon} : {bal} : {actualGame[gameNumber]}\n")
+	# logs.flush()
+	# logs.close()
+
+	gameID = (str(uuid.uuid4())[:8]).upper()
+
+	if type(activity) == int:
+		print("IS INTEGER!")
+		activity = actualGame[activity]
+	while True:
+		try:
+			DB.insert("INSERT INTO Logs VALUES(?, ?, ?, ?, ?, ?, ?)", [gameID, localtime, discordID, creditsSpent, creditsWon, bal, activity])
+			break
+		except sqlite3.IntegrityError:
+			gameID = str(uuid.uuid4())[:8]
+	return gameID
+
 
 class Totals(commands.Cog):
 	def __init__(self, bot):
@@ -119,10 +133,36 @@ class Totals(commands.Cog):
 		}
 
 	@nextcord.slash_command()
+	async def log(self, interaction:Interaction, gameid):
+		game = DB.fetchOne("SELECT * FROM Logs WHERE ID = ? LIMIT 1;", [gameid])
+
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Logs")
+
+		if not game:
+			embed.description =f"No log found for ID \n{gameid}"
+			await interaction.send(embed=embed, ephemeral=True)
+			return
+
+		if str(interaction.user.id) != game[2]:
+			embed.description = "This is not your log to view!"
+			await interaction.send(embed=embed, ephemeral=True)
+			return
+
+		embed.add_field(name="Activity", value=game[6], inline=False)
+		embed.add_field(name="Credits Spent", value=f"{game[3]:,}")
+		embed.add_field(name="Credits Gained", value=f"{game[4]:,}")
+		embed.add_field(name="New Balance", value=f"{game[5]:,}", inline=False)
+
+		embed.set_footer(text=f"ID: {game[0]}\nDate: {game[1]}")
+
+		await interaction.send(embed=embed, ephemeral=True)
+
+	@nextcord.slash_command()
 	async def profile(self, interaction:Interaction):
 		pass
 	
 	@profile.subcommand()
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='view')
 	async def view(self, interaction:Interaction):
 		totals = DB.fetchOne("SELECT Profit, Games FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 		profit = totals[0]
@@ -210,6 +250,7 @@ class Totals(commands.Cog):
 
 
 	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='colors')
 	async def colors(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Colors")
 		embed1 = nextcord.Embed(color=self.colors["green"], title=f"Shades of Green")
@@ -239,6 +280,7 @@ class Totals(commands.Cog):
 		pass
 
 	@edit.subcommand(description="Get color list from /colors")
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='embedcolor')
 	async def embedcolor(self, interaction:Interaction, choice):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
 		embed.set_thumbnail(url=interaction.user.avatar)
@@ -261,6 +303,7 @@ class Totals(commands.Cog):
 		await interaction.send(embed=embed)
 	
 	@edit.subcommand(description="Get color list from /colors")
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='textcolor')
 	async def textcolor(self, interaction:Interaction, choice):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
 		embed.set_thumbnail(url=interaction.user.avatar)
@@ -286,6 +329,7 @@ class Totals(commands.Cog):
 		await interaction.send(embed=embed)
 
 	@edit.subcommand()
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='backgroundimage')
 	async def backgroundimage(self, interaction:Interaction, choice = nextcord.SlashOption(
 																required=True,
 																name="bgimg", 
@@ -314,6 +358,7 @@ class Totals(commands.Cog):
 
 
 	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='badges')
 	async def badges(self, interaction:Interaction):
 		getRow = DB.fetchOne("SELECT E.Credits, E.Level, T.Profit, T.Games FROM Economy E INNER JOIN Totals T ON E.DiscordID = T.DiscordID WHERE E.DiscordID = ?;", [interaction.user.id])
 		
@@ -362,6 +407,7 @@ class Totals(commands.Cog):
 
 
 	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='stats')
 	async def stats(self, interaction:Interaction):		
 		getRow = DB.fetchOne("SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 
@@ -402,8 +448,8 @@ class Totals(commands.Cog):
 		elif game == 4: gameName = "Coinflip"
 		elif game == 5: gameName = "RPS"
 
-		bal = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		log(discordID, spent, won, game, bal)
+		# bal = await self.bot.get_cog("Economy").getBalance(interaction.user)
+		# log(discordID, spent, won, game, bal)
 
 		if won < 0:
 			won = 0
