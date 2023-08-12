@@ -19,6 +19,10 @@ class DealNoDealButton(nextcord.ui.Button):
 			await view.EndGame(interaction, offerView.offer)
 		elif self.label == "No Deal":
 			await view.NoDeal()
+		try:
+			await interaction.response.defer()
+		except:
+			pass
 
 class Button(nextcord.ui.Button):
 	def __init__(self, label, value, style, row):
@@ -78,6 +82,11 @@ class Button(nextcord.ui.Button):
 		await view.msg.edit(view=view)
 
 		await view.caseOpened(self)
+
+		try:
+			await interaction.response.defer()
+		except:
+			pass
 
 class OfferView(nextcord.ui.View):
 	def __init__(self, bot, view):
@@ -239,11 +248,10 @@ class View(nextcord.ui.View):
 		self.endGame = True
 		self.embed.description = f"**Game Over**\nYou won **{multiplier}x** your bet!"
 
-		amntToAdd = int(self.amntBet * multiplier)
-		profitInt = amntToAdd - self.amntBet
+		moneyToAdd = int(self.amntBet * multiplier)
+		profitInt = moneyToAdd - self.amntBet
 
-		if amntToAdd > 0:
-			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amntToAdd)
+		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="DOND", amntBet=self.amntBet)
 
 		if multiplier >= 1:
 			self.embed = await DB.addProfitAndBalFields(self, interaction, profitInt, self.embed)
@@ -251,7 +259,7 @@ class View(nextcord.ui.View):
 			self.embed = await DB.addProfitAndBalFields(self, interaction, profitInt, self.embed, True)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		self.embed = await DB.calculateXP(self, interaction, balance - amntToAdd, self.amntBet, self.embed)
+		self.embed = await DB.calculateXP(self, interaction, balance - moneyToAdd, self.amntBet, self.embed, gameID)
 
 		await self.msg.edit(embed=self.embed, view=None)
 
@@ -267,6 +275,7 @@ class Dond(commands.Cog):
 		}
 
 	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author, cooldown_id='dond')
 	async def dond(self, interaction, betamnt:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
 				casecount:int = nextcord.SlashOption(choices=[5, 10, 20])):
 		if betamnt < 1000:

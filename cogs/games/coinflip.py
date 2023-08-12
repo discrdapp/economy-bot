@@ -13,7 +13,7 @@ class Coinflip(commands.Cog):
 
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, use_external_emojis=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)	
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='coinflip')	
 	async def coinflip(self, interaction:Interaction, amntbet, sidebet = nextcord.SlashOption(
 																required=True,
 																name="side", 
@@ -89,16 +89,16 @@ class Coinflip(commands.Cog):
 			profitInt = moneyToAdd - amntbet
 			file = nextcord.File("./images/coinlost.png", filename="image.png")
 			embed.color = nextcord.Color(0xff2020)
-			
+
 		embed.set_thumbnail(url="attachment://image.png")
 		embed.add_field(name=f"{self.bot.user.name} | Coinflip", value=f"The coin landed on {side}\n_ _",inline=False)
-		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd)
+		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="CF", amntBet=amntbet)
 		
 		
 		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed)
+		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed, gameID)
 
 		await interaction.send(file=file, embed=embed)
 

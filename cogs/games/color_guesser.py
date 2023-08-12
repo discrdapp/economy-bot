@@ -14,7 +14,7 @@ class CG(commands.Cog):
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, use_external_emojis=True)
 	async def colorguesser(self, interaction:Interaction, amntbet: int):
 
-		await interaction.send("This command is temporarily disabled while we convert it to a slash command.")
+		await interaction.send("This command is disabled.")
 		return
 		
 		users = list()

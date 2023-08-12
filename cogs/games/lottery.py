@@ -19,7 +19,7 @@ class Lottery(commands.Cog):
 
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author, cooldown_id='lottery')
 	async def lottery(self, interaction:Interaction):
 		pass
 
@@ -136,6 +136,10 @@ class Lottery(commands.Cog):
 			winner = random.choice(self.userTickets)
 			msg = f"CONGRATULATIONS TO {winner.mention}.\nThey won {prizeAmount:,}{self.coin}"
 
+
+		gameID = await self.bot.get_cog("Economy").addWinnings(winner.id, prizeAmount, giveMultiplier=False, activityName="Lottery", amntBet=0)
+		msg += f"\nGame ID: {gameID}"
+
 		for chnlId in self.sendToChannels: # get each channel id to send lottery results to
 			chnl = self.bot.get_channel(chnlId) # convert to channel
 			try: await chnl.send(msg) # send winning message
@@ -144,7 +148,6 @@ class Lottery(commands.Cog):
 		self.sendToChannels.append(self.CHANNEL_ID)
 		self.userTickets.clear()
 
-		await self.bot.get_cog("Economy").addWinnings(winner.id, prizeAmount, False)
 
 	@lotteryTask.before_loop
 	async def before_lotteryTask(self):	
@@ -196,7 +199,6 @@ class Lottery(commands.Cog):
 		msg = ""
 		for userID, tickets in users.items():
 			user = await self.bot.fetch_user(userID)
-			await self.bot.get_cog("Economy").addWinnings(user.id, tickets * 1000)
 			msg += f"User {user.mention} owns {tickets} tickets.\n"
 
 		if not msg:

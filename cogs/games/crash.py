@@ -98,12 +98,13 @@ class View(nextcord.ui.View):
 		if not self.crash: # if they /done it before it crashes 
 			profitInt = int(self.amntbet * self.multiplier - self.amntbet) 
 			moneyToAdd = int(self.amntbet + profitInt)
-			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd)
 
 		else: # if game crashes without them doing /done
 			profitInt = -self.amntbet
 			moneyToAdd = 0
 			embed.color = nextcord.Color(0xff2020)
+
+		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="CRSH", amntBet=self.amntbet)
 
 		embed.add_field(name = f"Crashed at", value = f"{str(self.multiplier)}x", inline=False)
 
@@ -112,7 +113,7 @@ class View(nextcord.ui.View):
 		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed = await DB.calculateXP(self, interaction, balance - profitInt, self.amntbet, embed)
+		embed = await DB.calculateXP(self, interaction, balance - profitInt, self.amntbet, embed, gameID)
 
 		await interaction.send(embed=embed)
 
@@ -127,7 +128,7 @@ class Crash(commands.Cog):
 
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='crash')
 	async def crash(self, interaction:Interaction, bet): # actual command
 		bet = await self.bot.get_cog("Economy").GetBetAmount(interaction, bet)
 		bet = round(bet)

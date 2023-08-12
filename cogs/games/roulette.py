@@ -2,7 +2,7 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import random
+import random, cooldowns
 from PIL import Image
 
 from db import DB
@@ -275,12 +275,11 @@ class View(nextcord.ui.View):
 		if self.displayParityBet == parityResult:
 			winnings += "\nYou guessed the parity! You won 2x your bet!"
 			moneyToAdd += self.parity.bet * 2
-
-		if moneyToAdd > 0:
-			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd)
-
-
+		
 		amntSpent = self.totalBet
+		if amntSpent != 0:
+			gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="RLTTE", amntBet=amntSpent)
+
 		if moneyToAdd > amntSpent:
 			# \n**Profit:** {moneyToAdd - amntSpent}{self.coin}
 			result = f"You won a grand total of {moneyToAdd}{self.coin} after betting {amntSpent}{self.coin}"
@@ -295,17 +294,8 @@ class View(nextcord.ui.View):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if self.number.bet or self.highOrLow.bet or self.color.bet or self.parity.bet:
 			priorBal = balance + amntSpent - moneyToAdd
-			# minBet = priorBal * 0.05
-			# minBet = int(math.ceil(minBet / 10.0) * 10.0)
-			# if amntSpent >= minBet:
-			# 	xp = random.randint(50, 500)
-			# 	embed.set_footer(text=f"Earned {xp:,} XP!")
-			# 	await self.bot.get_cog("XP").addXP(interaction, xp)
-			# else:
-			# 	embed.set_footer(text=f"You have to bet your minimum to earn xp.")
-			self.embed = await DB.calculateXP(self, interaction, priorBal, amntSpent, self.embed)
+			self.embed = await DB.calculateXP(self, interaction, priorBal, amntSpent, self.embed, gameID)
 		else:
-			
 			self.embed.set_footer(text="No bets were placed, no XP was earned.")
 		self.embed.set_field_at(0, name="Picks", 
 			value=self.getFullBetsDisplay())
@@ -427,6 +417,7 @@ class Roulette(commands.Cog):
 
 	@nextcord.slash_command(description="Play Roulette!")
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='roulette')
 	async def roulette(self, interaction:Interaction):
 		view = View(self.bot, self.previousNums)
 		await view.Start(interaction)

@@ -12,7 +12,7 @@ class Slots(commands.Cog):
 		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command(description="Pay to play the slots!")
-	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='slots')
 	@commands.bot_has_guild_permissions(send_messages=True, use_external_emojis=True)
 	async def slots(self, interaction:Interaction, amntbet):
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
@@ -56,7 +56,6 @@ class Slots(commands.Cog):
 				moneyToAdd = int(amntbet * 1.5) # you win 150% your bet
 			
 			result = "YOU WON"
-			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd)
 
 		else: # if no match
 			moneyToAdd = 0
@@ -64,12 +63,14 @@ class Slots(commands.Cog):
 
 			embed.color = nextcord.Color(0xff2020)
 
+		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="Slots", amntBet=amntbet)
+
 		profitInt = moneyToAdd - amntbet
 
 		embed.add_field(name=f"**--- {result} ---**", value="_ _", inline=False)
 
 		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
-		embed = await DB.calculateXP(self, interaction, priorBal, amntbet, embed)
+		embed = await DB.calculateXP(self, interaction, priorBal, amntbet, embed, gameID)
 
 		await botMsg.edit(embed=embed)
 

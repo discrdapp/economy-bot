@@ -13,7 +13,7 @@ class rps(commands.Cog):
 
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='rockpaperscissors')
 	async def rockpaperscissors(self, 
 								interaction:Interaction, 
 								amntbet,
@@ -65,7 +65,7 @@ class rps(commands.Cog):
 			moneyToAdd = amntbet * 2 
 			profitInt = moneyToAdd - amntbet
 			result = "YOU WON"
-			
+
 			embed.color = nextcord.Color(0x23f518)
 
 		elif winner == -1:
@@ -73,21 +73,21 @@ class rps(commands.Cog):
 			profitInt = -amntbet # profit = amntWon - amntbet; amntWon = 0 in this case
 			result = "YOU LOST"
 
-		
+
 		elif winner == 0:
 			moneyToAdd = amntbet # add back their bet they placed since it was pushed (tied)
 			profitInt = 0 # they get refunded their money (so they don't make or lose money)
 			result = "PUSHED"
 
 		embed.add_field(name=f"{self.bot.user.name}' Casino | RPS", value=f"**{interaction.user.name}** picked **{userchoice}** \n**Pit Boss** picked **{botChoice}**",inline=False)
-		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd)
+		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="RPS", amntBet=amntbet)
 		
 		embed.add_field(name=f"**--- {result} ---**", value="_ _", inline=False)
 		
 		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed)
+		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed, gameID)
 
 		await interaction.send(content=f"{interaction.user.mention}", file=file, embed=embed)
 		

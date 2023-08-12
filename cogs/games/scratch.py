@@ -72,13 +72,19 @@ class ScratchTicket(nextcord.ui.View):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 
 		if profit >= 0:
-			await self.bot.get_cog("Economy").addWinnings(self.ownerId, profit+self.amntbet)
+			print(profit)
+			moneyToAdd = profit+self.amntbet
+		else:
+			moneyToAdd = 0
+
+		gameID = await self.bot.get_cog("Economy").addWinnings(self.ownerId, moneyToAdd, giveMultiplier=True, 
+							  activityName="Scratch", amntBet=self.amntbet)
 
 		embed = nextcord.Embed(color=0xff2020)
 		embed = await DB.addProfitAndBalFields(self, interaction, profit, embed)
 
 		# Why don't we just calculate the XP in subtractBet
-		embed = await DB.calculateXP(self, interaction, balance, self.amntbet, embed)
+		embed = await DB.calculateXP(self, interaction, balance, self.amntbet, embed, gameID)
 		await interaction.edit(content="", embed=embed, view=self)
 	
 	def GenerateTicket(self):
@@ -139,7 +145,7 @@ class Scratch(commands.Cog):
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='scratch')
 	async def scratch(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 100")):
 		if amntbet < 100:
 			await interaction.send("Minimum bet is 100", ephemeral=True)

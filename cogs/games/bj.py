@@ -13,7 +13,7 @@ from nextcord import Interaction
 
 # import cooldowns
 from random import randint
-import asyncio
+import asyncio, cooldowns
 
 from db import DB
 
@@ -420,6 +420,7 @@ class Blackjack(nextcord.ui.View):
 
 		file = None
 
+		moneyToAdd = 0
 		if winner == 999: # won by insurance
 			moneyToAdd = self.insuranceBet * 3
 			# if bought insurance and has blackjack
@@ -460,14 +461,13 @@ class Blackjack(nextcord.ui.View):
 		if file:
 			self.embed.set_thumbnail(url="attachment://image.png")
 
-		if moneyToAdd > 0:
-			await self.bot.get_cog("Economy").addWinnings(user.id, moneyToAdd)
+		gameID = await self.bot.get_cog("Economy").addWinnings(self.interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="BJ", amntBet=self.amntbet)
 		self.embed.set_field_at(2, name = f"**--- {result} ---**", value = "_ _", inline=False)
 
 		self.embed = await DB.addProfitAndBalFields(self, self.interaction, profitInt, self.embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(user)
-		self.embed = await DB.calculateXP(self, self.interaction, balance - profitInt, self.amntbet, self.embed)
+		self.embed = await DB.calculateXP(self, self.interaction, balance - profitInt, self.amntbet, self.embed, gameID)
 
 		# if winner == 999:
 		# await self.interaction.send(content=f"{user.mention}", file=file, embed=self.embed)
@@ -490,6 +490,7 @@ class bj(commands.Cog):
 
 	@nextcord.slash_command(description="Play BlackJack!")
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
+	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='blackjack')
 	async def blackjack(self, interaction:Interaction, amntbet):
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 		
