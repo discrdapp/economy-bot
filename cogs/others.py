@@ -81,20 +81,22 @@ class Others(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title="Thanks for taking an interest in me!")
 		embed.set_footer(text="And that's all for now folks!")
 
-		embed.add_field(name = "BOT HAS SWITCHED TO SLASH COMMANDS", value="All commands will start with slash (/). Some commands are a WIP.", inline=False)
+		embed.add_field(name = "BOT HAS SWITCHED TO SLASH COMMANDS", value="Commands start with slash (/). **Items, Mining, and New Commands are a WIP**", inline=False)
 		
 		embed.add_field(name = ":game_die: Game Commands", 
 						 value="`roulette`, `crash`, `blackjack`, " 
 							 + "`slots`, `coinflip`, `rps`, `dond`, `mines`, `scratch`, `rob`", inline = False)
 
 		embed.add_field(name = ":gear: Other Commands",
-					   value = "`balance`, `top`, `position`, `shop`, `use`, `stats`, `bank`, `claim`, "
-							 + "`profile`, `level`, `rewards`", inline=False)
+					   value = "`balance`, `top`, `position`, `shop`, `use`, `stats`, `bank`, "
+							 + "`profile`, `level`, `rewards`, `inventory`", inline=False)
 
 		embed.add_field(name = ":money_with_wings: Earn Money",
 					   value = "`vote`, `work`, `daily`, `weekly`, `monthly`, `search`, `claim`", inline=False)
 
 		embed.add_field(name=":grey_question: Quests", value=f"`quests`")
+
+		embed.add_field(name="New commands! :bangbang:", value = "`cooldown`, `log`, `beg`, `crime`, `fish`, `dig`", inline=False)
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `.claim` for free 7,500{self.coin}")
