@@ -116,7 +116,7 @@ class Shop(commands.Cog):
 				return
 
 
-		logID = await self.bot.get_cog("Economy").addWinnings(discordId, 0, giveMultiplier=False, activityName=f"Bought {amnt} {itemSelected}", amntBet=cost)		
+		logID = await self.bot.get_cog("Economy").addWinnings(discordId, -cost, giveMultiplier=False, activityName=f"Bought {amnt} {itemSelected}")		
 		
 		if theid == 3:
 			DB.update("UPDATE Economy SET DailyReward = DailyReward + ? WHERE DiscordID = ?;", [amnt*1000, discordId])
