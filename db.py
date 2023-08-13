@@ -71,15 +71,15 @@ class DB(commands.Cog):
 		conn.close()
 
 	@staticmethod
-	async def calculateXP(self, interaction:Interaction, initBal, amntBet, embed):
+	async def calculateXP(self, interaction:Interaction, initBal, amntBet, embed, gameID):
 		minBet = initBal * 0.05
 		minBet = int(ceil(minBet / 10.0) * 10.0)
 		if amntBet >= minBet:
 			xp = randint(50, 500)
-			embed.set_footer(text=f"Earned {xp:,} XP!")
+			embed.set_footer(text=f"Earned {xp:,} XP!\nGameID: {gameID}")
 			await self.bot.get_cog("XP").addXP(interaction, xp)
 		else:
-			embed.set_footer(text=f"You have to bet your minimum to earn xp.")
+			embed.set_footer(text=f"You have to bet your minimum to earn xp.\nGameID: {gameID}")
 		return embed
 
 	@staticmethod
@@ -100,14 +100,22 @@ class DB(commands.Cog):
 		embed.add_field(name="Credits", value=f"{balance:,}{self.coin}", inline=True)
 		return embed
 
+
+allItems = DB.fetchAll('SELECT * FROM Items')
 allItemNames = DB.fetchAll('SELECT Name FROM Items;')
 allItemNamesList = [item for sublist in allItemNames for item in sublist]
+
 buyableItems = DB.fetchAll('SELECT * FROM Items WHERE Buyable = 1;')
 buyableItemNames = DB.fetchAll("SELECT Name FROM Items WHERE Buyable = 1;")
 buyableItemNamesList = [item for sublist in buyableItemNames for item in sublist]
+
 usableItemNames = DB.fetchAll("SELECT Name FROM Items WHERE Type = 'Usable';")
 usableItemNamesList = [item for sublist in usableItemNames for item in sublist]
 
+collectibleItems = DB.fetchAll("SELECT * FROM Items WHERE Type = 'Collectible';")
+
+randomItemList = DB.fetchAll("SELECT * FROM Items WHERE Type = 'Usable' or TYPE = 'Collectible';")
+highestRarity = DB.fetchOne("SELECT * FROM Items WHERE Type = 'Usable' or TYPE = 'Collectible' ORDER BY Rarity DESC LIMIT 1;")[6]
 
 def setup(bot):
 	bot.add_cog(DB(bot))
