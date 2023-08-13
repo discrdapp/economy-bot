@@ -39,7 +39,8 @@ class Util(commands.Cog):
 				continue
 
 
-			resetInCST = ctp.next_reset - datetime.timedelta(hours=5)
+			# resetInCST = ctp.next_reset - datetime.timedelta(hours=5)
+			resetInCST = ctp.next_reset
 
 			diff = resetInCST - datetime.datetime.now()
 
