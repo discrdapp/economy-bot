@@ -149,8 +149,8 @@ class Shop(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crates")
 		embed.set_thumbnail(url=interaction.user.avatar)
 
-		if amnt > 50:
-			embed.description = "Max crates you can open is 50."
+		if amnt > 25:
+			embed.description = "Max crates you can open is 25."
 			await interaction.send(embed=embed)
 			return
 
@@ -185,27 +185,27 @@ class Shop(commands.Cog):
 			# 20% chance to get 5000 - 12500 credits
 			# 20% chance to get 0 - 500 credits
 			choice = randint(0, 100)
-			if choice <= 50: # 50% chance to find random item.
-				itemName, emoji = self.bot.get_cog("Inventory").getRandomItem()
+			if choice <= 40: # 50% chance to find random item.
+				itemName, emoji = self.bot.get_cog("Inventory").getRandomItem(3)
 				self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, 1, itemName)
 				aan = "an" if itemName in "aeiou" else "a"
 				embed.description += f"You found {aan} {itemName} {emoji}"
-			elif choice <= 60:
+			elif choice <= 50:
 				amntToAdd = randint(0, 3)
 				embed.description += f"You found {amntToAdd} crates!\n"
 				crates += amntToAdd
 
-			elif choice <= 70:
+			elif choice <= 60:
 				amntToAdd = randint(1, 3)
 				embed.description += f"You found {amntToAdd} keys!\n"
 				keys += amntToAdd
 
-			elif choice <= 75:
+			elif choice <= 70:
 				bal = randint(2500, 12000)
 				embed.description += f"You found {bal}{self.coin}!\n"
 				moneyToAdd += bal
 
-			elif choice <= 90:
+			elif choice <= 80:
 				bal = randint(50, 250)
 				embed.description += f"You found {bal}{self.coin}!\n"
 				moneyToAdd += bal
