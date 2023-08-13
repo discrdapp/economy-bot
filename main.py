@@ -56,6 +56,9 @@ async def on_ready():
 
 @bot.event
 async def on_interaction(interaction: Interaction):
+	# if interaction.user.id != 547475078082985990:
+	# 	await interaction.send("Updating bot!!! Check back within the next hour! :partying_face: ")
+	# 	return
 	if not await bot.get_cog("Economy").accCheck(interaction.user):
 		await bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		if interaction.data['name'] == 'blackjack':
