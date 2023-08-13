@@ -2,7 +2,7 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import cooldowns
+import cooldowns, config
 from random import randint
 
 from db import DB
@@ -20,6 +20,10 @@ from db import DB
 def GetBlocks():
 	itemNameList = DB.fetchAll('SELECT * FROM MinerBlocks;')
 	return itemNameList
+def GetHighestLevelBlock():
+	highestLevelBlock = DB.fetchOne('SELECT RequiresPickaxeLevel FROM MinerBlocks ORDER BY RequiresPickaxeLevel DESC LIMIT 1')[0]
+
+	return highestLevelBlock
 
 
 class Miner(commands.Cog):
@@ -27,6 +31,7 @@ class Miner(commands.Cog):
 		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 		self.blocks = GetBlocks()
+		self.highestLevelBlock = GetHighestLevelBlock()
 
 	def getInventory(self, userId, whatToGet=None):
 		if whatToGet:
@@ -62,10 +67,6 @@ class Miner(commands.Cog):
 			embed.description = "You need a pickaxe to mine.\nYou can buy one from the /shop"
 			await interaction.send(embed=embed)
 			return
-		if interaction.user.id != 547475078082985990:
-			embed.description = "We're currently working on MINER 2.0. Please check back later!"
-			await interaction.send(embed=embed)
-			return
 
 		inv = self.getInventory(interaction.user.id)
 
@@ -77,7 +78,7 @@ class Miner(commands.Cog):
 		spaceLeft = self.getBackpackSize(interaction) - spaceUsed
 
 		if spaceLeft <= 0:
-			embed.description = "You need to sell your blocks before you can mine some more.\nType `/miner sell`"
+			embed.description = "You need to sell your blocks before you can Mine some more.\nType `/miner sell`"
 			await interaction.send(embed=embed, ephemeral=True)
 			return
 
@@ -115,6 +116,10 @@ class Miner(commands.Cog):
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("miner")
 	async def sell(self, interaction:Interaction):
+		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, "Pickaxe"):
+			embed.description = "You need a Pickaxe to use the Mine commands.\nYou can buy one from the /shop"
+			await interaction.send(embed=embed)
+			return
 		inv = self.getInventory(interaction.user.id)
 
 		count = -1
@@ -166,31 +171,46 @@ class Miner(commands.Cog):
 	@cooldowns.shared_cooldown("miner")
 	async def upgrade(self, interaction:Interaction, userchoice = nextcord.SlashOption(required=True,name="item", choices=("pickaxe", "backpack"))):
 		embed = nextcord.Embed(color=1768431)
-		# embed.add_field(name = "Pickaxe", value="Level 0  ➡️  Level 1", inline=False)
-		# embed.add_field(name = "Backpack Size", value="32  ➡️  64", inline=False)
-		# embed.add_field(name = "Usage", value="**/miner upgrade <pickaxe/backpack>**", inline=False)
-		# embed.set_footer(text=f"User: {interaction.user.name}")
-		# await interaction.send(embed=embed)
+
+		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, "Pickaxe"):
+			embed.description = "You need a Pickaxe to use the Mine commands.\nYou can buy one from the /shop"
+			await interaction.send(embed=embed)
+			return
+
+		if interaction.user.id != config.botOwnerDiscordID:
+			embed.description = "Upgrading is disabled while we work on a permanent solution for it..."
+			await interaction.send(embed=embed)
+			return
 
 		if userchoice == "pickaxe":
-			DB.update("UPDATE MinerInventory SET PickaxeLevel = PickaxeLevel + 1 WHERE DiscordID = ?;", [interaction.user.id])
 			lvl = self.getInventory(interaction.user.id, "PickaxeLevel")
-			embed.add_field(name = "⛏️ Pickaxe Level", value=f"`{lvl-1} -> {lvl}`", inline=False)
+
+			if lvl == self.highestLevelBlock:
+				embed.description = "You're already at the highest level!"
+				await interaction.send(embed=embed)
+				return
+
+			DB.update("UPDATE MinerInventory SET PickaxeLevel = PickaxeLevel + 1 WHERE DiscordID = ?;", [interaction.user.id])
+			embed.add_field(name = "⛏️ Pickaxe Level", value=f"`{lvl} -> {lvl+1}`", inline=False)
 			# await interaction.send(embed=embed, ephemeral=True)
 
 			msg = ""
 			for block in self.blocks:
-				if lvl == block[4]:
+				if (lvl+1) == block[4]:
 					msg += f"{block[3]}\t"
 			if msg:
 				embed.add_field(name = "Unlocked Blocks", value=msg, inline=False)
 			await interaction.send(embed=embed, ephemeral=True)
 
 		elif userchoice == "backpack":
-			DB.update("UPDATE MinerInventory SET BackpackLevel = BackpackLevel + 1 WHERE DiscordID = ?;", [interaction.user.id])
 			lvl = self.getInventory(interaction.user.id, "BackpackLevel")
-			size = lvl * 32
-			embed.add_field(name = "Backpack Level", value=f"`{lvl-1} -> {lvl}`", inline=False)
+			if lvl == 3:
+				embed.description = "Your backpack is already at the highest level!"
+				await interaction.send(embed=embed)
+				return
+			DB.update("UPDATE MinerInventory SET BackpackLevel = BackpackLevel + 1 WHERE DiscordID = ?;", [interaction.user.id])
+			size = (lvl+1) * 32
+			embed.add_field(name = "Backpack Level", value=f"`{lvl} -> {lvl+1}`", inline=False)
 			embed.add_field(name = "Size", value=f"`{size-32} -> {size}`", inline=False)
 		
 			await interaction.send(embed=embed, ephemeral=True)
@@ -198,6 +218,11 @@ class Miner(commands.Cog):
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("miner")
 	async def level(self, interaction:Interaction, userchoice = nextcord.SlashOption(required=True,name="item", choices=("pickaxe", "backpack"))):
+		embed = nextcord.Embed(color=1768431)
+		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, "Pickaxe"):
+			embed.description = "You need a Pickaxe to use the Mine commands.\nYou can buy one from the /shop"
+			await interaction.send(embed=embed)
+			return
 		if userchoice == "pickaxe":
 			lvl = self.getInventory(interaction.user.id, "PickaxeLevel")
 		elif userchoice == "backpack":
