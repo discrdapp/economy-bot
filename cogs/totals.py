@@ -24,6 +24,9 @@ def log(discordID, creditsSpent, creditsWon, activity, bal): # Logs what credits
 
 	gameID = (str(uuid.uuid4())[:8]).upper()
 
+	if creditsSpent < 0:
+		creditsSpent *= -1
+
 	if type(activity) == int:
 		activity = actualGame[activity]
 	while True:
