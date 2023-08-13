@@ -31,15 +31,15 @@ class Vote(commands.Cog):
 
 		if numOfVotes == 1: 
 			times = "Time"
-			votes = "Vote"
+			voteMsg = "Vote"
 			chip = "Chip"
 		else: 
 			times = "Times"
-			votes = "Votes"
+			voteMsg = "Votes"
 			chip = "Chips"
 
 		moneyToAdd = 8500 * numOfVotes
-		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName=f"{numOfVotes} {votes}", amntBet=0)
+		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName=f"{numOfVotes} {voteMsg}", amntBet=0)
 		self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, numOfVotes, 'Voter Chip')
 				
 		embed.add_field(name=f"Thanks for Voting {numOfVotes} {times}!", value=f"{moneyToAdd}{self.coin} has been added to your account and you received {numOfVotes} Voter {chip}!")
