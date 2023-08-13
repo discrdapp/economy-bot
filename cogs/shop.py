@@ -23,7 +23,6 @@ class MySource(menus.ListPageSource):
 		super().__init__(data, per_page=5)
 
 	async def format_page(self, menu, entries):
-		# print(entries)
 		offset = menu.current_page * self.per_page
 
 		embed = nextcord.Embed(color=1768431, title=f"The Casino | Shop")

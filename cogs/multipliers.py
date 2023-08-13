@@ -81,7 +81,6 @@ class Multipliers(commands.Cog):
 
 		expireDate = datetime.datetime.strptime(expires, '%Y-%d-%m %H:%M:%S')
 		if expireDate > datetime.datetime.now():
-			print(f"multiplier {multiplier} is of type {type(multiplier)}")
 			seconds = (expireDate - datetime.datetime.now()).total_seconds()
 
 			if returnExpirationAsString:

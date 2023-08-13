@@ -205,7 +205,6 @@ class Util(commands.Cog):
 			view.job = job1.label
 
 		if not view.job:
-			print("not defined...")
 			return
 		
 		# 25% chance of not getting anything from /work

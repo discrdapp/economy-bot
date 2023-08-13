@@ -123,14 +123,11 @@ class TicTacToe(nextcord.ui.View):
 
 
 	async def GameOver(self, msg, won=bool):
-		print(f"You won: {won}")
 		embed = nextcord.Embed(color=1768431, title=f"Mine")
 		embed.add_field(name="Minesweeper", value=self.draw_grid(True))
 
 		await msg.clear_reactions()
 		await msg.edit(embed=embed, view=None)
-		print("Gameover!")
-
 	def draw_grid(self, isGameOver=False):
 		msg = "⬛"
 		for x in range(0, self.gridSize):

@@ -110,7 +110,6 @@ class Miner(commands.Cog):
 			await interaction.send(embed=embed, ephemeral=True)
 
 		blockName = self.blocks[block][1]
-		print(blockName)
 		DB.update(f"UPDATE MinerInventory SET {blockName} = ? WHERE DiscordID = ?;", [amntToSetTo, interaction.user.id])
 
 	@miner.subcommand()

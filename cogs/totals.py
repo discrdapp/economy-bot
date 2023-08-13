@@ -25,7 +25,6 @@ def log(discordID, creditsSpent, creditsWon, activity, bal): # Logs what credits
 	gameID = (str(uuid.uuid4())[:8]).upper()
 
 	if type(activity) == int:
-		print("IS INTEGER!")
 		activity = actualGame[activity]
 	while True:
 		try:

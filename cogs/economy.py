@@ -188,7 +188,6 @@ class Economy(commands.Cog):
 
 		gameID = None
 		if activityName and amntBet != None:
-			print("ADDING TO DB!")
 			balance = DB.fetchOne("SELECT Credits FROM Economy WHERE DiscordID = ?;", [discordid])[0]
 			gameID = log(discordid, amntBet, winnings, activityName, balance)
 			

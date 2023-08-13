@@ -72,7 +72,6 @@ class ScratchTicket(nextcord.ui.View):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 
 		if profit >= 0:
-			print(profit)
 			moneyToAdd = profit+self.amntbet
 		else:
 			moneyToAdd = 0
