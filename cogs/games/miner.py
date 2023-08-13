@@ -140,7 +140,7 @@ class Miner(commands.Cog):
 		
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, totalMoney, giveMultiplier=True, activityName="Miner", amntBet=0)
-		sellMsg += f"Total earned: {totalMoney} (+{int(totalMoney * (1 - multiplier))}){self.coin}"
+		sellMsg += f"Total earned: {totalMoney} (+{int(totalMoney * (multiplier - 1))}){self.coin}"
 
 		embed.description = sellMsg
 		embed.set_footer(text=f"\nGame ID: {gameID}")
