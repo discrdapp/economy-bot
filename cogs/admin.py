@@ -13,6 +13,27 @@ class Admin(commands.Cog):
 
 	def isOwner(self, theid):
 		return theid == config.botOwnerDiscordID
+	
+	@nextcord.slash_command(guild_ids=[config.adminServerID])
+	@application_checks.is_owner()
+	async def select(self, interaction:Interaction, whattoselect,
+		  table = nextcord.SlashOption(required=True, name="table", choices=("Donators", "Economy", "Inventory", "Items", "Logs", "MinerBlocks", "MinerInventory", "Multipliers", "Quests", "Totals")),
+		  conditions=None):
+		if interaction.user.id != config.botOwnerDiscordID:
+			await interaction.send("No.")
+			return
+		if conditions == None:
+			sqlStatement = f"SELECT {whattoselect} FROM {table}"
+		else:
+			sqlStatement = f"SELECT {whattoselect} FROM {table} WHERE {conditions}"
+
+		results = DB.fetchAll(sqlStatement)
+
+		msg = ""
+		for x in results:
+			msg += f"{x}\n"
+
+		await interaction.send(msg)
 
 	@nextcord.slash_command(guild_ids=[821015960931794964, 585226670361804827, 825179206958055425, 467084194200289280, 601446508121817088])
 	async def send(self, interaction:Interaction, user: nextcord.Member, amnt):
