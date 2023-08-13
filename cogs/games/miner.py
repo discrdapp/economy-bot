@@ -47,13 +47,15 @@ class Miner(commands.Cog):
 	def getBackpackSize(self, interaction:Interaction):
 		return DB.fetchOne('SELECT BackpackLevel FROM MinerInventory WHERE DiscordID = ?;', [interaction.user.id])[0]*32
 
+	cooldowns.define_shared_cooldown(1, 5, cooldowns.SlashBucket.author, cooldown_id="miner")
+
 	@nextcord.slash_command()
-	# @commands.cooldown(1, 3, commands.BucketType.user)
+	@cooldowns.shared_cooldown("miner")
 	async def miner(self, interaction:Interaction):
 		pass
 
 	@miner.subcommand()
-	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.shared_cooldown("miner")
 	async def mine(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431)
 		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, "Pickaxe"):
@@ -62,6 +64,7 @@ class Miner(commands.Cog):
 			return
 		if interaction.user.id != 547475078082985990:
 			embed.description = "We're currently working on MINER 2.0. Please check back later!"
+			await interaction.send(embed=embed)
 			return
 
 		inv = self.getInventory(interaction.user.id)
@@ -94,22 +97,24 @@ class Miner(commands.Cog):
 
 		if amnt < spaceLeft: 
 			# if inventory has space for all the blocks
-			await interaction.send(f"Mined {amnt} {self.blocks[block][3]}!")
+			embed.description = f"Mined {amnt} {self.blocks[block][3]}!"
+			await interaction.send(embed=embed)
 			# inv[block+2] += amnt
 			amntToSetTo = inv[block+3] + amnt
 		else: 
 			# if inventory doesn't have space for all the blocks, fill it up
-			await interaction.send(f"Mined {spaceLeft} {self.blocks[block][3]}!")
+			embed.description = f"Mined {spaceLeft} {self.blocks[block][3]}!"
 			# inv[block+2] += spaceLeft
 			amntToSetTo = inv[block+3] + spaceLeft
-			await interaction.send("Your backpack is now full!", ephemeral=True)
+			embed.set_footer(text="Your backpack is now full!")
+			await interaction.send(embed=embed, ephemeral=True)
 
 		blockName = self.blocks[block][1]
 		print(blockName)
 		DB.update(f"UPDATE MinerInventory SET {blockName} = ? WHERE DiscordID = ?;", [amntToSetTo, interaction.user.id])
 
 	@miner.subcommand()
-	@cooldowns.cooldown(1, 60, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.shared_cooldown("miner")
 	async def sell(self, interaction:Interaction):
 		inv = self.getInventory(interaction.user.id)
 
@@ -123,21 +128,26 @@ class Miner(commands.Cog):
 			sellMsg += f"Sold {item} {self.blocks[count][3]} for {item * self.blocks[count][2]}{self.coin}\n"
 			totalMoney += item * self.blocks[count][2]
 		
+		embed = nextcord.Embed(color=1768431)
 		if totalMoney == 0:
-			await interaction.send("You have no blocks to sell! Use `/miner mine` to mine some blocks")
+			embed.description = "You have no blocks to sell! Use `/miner mine` to mine some blocks"
+			await interaction.send(embed=embed)
 			return
 		
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
-		await self.bot.get_cog("Economy").addWinnings(interaction.user.id, totalMoney * multiplier)
+		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, totalMoney, giveMultiplier=True, activityName="Miner", amntBet=0)
 		sellMsg += f"Total earned: {totalMoney} (+{int(totalMoney * (1 - multiplier))}){self.coin}"
-		await interaction.send(sellMsg)
+
+		embed.description = sellMsg
+		embed.set_footer(text=f"\nGame ID: {gameID}")
+		await interaction.send(embed=embed)
 
 		DB.update(f"UPDATE MinerInventory SET Dirt = 0, Cobblestone = 0, Coal = 0, Iron = 0, Gold = 0, Emerald = 0, Diamond = 0 WHERE DiscordID = ?;", [interaction.user.id])
 		
 
 
 	@miner.subcommand()
-	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.shared_cooldown("miner")
 	async def backpack(self, interaction:Interaction):
 		inv = self.getInventory(interaction.user.id)
 		
@@ -154,7 +164,7 @@ class Miner(commands.Cog):
 		await interaction.send(embed=embed)
 
 	@miner.subcommand()
-	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.shared_cooldown("miner")
 	async def upgrade(self, interaction:Interaction, userchoice = nextcord.SlashOption(required=True,name="item", choices=("pickaxe", "backpack"))):
 		embed = nextcord.Embed(color=1768431)
 		# embed.add_field(name = "Pickaxe", value="Level 0  ➡️  Level 1", inline=False)
@@ -187,7 +197,7 @@ class Miner(commands.Cog):
 			await interaction.send(embed=embed, ephemeral=True)
 	
 	@miner.subcommand()
-	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.shared_cooldown("miner")
 	async def level(self, interaction:Interaction, userchoice = nextcord.SlashOption(required=True,name="item", choices=("pickaxe", "backpack"))):
 		if userchoice == "pickaxe":
 			lvl = self.getInventory(interaction.user.id, "PickaxeLevel")
