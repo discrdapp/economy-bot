@@ -116,6 +116,7 @@ class Miner(commands.Cog):
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("miner")
 	async def sell(self, interaction:Interaction):
+		embed = nextcord.Embed(color=1768431)
 		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, "Pickaxe"):
 			embed.description = "You need a Pickaxe to use the Mine commands.\nYou can buy one from the /shop"
 			await interaction.send(embed=embed)
@@ -132,7 +133,6 @@ class Miner(commands.Cog):
 			sellMsg += f"Sold {item} {self.blocks[count][3]} for {item * self.blocks[count][2]}{self.coin}\n"
 			totalMoney += item * self.blocks[count][2]
 		
-		embed = nextcord.Embed(color=1768431)
 		if totalMoney == 0:
 			embed.description = "You have no blocks to sell! Use `/miner mine` to mine some blocks"
 			await interaction.send(embed=embed)

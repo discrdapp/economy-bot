@@ -279,6 +279,8 @@ class View(nextcord.ui.View):
 		amntSpent = self.totalBet
 		if amntSpent != 0:
 			gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="RLTTE", amntBet=amntSpent)
+		else:
+			gameID = None
 
 		if moneyToAdd > amntSpent:
 			# \n**Profit:** {moneyToAdd - amntSpent}{self.coin}
