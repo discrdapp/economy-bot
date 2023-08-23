@@ -85,7 +85,7 @@ class Others(commands.Cog):
 		
 		embed.add_field(name = ":game_die: Game Commands", 
 						 value="`roulette`, `crash`, `blackjack`, " 
-							 + "`slots`, `coinflip`, `rps`, `dond`, `mines`, `scratch`, `rob`", inline = False)
+							 + "`slots`, `coinflip`, `rockpaperscissors`, `dond`, `mines`, `scratch`, `rob`", inline = False)
 
 		embed.add_field(name = ":gear: Other Commands",
 					   value = "`balance`, `top`, `position`, `shop`, `use`, `stats`, `bank`, "
