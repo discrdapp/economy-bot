@@ -36,7 +36,6 @@ extensions = ["db",
 			  "cogs.shop", 
 			  "cogs.totals",
 			  "cogs.ttt", 					# removable
-			  "cogs.user_settings", 		# removable
 			  "cogs.util", 
 			  "cogs.vote",					# removable
 			  "cogs.weeklymonthly",			# removable
