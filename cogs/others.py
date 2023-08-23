@@ -81,14 +81,14 @@ class Others(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title="Thanks for taking an interest in me!")
 		embed.set_footer(text="And that's all for now folks!")
 
-		embed.add_field(name = "BOT HAS SWITCHED TO SLASH COMMANDS", value="Commands start with slash (/). **Items, Mining, and New Commands are a WIP**", inline=False)
+		embed.add_field(name = "BOT HAS SWITCHED TO SLASH COMMANDS", value="Commands start with slash (/). **Crypto, Horse, Items, Mining are a WIP**", inline=False)
 		
 		embed.add_field(name = ":game_die: Game Commands", 
-						 value="`roulette`, `crash`, `blackjack`, " 
+						 value="`roulette`, `crash`, `blackjack`, `horse`" 
 							 + "`slots`, `coinflip`, `rockpaperscissors`, `dond`, `mines`, `scratch`, `rob`", inline = False)
 
 		embed.add_field(name = ":gear: Other Commands",
-					   value = "`balance`, `top`, `position`, `shop`, `use`, `stats`, `bank`, "
+					   value = "`balance`, `crypto`, `top`, `position`, `shop`, `use`, `stats`, `bank`, "
 							 + "`profile`, `level`, `rewards`, `inventory`", inline=False)
 
 		embed.add_field(name = ":money_with_wings: Earn Money",
