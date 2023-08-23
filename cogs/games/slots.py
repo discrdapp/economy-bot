@@ -17,6 +17,9 @@ class Slots(commands.Cog):
 	async def slots(self, interaction:Interaction, amntbet):
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
+		if amntbet < 100:
+			raise Exception("minBet 100")
+
 		priorBal = await self.bot.get_cog("Economy").getBalance(interaction.user)
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Slots")

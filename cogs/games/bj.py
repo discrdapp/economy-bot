@@ -493,6 +493,9 @@ class bj(commands.Cog):
 	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='blackjack')
 	async def blackjack(self, interaction:Interaction, amntbet):
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
+
+		if amntbet < 100:
+			raise Exception("minBet 100")
 		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

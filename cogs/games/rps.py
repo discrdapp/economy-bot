@@ -26,6 +26,9 @@ class rps(commands.Cog):
 
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
+		if amntbet < 100:
+			raise Exception("minBet 100")
+
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")
 			

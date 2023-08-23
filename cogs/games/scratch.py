@@ -147,8 +147,7 @@ class Scratch(commands.Cog):
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='scratch')
 	async def scratch(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 100")):
 		if amntbet < 100:
-			await interaction.send("Minimum bet is 100", ephemeral=True)
-			return
+			raise Exception("minBet 100")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

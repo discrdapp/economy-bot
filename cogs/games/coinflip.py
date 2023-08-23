@@ -71,6 +71,9 @@ class Coinflip(commands.Cog):
 		## SINGLE PLAYER ##
 		###################
 
+		if amntbet < 100:
+			raise Exception("minBet 100")
+
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")
 
@@ -87,7 +90,7 @@ class Coinflip(commands.Cog):
 			moneyToAdd = 0
 			file = nextcord.File("./images/coinlost.png", filename="image.png")
 			embed.color = nextcord.Color(0xff2020)
-		
+
 		profitInt = moneyToAdd - amntbet
 
 		embed.set_thumbnail(url="attachment://image.png")
