@@ -24,8 +24,8 @@ class Vote(commands.Cog):
 		try:
 			numOfVotes = votes[f"{interaction.user.id}"]
 		except:
-			embed.add_field(name="Links", value="[top.gg](https://top.gg/bot/585235000459264005/vote/)\n" + 
-				"[discordbotlist](https://discordbotlist.com/bots/casino-bot/upvote)\n")
+			embed.add_field(name="Links", value="1. [top.gg](https://top.gg/bot/585235000459264005/vote/)\n" + 
+				"2. [discordbotlist](https://discordbotlist.com/bots/casino-bot/upvote)\n")
 			await interaction.send("You have not voted yet.", embed=embed)
 			return
 
@@ -42,7 +42,7 @@ class Vote(commands.Cog):
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName=f"{numOfVotes} {voteMsg}", amntBet=0)
 		self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, numOfVotes, 'Voter Chip')
 				
-		embed.add_field(name=f"Thanks for Voting {numOfVotes} {times}!", value=f"{moneyToAdd}{self.coin} has been added to your account and you received {numOfVotes} Voter {chip}!")
+		embed.add_field(name=f"Thanks for Voting {numOfVotes} {times}!", value=f"{moneyToAdd:,}{self.coin} has been added to your account and you received {numOfVotes} Voter {chip}!")
 		embed.set_footer(text=f"/use to use your Voter Chip\nLog ID {logID}")
 		msg = await interaction.send(embed=embed)
 		msg = await msg.fetch()
