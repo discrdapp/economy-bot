@@ -4,11 +4,12 @@ from nextcord import Interaction
 
 import config
 
-from cooldowns import CallableOnCooldown
+from cooldowns import CallableOnCooldown, reset_bucket
 
 import datetime
 import traceback
 from difflib import get_close_matches
+
 
 
 class ErrorHandling(commands.Cog):
@@ -41,6 +42,7 @@ class ErrorHandling(commands.Cog):
 
 		elif isinstance(error, commands.BadArgument):
 			embed.description = f"{error}"
+			reset_bucket(interaction.application_command.callback, interaction)
 
 		else:
 			err = str(error)
@@ -48,7 +50,7 @@ class ErrorHandling(commands.Cog):
 			
 			if err == "forbiddenError":
 				embed.description = "Your Discord settings does not allow me to DM you. Please change them and try again."
-				await interaction.send(embed=embed)
+				await interaction.send(embed=embed, ephemeral=True)
 				return
 
 			if err == "timeoutError":
@@ -59,16 +61,24 @@ class ErrorHandling(commands.Cog):
 			if err == "valueError":
 				embed.description = "Did not provide correct option. Please try again"
 				await interaction.send(embed=embed)
+				reset_bucket(interaction.application_command.callback, interaction)
 				return
 
 			if err == "itemNotFoundInInventory":
 				embed.description = "You do not have that item in your inventory"
-				await interaction.send(embed=embed)
+				await interaction.send(embed=embed, ephemeral=True)
 				return
 
 			if err == "tooPoor":
 				embed.description = "You do not have enough credits to do that (or you are trying to use an amount less than 1)"
-				await interaction.send(embed=embed)
+				await interaction.send(embed=embed, ephemeral=True)
+				reset_bucket(interaction.application_command.callback, interaction)
+				return
+			
+			if "minBet" in err:
+				embed.description = f"Minimum bet is {err[7:]} credits" 
+				await interaction.send(embed=embed, ephemeral=True)
+				reset_bucket(interaction.application_command.callback, interaction)
 				return
 
 			exc = ''.join(traceback.format_exception(type(error), error, error.__traceback__, chain=False))
