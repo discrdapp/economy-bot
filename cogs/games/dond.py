@@ -276,18 +276,16 @@ class Dond(commands.Cog):
 		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
 		self.multipliers = {
-			5: [0.01, 0.5, 1.0, 1.5, 2.0],
-			10: [0.01, 0.2, 0.4, 0.6, 0.8, 1.2, 1.4, 1.6, 1.8, 2.0],
-			20: [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]
+			5: [0.01, 0.5, 1.0, 1.4, 2.0],
+			10: [0.01, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 2.0],
 		}
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author, cooldown_id='dond')
 	async def dond(self, interaction, betamnt:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
-				casecount:int = nextcord.SlashOption(choices=[5, 10, 20])):
+				casecount:int = nextcord.SlashOption(choices=[5, 10])):
 		if betamnt < 1000:
-			await interaction.send("Minimum bet is 1000", ephemeral=True)
-			return
+			raise Exception("minBet 1000")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, betamnt):
 			raise Exception("tooPoor")
