@@ -87,7 +87,7 @@ class DB(commands.Cog):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 
-		name = "Result"
+		name = "Profit"
 		if profit > 0 and redEmbed != True:
 			embed.color = nextcord.Color(0x23f518)
 		else:
