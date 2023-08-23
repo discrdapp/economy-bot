@@ -84,7 +84,7 @@ class Others(commands.Cog):
 		embed.add_field(name = "BOT HAS SWITCHED TO SLASH COMMANDS", value="Commands start with slash (/). **Crypto, Horse, Items, Mining are a WIP**", inline=False)
 		
 		embed.add_field(name = ":game_die: Game Commands", 
-						 value="`roulette`, `crash`, `blackjack`, `horse`" 
+						 value="`roulette`, `crash`, `blackjack`, `horse`, " 
 							 + "`slots`, `coinflip`, `rockpaperscissors`, `dond`, `mines`, `scratch`, `rob`", inline = False)
 
 		embed.add_field(name = ":gear: Other Commands",
