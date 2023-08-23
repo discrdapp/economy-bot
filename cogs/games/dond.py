@@ -33,6 +33,10 @@ class Button(nextcord.ui.Button):
 		assert self.view is not None
 		view: View = self.view
 
+		if view.ownerId != interaction.user.id:
+			await interaction.send("This is not your game!", ephemeral=True)
+			return
+
 		if self.opened:
 			return
 
@@ -113,7 +117,7 @@ class OfferView(nextcord.ui.View):
 
 
 class View(nextcord.ui.View):
-	def __init__(self, bot):
+	def __init__(self, bot, ownerId):
 		super().__init__(timeout=60)
 		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
@@ -132,6 +136,8 @@ class View(nextcord.ui.View):
 		self.myCase = None
 
 		self.offerView = OfferView(bot, self)
+
+		self.ownerId = ownerId
 	
 	def getPrefixMsg(self):
 		msg = f"{self.getMultiplierList()}\nYour case: {self.myCase.label}\n\n\n"
@@ -178,6 +184,7 @@ class View(nextcord.ui.View):
 
 
 	async def Start(self, interaction, casecount, multiplier, amntBet):
+		self.ownerId = interaction.user.id
 		self.amntBet = amntBet
 		self.totalCasesLeft = casecount
 		random.shuffle(multiplier)
@@ -286,7 +293,7 @@ class Dond(commands.Cog):
 			raise Exception("tooPoor")
 
 		multiplier = self.multipliers[casecount]
-		view = View(self.bot)
+		view = View(self.bot, interaction.user.id)
 		await view.Start(interaction, casecount, multiplier, betamnt)
 
 def setup(bot):
