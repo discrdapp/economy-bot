@@ -189,7 +189,7 @@ class Shop(commands.Cog):
 				itemName, emoji = self.bot.get_cog("Inventory").getRandomItem(3)
 				self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, 1, itemName)
 				aan = "an" if itemName in "aeiou" else "a"
-				embed.description += f"You found {aan} {itemName} {emoji}"
+				embed.description += f"You found {aan} {itemName} {emoji}\n"
 			elif choice <= 50:
 				amntToAdd = randint(0, 3)
 				embed.description += f"You found {amntToAdd} crates!\n"
