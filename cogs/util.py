@@ -188,7 +188,7 @@ class Util(commands.Cog):
 
 		jobs = random.sample(self.jobs, 3)
 
-		view = nextcord.ui.View(timeout=5)
+		view = nextcord.ui.View(timeout=30)
 
 		job1 = Button(label=jobs[0], style=nextcord.ButtonStyle.green)
 		job2 = Button(label=jobs[1], style=nextcord.ButtonStyle.green)
