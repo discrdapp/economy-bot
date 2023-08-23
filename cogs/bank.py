@@ -7,6 +7,7 @@ from math import floor
 
 import cooldowns
 
+from cogs.totals import log
 from db import DB
 
 class Bank(commands.Cog):
@@ -18,7 +19,7 @@ class Bank(commands.Cog):
 	async def on_ready(self):
 		if not self.bankInterest.is_running():
 			self.bankInterest.start()
-	
+
 	def cog_unload(self):
 		if self.bankInterest.is_running():
 			self.bankInterest.cancel()
@@ -62,10 +63,12 @@ class Bank(commands.Cog):
 
 		# add credits to Bank
 		DB.update("UPDATE Economy SET Bank = Bank + ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
+		balance = DB.fetchOne("SELECT Credits FROM Economy WHERE DiscordID = ?;", [interaction.user.id])[0]
+		logID = log(interaction.user.id, amnt, 0, "Deposit", balance)
 
 		embed.description = f"Successfully deposited {amnt:,}{self.coin}!"
+		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
-
 
 	@bank.subcommand(name='withdraw')
 	@cooldowns.shared_cooldown("bank")
@@ -133,3 +136,6 @@ class Bank(commands.Cog):
 
 def setup(bot):
 	bot.add_cog(Bank(bot))
+
+def teardown(bot):
+	print("i am being removed..")
