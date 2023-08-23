@@ -272,9 +272,9 @@ class Totals(commands.Cog):
 		embed.add_field(name="Regular colors", value=f"{msg}")
 		embed1.add_field(name="_ _", value=f"{msg1}")
 		embed2.add_field(name="_ _", value=f"{msg2}")
-		await interaction.send(embed=embed)
-		await interaction.send(embed=embed1)
-		await interaction.send(embed=embed2)
+		await interaction.send(embed=embed, ephemeral=True)
+		await interaction.send(embed=embed1, ephemeral=True)
+		await interaction.send(embed=embed2, ephemeral=True)
 
 
 	@profile.subcommand()
@@ -425,16 +425,16 @@ class Totals(commands.Cog):
 		rps = getRow[9]
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Stats")
-		embed.add_field(name = "Total Spent", value = f"{creditsSpent}", inline=True)
-		embed.add_field(name = "Total Won", value = f"{creditsWon}", inline=True)
-		embed.add_field(name = "Profit", value = f"{profit}", inline=True)
-		embed.add_field(name = "Games Played", value = f"{games}", inline=True)
-		embed.add_field(name = "Slots", value = f"{slots}", inline=True)
-		embed.add_field(name = "Blackjack", value = f"{blackjack}", inline=True)
-		embed.add_field(name = "Crash", value = f"{crash}", inline=True)
-		embed.add_field(name = "Roulette", value = f"{roulette}", inline=True)
-		embed.add_field(name = "Coinflip", value = f"{coinflip}", inline=True)
-		embed.add_field(name = "Rock-Paper-Scissors", value = f"{rps}", inline=True)
+		embed.add_field(name = "Total Spent", value = f"{creditsSpent:,}", inline=True)
+		embed.add_field(name = "Total Won", value = f"{creditsWon:,}", inline=True)
+		embed.add_field(name = "Profit", value = f"{profit:,}", inline=True)
+		embed.add_field(name = "Games Played", value = f"{games:,}", inline=True)
+		embed.add_field(name = "Slots", value = f"{slots:,}", inline=True)
+		embed.add_field(name = "Blackjack", value = f"{blackjack:,}", inline=True)
+		embed.add_field(name = "Crash", value = f"{crash:,}", inline=True)
+		embed.add_field(name = "Roulette", value = f"{roulette:,}", inline=True)
+		embed.add_field(name = "Coinflip", value = f"{coinflip:,}", inline=True)
+		embed.add_field(name = "Rock-Paper-Scissors", value = f"{rps:,}", inline=True)
 
 		await interaction.send(embed=embed)
 
