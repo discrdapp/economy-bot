@@ -9,35 +9,37 @@ bot = commands.Bot()
 bot.remove_command('help')
 
 extensions = ["db", 
-			  "cogs.games.bj",
-			  "cogs.games.coinflip",
-			  "cogs.games.color_guesser",
-			  "cogs.games.crash", 
-			  "cogs.games.dond",
-			  "cogs.games.lottery",
-			  "cogs.games.miner",
-			  "cogs.games.mines",
-			  "cogs.games.roulette", 
-			  "cogs.games.rps",
-			  "cogs.games.scratch", 
-			  "cogs.games.slots", 
-			  "cogs.admin", 
-			  "cogs.bank", 
-			  "cogs.daily",
+			  "cogs.games.bj",				# removable
+			  "cogs.games.coinflip",		# removable
+			  "cogs.games.color_guesser",	# removable
+			  "cogs.games.crash", 			# removable
+			  "cogs.games.dond",			# removable
+			  "cogs.games.horse",			# removable
+			  "cogs.games.lottery",			# removable
+			  "cogs.games.miner",			# removable
+			  "cogs.games.mines",			# removable
+			  "cogs.games.roulette", 		# removable
+			  "cogs.games.rps",				# removable
+			  "cogs.games.scratch", 		# removable
+			  "cogs.games.slots", 			# removable
+			  "cogs.admin", 				# removable
+			  "cogs.bank", 					# removable
+			  "cogs.crypto",				# removable
+			  "cogs.daily",					# removable
 			  "cogs.economy", 
 			  "cogs.error_handling",
-			  "cogs.fish",
+			  "cogs.fish",					# removable
 			  "cogs.inventory",
 			  "cogs.multipliers",
-			  "cogs.others", 
+			  "cogs.others", 				# removable
 			  "cogs.quests", 
 			  "cogs.shop", 
 			  "cogs.totals",
-			  "cogs.ttt", 
-			  "cogs.user_settings", 
+			  "cogs.ttt", 					# removable
+			  "cogs.user_settings", 		# removable
 			  "cogs.util", 
-			  "cogs.vote",
-			  "cogs.weeklymonthly",
+			  "cogs.vote",					# removable
+			  "cogs.weeklymonthly",			# removable
 			  "cogs.xp"] 
 
 
@@ -56,7 +58,7 @@ async def on_ready():
 
 @bot.event
 async def on_interaction(interaction: Interaction):
-	# if interaction.user.id != 547475078082985990:
+	# if interaction.user.id != config.botOwnerDiscordID:
 	# 	await interaction.send("Updating bot!!! Check back within the next hour! :partying_face: ")
 	# 	return
 	if not await bot.get_cog("Economy").accCheck(interaction.user):
