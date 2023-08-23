@@ -156,7 +156,7 @@ class Util(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 3000, bucket=cooldowns.SlashBucket.author, cooldown_id='crime')
 	async def crime(self, interaction:Interaction):
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Beg")
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crime")
 
 		# 50% chance to not get anything
 		if random.randint(0, 1) == 0:
