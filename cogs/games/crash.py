@@ -14,11 +14,11 @@ class Button(nextcord.ui.Button):
 	
 	async def callback(self, interaction: Interaction):
 		assert self.view is not None
-		view: Crash = self.view
+		view: View = self.view
 
 		if view.task is not None and view.multiplier != view.crashNum and interaction.user.id == view.userId:
 			view.task.cancel() # cancel task if there is a current task, and current multiplier number isn't the crashing number
-							   # and user issuing command is user who started the game
+							# and user issuing command is user who started the game
 			await view.finished(interaction)
 
 class View(nextcord.ui.View):
@@ -129,14 +129,15 @@ class Crash(commands.Cog):
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='crash')
-	async def crash(self, interaction:Interaction, bet): # actual command
-		bet = await self.bot.get_cog("Economy").GetBetAmount(interaction, bet)
-		bet = round(bet)
+	async def crash(self, interaction:Interaction, betamnt:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 100")): # actual command
+		if betamnt < 100:
+			await interaction.send("Minimum bet is 100", ephemeral=True)
+			return
 
-		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, bet):
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, betamnt):
 			raise Exception("tooPoor")
 
-		view = View(self.bot, interaction.user.id, bet)
+		view = View(self.bot, interaction.user.id, betamnt)
 		await view.Start(interaction)
 
 
