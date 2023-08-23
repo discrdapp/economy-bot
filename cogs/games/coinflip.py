@@ -81,14 +81,14 @@ class Coinflip(commands.Cog):
 		
 		if sidebet == side:
 			moneyToAdd = int(amntbet * 2)
-			profitInt = moneyToAdd - amntbet
 			file = nextcord.File("./images/coinwon.png", filename="image.png")
 
 		else:
 			moneyToAdd = 0
-			profitInt = moneyToAdd - amntbet
 			file = nextcord.File("./images/coinlost.png", filename="image.png")
 			embed.color = nextcord.Color(0xff2020)
+		
+		profitInt = moneyToAdd - amntbet
 
 		embed.set_thumbnail(url="attachment://image.png")
 		embed.add_field(name=f"{self.bot.user.name} | Coinflip", value=f"The coin landed on {side}\n_ _",inline=False)
