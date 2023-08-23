@@ -63,9 +63,16 @@ class View(nextcord.ui.View):
 
 	def GetFullDisplay(self, horses):
 		msg = "-------------------------------------------------"
+		x = 0
 		for horse in horses:
-			msg += "\n|"
+			if x == 0: indicator = ":red_circle:"
+			elif x == 1: indicator = ":blue_circle:"
+			elif x == 2: indicator = ":green_circle:"
+			elif x == 3: indicator = ":white_circle:"
+			else: indicator = ":warning:"
+			msg += f"\n{indicator}|"
 			msg += self.GetDisplay(horse)
+			x += 1
 		self.raceTrack = "-------------------------------------------------"
 		return msg
 
@@ -170,6 +177,9 @@ class Horse(commands.Cog):
 		 interaction:Interaction, 
 		 amntbet:int=nextcord.SlashOption(required=True, description="Enter the amount you want to bet. Minimum is 100"),
 		 horse:str=nextcord.SlashOption(description="What horse would you like?", required=False, choices=["Red", "Blue", "Green", "Grey"])): # actual command
+
+		if amntbet < 100:
+			raise Exception("minBet 100")
 		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")
