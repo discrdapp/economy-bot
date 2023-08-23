@@ -67,7 +67,6 @@ class Crypto(commands.Cog):
 	
 	def GetAllBalances(self, discordID):
 		balances = DB.fetchAll(f"SELECT Name, Quantity FROM Crypto WHERE DiscordID = ?;", [discordID])
-		print(balances)
 		return balances
 
 

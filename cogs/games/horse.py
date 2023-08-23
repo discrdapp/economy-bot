@@ -118,9 +118,6 @@ class View(nextcord.ui.View):
 					self.horses[3] = self.horses[3][1:]
 				
 				if self.horses[0][0] != "-" or self.horses[1][0] != "-" or self.horses[2][0] != "-" or self.horses[3][0] != "-":
-					print("Winner!")
-					
-					print(type(self.horses[0][0]))
 					if self.horses[0][0] != "-":
 						winner = "Red"
 					elif self.horses[1][0] != "-":
@@ -130,7 +127,6 @@ class View(nextcord.ui.View):
 					elif self.horses[3][0] != "-":
 						winner = "Grey"
 					notWon = False
-					print(f"{winner} won!")
 					break
 
 
