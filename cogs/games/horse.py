@@ -106,8 +106,8 @@ class View(nextcord.ui.View):
 		winner = None
 		while notWon:
 			for _ in range(20):
-				# raceToMove = random.randint(0, 4)
-				raceToMove = 0
+				raceToMove = random.randint(0, 4)
+				# raceToMove = 0
 				if raceToMove == 0:
 					self.horses[0] = self.horses[0][1:]
 				elif raceToMove == 1:
