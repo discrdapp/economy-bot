@@ -12,7 +12,6 @@ images/profile.png
 channels.py
 claimed.txt
 lotteryChannels.json
-miner.json
 prefix.json
 profiles.json
 rewards.json
