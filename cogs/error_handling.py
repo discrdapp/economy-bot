@@ -61,7 +61,10 @@ class ErrorHandling(commands.Cog):
 			if err == "valueError":
 				embed.description = "Did not provide correct option. Please try again"
 				await interaction.send(embed=embed)
-				reset_bucket(interaction.application_command.callback, interaction)
+				try:
+					reset_bucket(interaction.application_command.callback, interaction)
+				except:
+					pass
 				return
 
 			if err == "itemNotFoundInInventory":
@@ -81,7 +84,10 @@ class ErrorHandling(commands.Cog):
 			if "minBet" in err:
 				embed.description = f"Minimum bet is {err[7:]} credits" 
 				await interaction.send(embed=embed, ephemeral=True)
-				reset_bucket(interaction.application_command.callback, interaction)
+				try:
+					reset_bucket(interaction.application_command.callback, interaction)
+				except:
+					pass
 				return
 
 			exc = ''.join(traceback.format_exception(type(error), error, error.__traceback__, chain=False))
