@@ -144,7 +144,7 @@ class Inventory(commands.Cog):
 		if itemSelected == "Voter Chip":
 			embed.description = self.bot.get_cog("Multipliers").addMultiplier(interaction.user.id, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=(150*amnt)))
 		if itemSelected == "Dealer Chip" or "Ace of Spades":
-			self.addActiveItemToDB(interaction.user, itemSelected)
+			self.addActiveItemToDB(interaction.user, itemSelected, amnt)
 			embed.description = f"{itemSelected} has been activated! Proceed with your blackjack game."
 		elif itemSelected == "Magic 8 Ball":
 			text = ""
@@ -187,8 +187,11 @@ class Inventory(commands.Cog):
 		return crates, keys
 
 
-	def addActiveItemToDB(self, user: nextcord.user, itemName : str):
-		DB.insert('INSERT INTO ActiveBuffs(DiscordID, Item) VALUES (?, ?);', [user.id, itemName])
+	def addActiveItemToDB(self, user: nextcord.user, itemName : str, amnt:int):
+		if amnt < 1:
+			raise ValueError("valueError")
+		for _ in range(amnt):
+			DB.insert('INSERT INTO ActiveBuffs(DiscordID, Item) VALUES (?, ?);', [user.id, itemName])
 	
 	def checkForActiveItem(self, user: nextcord.user, itemName: str):
 		isInInventory = DB.fetchOne("SELECT 1 FROM ActiveBuffs WHERE DiscordID = ? AND Item = ?;", [user.id, itemName])
