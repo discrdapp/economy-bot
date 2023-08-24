@@ -142,6 +142,7 @@ class Blackjack(nextcord.ui.View):
 		self.amntbet = amntbet
 
 		self.usedDealerChip = False
+		self.usedAceofSpades = False
 
 		self.doubleDown = Button(bot, label="Double Down", style=nextcord.ButtonStyle.blurple, row=1)
 		self.add_item(self.doubleDown)
@@ -162,6 +163,10 @@ class Blackjack(nextcord.ui.View):
 		if self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Dealer Chip"):
 			self.bot.get_cog("Inventory").removeActiveItemFromDB(interaction.user, "Dealer Chip")
 			self.usedDealerChip = True
+		if self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Ace of Spades"):
+			self.bot.get_cog("Inventory").removeActiveItemFromDB(interaction.user, "Ace of Spades")
+			self.usedAceofSpades = True
+			
 
 		self.embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack")
 		file = nextcord.File("./images/bj.png", filename="image.png")
@@ -199,11 +204,12 @@ class Blackjack(nextcord.ui.View):
 	async def player_first_turn(self):
 		for x in range(0,2):
 			# player draws a card
-			# if x == 0:
-			# 	pDrawnCard = "♦ A"
+			if self.usedAceofSpades and x == 0:
+				pDrawnCard = "♠ A"
 			# else:
 			# 	pDrawnCard = "♦ 10"
-			pDrawnCard = self.take_card()
+			else:
+				pDrawnCard = self.take_card()
 			self.pCARD.append(pDrawnCard)
 
 			# splits the number and the suit 
