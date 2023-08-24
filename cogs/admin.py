@@ -115,6 +115,19 @@ class Admin(commands.Cog):
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
+	async def uses(self, interaction:Interaction):
+		amnt = DB.fetchOne("select count(1) from logs;")
+
+		if amnt:
+			amnt = int(amnt[0])
+
+		# adds both previous log file count
+		totalAmnt = amnt + 96934
+
+		await interaction.send(f"I have been used over **{totalAmnt:,}** times")
+
+	@nextcord.slash_command(guild_ids=[config.adminServerID])
+	@application_checks.is_owner()
 	async def end(self, interaction:Interaction):
 		await self.bot.logout()
 
