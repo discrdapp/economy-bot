@@ -72,7 +72,10 @@ class ErrorHandling(commands.Cog):
 			if err == "tooPoor":
 				embed.description = "You do not have enough credits to do that (or you are trying to use an amount less than 1)"
 				await interaction.send(embed=embed, ephemeral=True)
-				reset_bucket(interaction.application_command.callback, interaction)
+				try:
+					reset_bucket(interaction.application_command.callback, interaction)
+				except:
+					pass
 				return
 			
 			if "minBet" in err:
