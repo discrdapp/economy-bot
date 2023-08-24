@@ -1,7 +1,6 @@
 import nextcord
 from nextcord.ext import commands, tasks, application_checks
 from nextcord import Interaction
-from nextcord.ext.commands import has_permissions
 
 import cooldowns, random, datetime, json
 import numpy as np
@@ -24,7 +23,6 @@ class Lottery(commands.Cog):
 		pass
 
 	@lottery.subcommand()
-	@has_permissions(administrator=True)
 	async def info(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Lottery")
 		msg = ""
@@ -47,7 +45,6 @@ class Lottery(commands.Cog):
 		await interaction.send(embed=embed)
 	
 	@lottery.subcommand()
-	@has_permissions(administrator=True)
 	async def buy(self, interaction:Interaction, amnt:int=1):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Lottery")
 		if not self.lotteryTask.is_running():
@@ -85,8 +82,12 @@ class Lottery(commands.Cog):
 
 
 	@lottery.subcommand()
-	@has_permissions(administrator=True)
 	async def channel(self, interaction:Interaction, channel: nextcord.TextChannel):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Lottery")
+		if not interaction.user.guild_permissions.administrator:
+			embed.description = "Only server Administrators can run that command!"
+			await interaction.send(embed=embed)
+			return
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Lottery")
 		with open(r"lotteryChannels.json", 'r') as f:
 			channels = json.load(f)
@@ -99,9 +100,12 @@ class Lottery(commands.Cog):
 			json.dump(channels, f, indent=4)
 
 	@lottery.subcommand()
-	@has_permissions(administrator=True)
 	async def remove(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Lottery")
+		if not interaction.user.guild_permissions.administrator:
+			embed.description = "Only server Administrators can run that command!"
+			await interaction.send(embed=embed)
+			return
 		with open(r"lotteryChannels.json", 'r') as f:
 			channels = json.load(f)
 
