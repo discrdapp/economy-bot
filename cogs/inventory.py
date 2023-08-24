@@ -37,11 +37,13 @@ class Inventory(commands.Cog):
 			itemselected: str,
 			amnt: int=1):
 		
-		itemselected = DB.fetchOne("SELECT Name FROM Items WHERE Name LIKE ?;", [itemselected])[0]
+		itemselected = DB.fetchOne("SELECT Name FROM Items WHERE Name LIKE ?;", [itemselected])
 
 		if not itemselected:
 			await interaction.send("Item could not be found.")
 			return
+		
+		itemselected = itemselected[0]
 
 		self.addItemToInventory(user.id, amnt, itemselected)
 		await interaction.send(f"{amnt} {itemselected} given to {user}")
