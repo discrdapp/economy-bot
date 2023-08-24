@@ -37,7 +37,12 @@ class Inventory(commands.Cog):
 			itemselected: str,
 			amnt: int=1):
 		
-		itemselected = itemselected.title()
+		itemselected = DB.fetchOne("SELECT Name FROM Items WHERE Name LIKE ?;", [itemselected])[0]
+
+		if not itemselected:
+			await interaction.send("Item could not be found.")
+			return
+
 		self.addItemToInventory(user.id, amnt, itemselected)
 		await interaction.send(f"{amnt} {itemselected} given to {user}")
 
@@ -136,9 +141,9 @@ class Inventory(commands.Cog):
 
 		if itemSelected == "Voter Chip":
 			embed.description = self.bot.get_cog("Multipliers").addMultiplier(interaction.user.id, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=(150*amnt)))
-		if itemSelected == "Dealer Chip":
-			self.addActiveItemToDB(interaction.user, "Dealer Chip")
-			embed.description = "Dealer Chip has been activated! Proceed with your blackjack game."
+		if itemSelected == "Dealer Chip" or "Ace of Spades":
+			self.addActiveItemToDB(interaction.user, itemSelected)
+			embed.description = f"{itemSelected} has been activated! Proceed with your blackjack game."
 		elif itemSelected == "Magic 8 Ball":
 			text = ""
 			totalAmnt = 0
