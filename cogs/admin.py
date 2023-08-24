@@ -35,7 +35,7 @@ class Admin(commands.Cog):
 
 		await interaction.send(msg)
 
-	@nextcord.slash_command(guild_ids=[821015960931794964, 585226670361804827, 825179206958055425, 467084194200289280, 601446508121817088])
+	@nextcord.slash_command(guild_ids=[821015960931794964, 585226670361804827, 825179206958055425, 467084194200289280, 601446508121817088, 670038316271403021])
 	async def send(self, interaction:Interaction, user: nextcord.Member, amnt):
 
 		amnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, amnt)
