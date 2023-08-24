@@ -87,12 +87,23 @@ class Inventory(commands.Cog):
 		pages.add_item(a)
 
 		await pages.start(interaction=interaction, ephemeral=True)
-	
+
 	@nextcord.slash_command()
 	@cooldown(1, 5, bucket=SlashBucket.author)
-	async def sendemojis(self, interaction:Interaction):
-		msg = [x[-1] for x in allItems]
-		await interaction.send(f"Msg is {msg}")
+	async def activebuffs(self, interaction:Interaction):
+		buffs = DB.fetchAll("SELECT Item FROM ActiveBuffs WHERE DiscordID = ?;", [interaction.user.id])
+
+		if not buffs:
+			await interaction.send("You have no active buffs.")
+			return
+
+		buffs = set(buffs)
+		
+		msg = ""
+		for x in buffs:
+			msg += x[0]
+			msg += "\n"
+		await interaction.send(msg)
 
 
 	@nextcord.slash_command()
@@ -125,6 +136,9 @@ class Inventory(commands.Cog):
 
 		if itemSelected == "Voter Chip":
 			embed.description = self.bot.get_cog("Multipliers").addMultiplier(interaction.user.id, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=(150*amnt)))
+		if itemSelected == "Dealer Chip":
+			self.addActiveItemToDB(interaction.user, "Dealer Chip")
+			embed.description = "Dealer Chip has been activated! Proceed with your blackjack game."
 		elif itemSelected == "Magic 8 Ball":
 			text = ""
 			totalAmnt = 0
@@ -164,6 +178,19 @@ class Inventory(commands.Cog):
 		else: keys = 0
 
 		return crates, keys
+
+
+	def addActiveItemToDB(self, user: nextcord.user, itemName : str):
+		DB.insert('INSERT INTO ActiveBuffs(DiscordID, Item) VALUES (?, ?);', [user.id, itemName])
+	
+	def checkForActiveItem(self, user: nextcord.user, itemName: str):
+		isInInventory = DB.fetchOne("SELECT 1 FROM ActiveBuffs WHERE DiscordID = ? AND Item = ?;", [user.id, itemName])
+
+		if isInInventory: return True
+		else: return False
+
+	def removeActiveItemFromDB(self, user: nextcord.user, itemName: str, amnt: int=1):
+		DB.delete("DELETE FROM ActiveBuffs where ID = (SELECT ID FROM ActiveBuffs WHERE DiscordID = ? AND Item = ? LIMIT 1);", [user.id, itemName])
 
 	# checks if user has an item in their inventory
 	def checkInventoryFor(self, user: nextcord.user, itemName: str, amnt: int=1):
