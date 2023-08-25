@@ -255,17 +255,14 @@ class View(nextcord.ui.View):
 		self.endGame = True
 		self.embed.description = f"**Game Over**\nYou won **{multiplier}x** your bet!"
 
-		moneyToAdd = int(self.amntBet * multiplier)
+		moneyToAdd = int(round(self.amntBet * multiplier))
 		profitInt = moneyToAdd - self.amntBet
 
-		if profitInt > 0: # only give multiplier if user profits in game
-			gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="DOND", amntBet=self.amntBet)
-		else:
-			gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=False, activityName="DOND", amntBet=self.amntBet)
-
 		if multiplier >= 1:
+			gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="DOND", amntBet=self.amntBet)
 			self.embed = await DB.addProfitAndBalFields(self, interaction, profitInt, self.embed)
 		else:
+			gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=False, activityName="DOND", amntBet=self.amntBet)
 			self.embed = await DB.addProfitAndBalFields(self, interaction, profitInt, self.embed, True)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
