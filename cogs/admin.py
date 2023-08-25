@@ -116,15 +116,37 @@ class Admin(commands.Cog):
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def uses(self, interaction:Interaction):
-		amnt = DB.fetchOne("select count(1) from logs;")
+		amnt = DB.fetchAll("select DateTime from logs;")
 
-		if amnt:
-			amnt = int(amnt[0])
+		totalUses = len(amnt) + 96934
 
-		# adds both previous log file count
-		totalAmnt = amnt + 96934
+		todaysUses = 0
+		weeksUses = 0
+		monthsUses = 0
+		sixHourUses = 0
+		hourUses = 0
+		for record in amnt:
+			# print(record)
+			dateStr = record[0]
+			datetime_object = datetime.datetime.strptime(dateStr, '%b/%d/%y %H:%M:%S')
+			
+			diff = datetime.datetime.now() - datetime_object
+			
+			if diff.total_seconds() <= 2592000:
+				monthsUses += 1
+				if diff.total_seconds() <= 604800:
+					weeksUses += 1
+					if diff.total_seconds() <= 86400:
+						todaysUses += 1
+						if diff.total_seconds() <= 21600:
+							sixHourUses += 1
+							if diff.total_seconds() <= 3600:
+								hourUses += 1
 
-		await interaction.send(f"I have been used over **{totalAmnt:,}** times")
+
+
+
+		await interaction.send(f"I have been used:\n\t\t**{monthsUses}** times this month.\n\t\t**{weeksUses}** times this week.\n\t\t**{todaysUses}** times today.\n\t\t**{sixHourUses}** times in the past 6 hours.\n\t\t**{hourUses}** times in the past hour.\nAnd in total, over **{totalUses:,}** times.")
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
