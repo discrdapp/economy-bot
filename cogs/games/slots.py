@@ -77,9 +77,8 @@ class Slots(commands.Cog):
 
 		await botMsg.edit(embed=embed)
 
-		if moneyToAdd > 0:
-			await self.bot.get_cog("Totals").addTotals(interaction, amntbet, profitInt, 0)
-			await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Slt", profitInt)
+		self.bot.get_cog("Totals").addTotals(interaction, amntbet, profitInt, "Slots")
+		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Slt", profitInt)
 
 
 def setup(bot):
