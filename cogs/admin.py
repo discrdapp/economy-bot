@@ -56,10 +56,13 @@ class Admin(commands.Cog):
 		if not await self.bot.get_cog("Economy").accCheck(user):
 			await interaction.send("User not registered in system...")
 			return
-			
-		DB.delete("DELETE FROM Economy WHERE DiscordID = ?;", [user.id])
+
 		DB.delete("DELETE FROM Inventory WHERE DiscordID = ?;", [user.id])
 		DB.delete("DELETE FROM Totals WHERE DiscordID = ?;", [user.id])
+		DB.delete("DELETE FROM ActiveBuffs WHERE DiscordID = ?;", [user.id])
+		DB.delete("DELETE FROM Crypto WHERE DiscordID = ?;", [user.id])
+		DB.delete("DELETE FROM Economy WHERE DiscordID = ?;", [user.id])
+		DB.delete("DELETE FROM MinerInventory WHERE DiscordID = ?;", [user.id])
 
 		await interaction.send("Deleted user.")
 
