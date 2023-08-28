@@ -96,7 +96,7 @@ class Others(commands.Cog):
 
 		embed.add_field(name=":grey_question: Quests", value=f"`quests`")
 
-		embed.add_field(name="New commands! :bangbang:", value = "`cooldown`, `log`, `beg`, `crime`, `fish`, `dig`", inline=False)
+		embed.add_field(name="New commands! :bangbang:", value = "`feedback`, `highlow`, `cooldown`, `log`, `beg`, `crime`, `fish`, `dig`", inline=False)
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `.claim` for free 7,500{self.coin}")
