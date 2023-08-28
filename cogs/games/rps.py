@@ -94,7 +94,7 @@ class rps(commands.Cog):
 
 		await interaction.send(content=f"{interaction.user.mention}", file=file, embed=embed)
 		
-		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 5)
+		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "RPS")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "RPS", profitInt)
 
 

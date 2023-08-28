@@ -105,7 +105,7 @@ class Coinflip(commands.Cog):
 
 		await interaction.send(file=file, embed=embed)
 
-		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, 4)
+		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "Coinflip")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "CF", profitInt)
 
 def setup(bot):

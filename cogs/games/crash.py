@@ -117,7 +117,7 @@ class View(nextcord.ui.View):
 
 		await interaction.send(embed=embed)
 
-		await self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, 2)
+		self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Crash")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Crsh", profitInt)
 
 
@@ -129,14 +129,14 @@ class Crash(commands.Cog):
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='crash')
-	async def crash(self, interaction:Interaction, betamnt:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 100")): # actual command
-		if betamnt < 100:
+	async def crash(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 100")): # actual command
+		if amntbet < 100:
 			raise Exception("minBet 100")
 
-		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, betamnt):
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")
 
-		view = View(self.bot, interaction.user.id, betamnt)
+		view = View(self.bot, interaction.user.id, amntbet)
 		await view.Start(interaction)
 
 
