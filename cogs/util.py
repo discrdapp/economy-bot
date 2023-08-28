@@ -2,7 +2,9 @@ import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction 
 
-import cooldowns, random, datetime, math
+import cooldowns, random, datetime, math, config
+
+from db import DB
 
 
 class Button(nextcord.ui.Button):
@@ -18,7 +20,29 @@ class Util(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
 		self.jobs = ["Administrative Assistant", "Executive Assistant", "Marketing Manager", "Customer Service Representative", "Nurse Practitioner", "Software Engineer", "Sales Manager", "Data Entry Clerk", "Office Assistant", "Accounting Specialist", "Payroll Specialist", "Dentist", "Registered Nurse", "Pharmacist", "Computer Systems Analyst", "Physician", "Database Administrator", "Software Developer", "Physical Therapist", "Web Developer", "Dental Hygienist", "Occupational Therapist", "Veterinarian", "Computer Programmer", "School Psychologist", "Physical Therapist Assistant", "Interpreter & Translator", "Mechanical Engineer", "Veterinary Technologist & Technician", "Epidemiologist", "IT Manager", "Market Research Analyst", "Diagnostic Medical Sonographer", "Computer Systems Administrator", "Respiratory Therapist", "Medical Secretary", "Civil Engineer", "Substance Abuse Counselor", "Speech-Language Pathologist", "Landscaper & Groundskeeper", "Radiologic Technologist", "Cost Estimator", "Financial Advisor", "Marriage & Family Therapist", "Medical Assistant", "Lawyer", "Accountant", "Compliance Officer", "High School Teacher", "Clinical Laboratory Technician", "Maintenance & Repair Worker", "Bookkeeping, Accounting, & Audit Clerk", "Financial Manager", "Recreation & Fitness Worker", "Insurance Agent", "Elementary School Teacher", "Dental Assistant", "Management Analyst", "Home Health Aide", "Pharmacy Technician", "Construction Manager", "Public Relations Specialist", "Middle School Teacher", "Massage Therapist", "Paramedic", "Preschool Teacher", "Hairdresser", "Marketing Manager", "Patrol Officer", "School Counselor", "Executive Assistant", "Financial Analyst", "Personal Care Aide", "Clinical Social Worker", "Business Operations Manager", "Loan Officer", "Meeting, Convention & Event Planner", "Mental Health Counselor", "Nursing Aide", "Sales Representative", "Architect", "Sales Manager", "HR Specialist", "Plumber", "Real Estate Agent", "Glazier", "Art Director", "Customer Service Representative", "Logistician", "Auto Mechanic", "Bus Driver", "Restaurant Cook", "Child & Family Social Worker", "Administrative Assistant", "Receptionist", "Paralegal", "Cement Mason & Concrete Finisher", "Painter", "Sports Coach", "Teacher Assistant", "Brickmason & Blockmason", "Cashier", "Janitor", "Electrician", "Delivery Truck Driver", "Maid & Housekeeper", "Carpenter", "Security Guard", "Construction Worker", "Fabricator", "Telemarketer"]
+		self.coin = "<:coins:585233801320333313>"
 		# self.jobs = ["1", "2", "3", "4"]
+	
+
+	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 3600, bucket=cooldowns.SlashBucket.author, cooldown_id='feedback')
+	async def feedback(self, interaction:Interaction, 
+		    message,
+		    type = nextcord.SlashOption(
+				required=True,
+				name="type", 
+				choices=("Bug", "Suggestion", "Question", "Comment"))):
+
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Feedback")
+		embed.description = f"Thank you for your {type}.\nPlease feel free to [join the bot's official support server](https://discord.gg/ggUksVN) if you'd like a response"
+		await interaction.send(embed=embed)
+
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | {type}")
+		embed.description = message
+		embed.set_footer(text=interaction.user)
+		ch = self.bot.get_channel(config.channelIDForSuggestions)
+		await ch.send(content=f"<@{config.botOwnerDiscordID}>", embed=embed)
+
 	
 	@nextcord.slash_command()
 	async def cooldown(self, interaction:Interaction):
@@ -34,7 +58,7 @@ class Util(commands.Cog):
 
 			if not ctp:
 				continue
-			
+
 			if not ctp.next_reset:
 				continue
 
@@ -62,9 +86,44 @@ class Util(commands.Cog):
 		
 		if not msg:
 			msg = "You currently have no commands on cooldown!"
-		
+
 		await interaction.send(msg)
-	
+
+
+	@nextcord.slash_command(description="Quick game. Guess if chosen number is lower than 50 or equal/higher")
+	@cooldowns.cooldown(1, 2, bucket=cooldowns.SlashBucket.author, cooldown_id='gamble')
+	async def highlow(self, interaction:Interaction, amntbet:int, choice=nextcord.SlashOption(required=True, choices=["high", "low"])):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | HighLow")
+		if amntbet < 100:
+			raise Exception("minBet 100")
+
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
+			raise Exception("tooPoor")
+		
+		number = random.randint(0, 100)
+
+		if (number >= 50 and choice == "high") or (number < 50 and choice == "low"):
+			moneyToAdd = amntbet * 2
+		else:
+			moneyToAdd = 0
+
+		profitInt = moneyToAdd - amntbet
+		
+		embed.description = f"I chose {number}"
+		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="HighLow", amntBet=amntbet)
+		
+		
+		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
+
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
+		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed, gameID)
+
+		await interaction.send(embed=embed)
+
+		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "HighLow")
+
+
+
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 3000, bucket=cooldowns.SlashBucket.author, cooldown_id='dig')
 	async def dig(self, interaction:Interaction):
@@ -100,7 +159,7 @@ class Util(commands.Cog):
 			pay = random.randrange(5000, 15000)
 			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay, giveMultiplier=False, activityName=f"Dig", amntBet=0)
 
-			embed.description = f"You were given {pay:,}<:coins:585233801320333313>"
+			embed.description = f"You were given {pay:,}{self.coin}"
 			embed.set_footer(text=f"Log ID: {logID}")
 			await interaction.send(embed=embed)
 
@@ -146,7 +205,7 @@ class Util(commands.Cog):
 			pay = random.randrange(5000, 10000)
 			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay, giveMultiplier=False, activityName=f"Beg", amntBet=0)
 
-			embed.description = f"You were given {pay:,}<:coins:585233801320333313>"
+			embed.description = f"You were given {pay:,}{self.coin}"
 			embed.set_footer(text=f"Log ID: {logID}")
 			await interaction.send(embed=embed)
 
@@ -171,14 +230,12 @@ class Util(commands.Cog):
 			pay = random.randrange(5000, 15000)
 			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay, giveMultiplier=False, activityName=f"Beg", amntBet=0)
 
-			embed.description = f"You were given {pay:,}<:coins:585233801320333313>"
+			embed.description = f"You were given {pay:,}{self.coin}"
 			embed.set_footer(text=f"Log ID: {logID}")
 			await interaction.send(embed=embed)
 
 			if random.randint(0, 1) == 0: # 25% chance to get a random item
 				await self.bot.get_cog("Inventory").GiveRandomItem(interaction)
-
-
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 3600, bucket=cooldowns.SlashBucket.author, cooldown_id="work")
@@ -228,7 +285,7 @@ class Util(commands.Cog):
 			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay, giveMultiplier=False, activityName=f"Work", amntBet=0)
 
 			aan = "an" if view.job[0].lower() in "aeiou" else "a"
-			embed.description = f"You worked as {aan} {view.job} and earned {pay:,}<:coins:585233801320333313>"
+			embed.description = f"You worked as {aan} {view.job} and earned {pay:,}{self.coin}"
 			embed.set_footer(text=f"Log ID: {logID}")
 			await msg.edit(embed=embed, view=None)
 
@@ -246,18 +303,26 @@ class Util(commands.Cog):
 			return
 			
 		if not await self.bot.get_cog("Economy").accCheck(member):
-			await self.bot.get_cog("Economy").StartPlaying(interaction, member)
+			embed.description = f"{member} has not registed yet. Cannot rob them."
+			await interaction.send(embed=embed, ephemeral=True)
+
+			cooldowns.reset_bucket(self.rob.callback, interaction)
+			return
 
 		bal1 = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if bal1 < 2500:
-			embed.description = f"{interaction.user}, you need at least 2500<:coins:585233801320333313> to rob."
+			embed.description = f"{interaction.user}, you need at least 2500{self.coin} to rob."
 			await interaction.send(embed=embed)
+
+			cooldowns.reset_bucket(self.rob.callback, interaction)
 			return
 		
 		bal2 = await self.bot.get_cog("Economy").getBalance(member)
 		if bal2 < 2500:
-			embed.description = f"{member.mention} needs at least 2500<:coins:585233801320333313> to be robbed."
+			embed.description = f"{member.mention} needs at least 2500{self.coin} to be robbed."
 			await interaction.send(embed=embed)
+
+			cooldowns.reset_bucket(self.rob.callback, interaction)
 			return
 
 		choice = random.randrange(0, 10)
@@ -267,8 +332,7 @@ class Util(commands.Cog):
 			embed.description = f"{member.mention} caught you red-handed! But they decided to forgive you... No money has been robbed!"
 			await interaction.send(embed=embed)
 			return
-
-		coin = "<:coins:585233801320333313>"
+	
 		# amnt = -1
 
 		if choice <= 4: # 0 - 4		(50%)
@@ -290,9 +354,9 @@ class Util(commands.Cog):
 			amnt = random.randrange(2500, 25001)
 
 		if choice <= 4: # 0 - 4		(50%)
-			message = f"While {member.mention} was sleeping, you took {amnt:,}{coin} out of their pockets."
+			message = f"While {member.mention} was sleeping, you took {amnt:,}{self.coin} out of their pockets."
 		else: # 5, 6, or 7			(30%)
-			message = f"As you walk past {member.mention}, you try to pick pocket them, but they notice. They beat you up and steal {amnt:,}{coin} from you instead."
+			message = f"As you walk past {member.mention}, you try to pick pocket them, but they notice. They beat you up and steal {amnt:,}{self.coin} from you instead."
 
 
 		await self.bot.get_cog("Economy").addWinnings(robber.id, amnt)
@@ -300,7 +364,7 @@ class Util(commands.Cog):
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 
-		embed.description = f"{message}\nYour new balance is {balance:,}{coin}"
+		embed.description = f"{message}\nYour new balance is {balance:,}{self.coin}"
 		await interaction.send(embed=embed)
 
 
