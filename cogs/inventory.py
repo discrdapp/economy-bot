@@ -143,7 +143,7 @@ class Inventory(commands.Cog):
 
 		if itemSelected == "Voter Chip":
 			embed.description = self.bot.get_cog("Multipliers").addMultiplier(interaction.user.id, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=(150*amnt)))
-		if itemSelected == "Dealer Chip" or itemSelected == "Ace of Spades":
+		if itemSelected == "Dealer Chip" or itemSelected == "Ace of Spades" or itemSelected == "Big Blind Chip":
 			self.addActiveItemToDB(interaction.user, itemSelected, amnt)
 			embed.description = f"{itemSelected} has been activated! Proceed with your blackjack game."
 		elif itemSelected == "Magic 8 Ball":
