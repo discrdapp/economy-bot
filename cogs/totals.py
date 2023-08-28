@@ -17,11 +17,6 @@ def log(discordID, creditsSpent, creditsWon, activity, bal): # Logs what credits
 	x = datetime.datetime.now()
 						#  MON DAY YY HOUR:MIN:SEC
 	localtime = x.strftime("%b/%d/%y %H:%M:%S")
-	# logs = open("logs.txt", "a")
-	# logs.write(f"{localtime} : {discordID} : {creditsSpent} : {creditsWon} : {bal} : {actualGame[gameNumber]}\n")
-	# logs.flush()
-	# logs.close()
-
 	gameID = (str(uuid.uuid4())[:8]).upper()
 
 	if creditsSpent < 0:
@@ -411,7 +406,7 @@ class Totals(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='stats')
 	async def stats(self, interaction:Interaction):		
-		getRow = DB.fetchOne("SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
+		getRow = DB.fetchOne("SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS, Mines, HighLow, Horse, DOND, Scratch FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 
 		creditsSpent = getRow[0]
 		creditsWon = getRow[1]
@@ -423,6 +418,11 @@ class Totals(commands.Cog):
 		roulette = getRow[7]
 		coinflip = getRow[8]
 		rps = getRow[9]
+		mines = getRow[10]
+		highLow = getRow[11]
+		horse = getRow[12]
+		dond = getRow[13]
+		scratch = getRow[14]
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Stats")
 		embed.add_field(name = "Total Spent", value = f"{creditsSpent:,}", inline=True)
@@ -435,24 +435,17 @@ class Totals(commands.Cog):
 		embed.add_field(name = "Roulette", value = f"{roulette:,}", inline=True)
 		embed.add_field(name = "Coinflip", value = f"{coinflip:,}", inline=True)
 		embed.add_field(name = "Rock-Paper-Scissors", value = f"{rps:,}", inline=True)
+		embed.add_field(name = "Mines", value = f"{mines:,}", inline=True)
+		embed.add_field(name = "HighLow", value = f"{highLow:,}", inline=True)
+		embed.add_field(name = "Horse", value = f"{horse:,}", inline=True)
+		embed.add_field(name = "DOND", value = f"{dond:,}", inline=True)
+		embed.add_field(name = "Scratch", value = f"{scratch:,}", inline=True)
 
 		await interaction.send(embed=embed)
 
 
 
-	async def addTotals(self, interaction:Interaction, spent, won, game):
-		discordID = interaction.user.id
-
-		if game == 0: gameName = "Slots"		  
-		elif game == 1: gameName = "Blackjack"
-		elif game == 2: gameName = "Crash"
-		elif game == 3: gameName = "Roulette"
-		elif game == 4: gameName = "Coinflip"
-		elif game == 5: gameName = "RPS"
-
-		# bal = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		# log(discordID, spent, won, game, bal)
-
+	def addTotals(self, interaction:Interaction, spent, won, game=None):
 		if won < 0:
 			won = 0
 		if spent < 0:
@@ -462,12 +455,17 @@ class Totals(commands.Cog):
 		# DB.update("""UPDATE Totals
 		# 		  SET Paid = Paid + ?, Won = Won + ?, Profit = Profit + ?, Games = Games + 1, ? = ? + ?
 		# 		  WHERE DiscordID = ?;""", [spent, won, profit, gameName, gameName, profit, interaction.user.id])
-		sql = f"""UPDATE Totals
-				  SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, {gameName} = {gameName} + {profit}
-				  WHERE DiscordID = '{interaction.user.id}';"""
+		if game:
+			sql = f"""UPDATE Totals
+					SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1, {game} = {game} + {profit}
+					WHERE DiscordID = '{interaction.user.id}';"""
+		else:
+			sql = f"""UPDATE Totals
+				SET Paid = Paid + {spent}, Won = Won + {won}, Profit = Profit + {profit}, Games = Games + 1
+				WHERE DiscordID = '{interaction.user.id}';"""
 
 		conn = sqlite3.connect(config.db)
-		cursor = conn.execute(sql)
+		conn.execute(sql)
 		conn.commit()
 		conn.close()
 
