@@ -36,6 +36,9 @@ class Button(nextcord.ui.Button):
 	async def callback(self, interaction: Interaction):
 		assert self.view is not None
 		view: View = self.view
+		if view.ownerId != interaction.user.id:
+			await interaction.send("This is not your game!", ephemeral=True)
+			return
 		if self.label == "Spin":
 			view.stop()
 			return
@@ -110,20 +113,22 @@ class Modal(nextcord.ui.Modal):
 			self.add_item(GetParityBet())
 		elif modalType == "High or Low":
 			self.add_item(GetHighLowBet())
-		self.betamnt = GetAmountToBet()
+		self.amntbet = GetAmountToBet()
 		
-		self.add_item(self.betamnt)
+		self.add_item(self.amntbet)
 
 	async def callback(self, interaction: nextcord.Interaction):
 		self.stop()
-		# await interaction.send(f"{self.number.value} {self.color.value} {self.parity.value} {self.highlow.value} {self.betamnt.value} ")
+		# await interaction.send(f"{self.number.value} {self.color.value} {self.parity.value} {self.highlow.value} {self.amntbet.value} ")
 
 class View(nextcord.ui.View):
-	def __init__(self, bot, previousNums):
+	def __init__(self, bot, previousNums, ownerId):
 		super().__init__()
 		self.bot:commands.bot.Bot = bot
 		self.previousNums = previousNums
 		self.coin = "<:coins:585233801320333313>"
+
+		self.ownerId = ownerId
 
 		self.add_item(Button(bot = self.bot, label = "Spin", style = nextcord.ButtonStyle.green, row=0))
 		self.number = Button(bot = self.bot, label = "Number", style = nextcord.ButtonStyle.blurple, row=1, acceptableResponses=[str(x) for x in range(0,37)])
@@ -311,7 +316,7 @@ class View(nextcord.ui.View):
 		else:
 			self.embed = await DB.addProfitAndBalFields(self, interaction, -amntSpent + moneyToAdd, self.embed)
 		await self.msg.edit(embed=self.embed, file=nextcord.File('images/roulette/temproulette.png'))
-		await self.bot.get_cog("Totals").addTotals(interaction, amntSpent, moneyToAdd, 3)
+		self.bot.get_cog("Totals").addTotals(interaction, amntSpent, moneyToAdd, "Roulette")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Rltte", moneyToAdd - amntSpent)
 		if len(self.previousNums) == 8:  # display only 8 previous numbers
 			self.previousNums.pop()
@@ -421,7 +426,7 @@ class Roulette(commands.Cog):
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, add_reactions=True, use_external_emojis=True, manage_messages=True, read_message_history=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='roulette')
 	async def roulette(self, interaction:Interaction):
-		view = View(self.bot, self.previousNums)
+		view = View(self.bot, self.previousNums, interaction.user.id)
 		await view.Start(interaction)
 
 def setup(bot):
