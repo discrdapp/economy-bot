@@ -32,6 +32,7 @@ class Economy(commands.Cog):
 			return
 		DB.insert('INSERT INTO Economy(DiscordID) VALUES (?);', [user.id])
 		DB.insert('INSERT INTO Totals(DiscordID) VALUES (?);', [user.id])
+		log(interaction.user.id, 0, 0, "Registered", 2500)
 
 		embed.description = f"You are now successfully registered. Enjoy {self.bot.user.name}."
 
@@ -144,12 +145,13 @@ class Economy(commands.Cog):
 		donatorReward = self.getDonatorReward(interaction.user.id)
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(donatorReward * (multiplier - 1))
-		await self.addWinnings(interaction.user.id, donatorReward, True)
+		logID = await self.addWinnings(interaction.user.ii, donatorReward, giveMultiplier=True, activityName="Donator Reward", amntBet=0)
 
 		balance = await self.getBalance(interaction.user)
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name = f"You got {donatorReward:,} {self.coin}", 
 						value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
+		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
 
 
@@ -181,7 +183,9 @@ class Economy(commands.Cog):
 		if winnings > 0 and giveMultiplier:
 			multiplier = self.bot.get_cog("Multipliers").getMultiplier(discordid)
 			if multiplier > 1:
-				extraMoney = int(winnings * (multiplier - 1))
+				if amntBet > winnings: profitAmnt = amntBet - winnings
+				else: profitAmnt = winnings - amntBet
+				extraMoney = int(profitAmnt * (multiplier - 1))
 				winnings += extraMoney
 		if winnings != 0:
 			DB.update("UPDATE Economy SET Credits = Credits + ? WHERE DiscordID = ?;", [math.ceil(winnings), discordid])
