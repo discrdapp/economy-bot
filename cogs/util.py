@@ -35,7 +35,7 @@ class Util(commands.Cog):
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Feedback")
 		embed.description = f"Thank you for your {type}.\nPlease feel free to [join the bot's official support server](https://discord.gg/ggUksVN) if you'd like a response"
-		await interaction.send(embed=embed)
+		await interaction.send(embed=embed, ephemeral=True)
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | {type}")
 		embed.description = message
