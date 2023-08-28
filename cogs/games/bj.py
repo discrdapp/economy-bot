@@ -121,7 +121,7 @@ class Button(nextcord.ui.Button['Blackjack']):
 			pass
 
 class Blackjack(nextcord.ui.View):
-	def __init__(self, bot, id, cards, amntbet):
+	def __init__(self, bot, id, cards, amntbet, currCount):
 		super().__init__(timeout=120)
 		self.bot:commands.bot.Bot = bot
 		self.coin = "<:coins:585233801320333313>"
@@ -130,6 +130,8 @@ class Blackjack(nextcord.ui.View):
 		self.pCARD = list()
 		self.pCardSuit = list()
 		self.pCardNum = list()
+
+		self.currCardCount = currCount
 
 		self.interaction = None
 		self.ownerId = id
@@ -143,6 +145,7 @@ class Blackjack(nextcord.ui.View):
 
 		self.usedDealerChip = False
 		self.usedAceofSpades = False
+		self.showCardCount = False
 
 		self.doubleDown = Button(bot, label="Double Down", style=nextcord.ButtonStyle.blurple, row=1)
 		self.add_item(self.doubleDown)
@@ -159,14 +162,21 @@ class Blackjack(nextcord.ui.View):
 
 	async def Start(self, interaction: Interaction):
 		self.interaction = interaction
+		self.usedAceofSpades = False
+		self.usedDealerChip = False
+		self.showCardCount = False
 		# generate the starting cards
 		if self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Dealer Chip"):
 			self.bot.get_cog("Inventory").removeActiveItemFromDB(interaction.user, "Dealer Chip")
 			self.usedDealerChip = True
+		elif self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Big Blind Chip"):
+			self.bot.get_cog("Inventory").removeActiveItemFromDB(interaction.user, "Big Blind Chip")
+			self.showCardCount = True
+		
 		if self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Ace of Spades"):
 			self.bot.get_cog("Inventory").removeActiveItemFromDB(interaction.user, "Ace of Spades")
 			self.usedAceofSpades = True
-			
+
 
 		self.embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack")
 		file = nextcord.File("./images/bj.png", filename="image.png")
@@ -185,10 +195,11 @@ class Blackjack(nextcord.ui.View):
 
 			self.embed.add_field(name = f"{self.interaction.user.name}'s CARD:", value = f"Waiting...", inline=True)
 			self.embed.add_field(name = f"{self.bot.user.name}' CARD", value = f"{dTotal}\n**Score**: {sum(self.dealerNum)}\n", inline=True)
-			if self.dealerHand[1] != None:
-				print(f"not none. it is {self.dealerHand[1]}")
 			self.embed.add_field(name = "_ _", value = "**Options:** hit or stay", inline=False)
-			self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+			if not self.showCardCount:
+				self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+			else:
+				self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}\nCount is {self.currCardCount[0]}")
 
 			botMsg = await self.interaction.send(f"{self.interaction.user.mention}", embed=self.embed, view=self)
 			self.msg = await botMsg.fetch()
@@ -247,7 +258,11 @@ class Blackjack(nextcord.ui.View):
 			self.embed.add_field(name = f"{self.interaction.user.name}'s CARD:", value = f"{pTotal}\n**Score**: {sum(self.pCardNum)}", inline=True)
 			self.embed.add_field(name = f"{self.bot.user.name}' CARD", value = f"{self.dealerHand[0]}\n**Score**: {self.dealerNum[0]}\n", inline=True)
 			self.embed.add_field(name = "_ _", value = "**Options:** hit or stay", inline=False)
-			self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+			
+			if not self.showCardCount:
+				self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+			else:
+				self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}\nCount is {self.currCardCount[0]}")
 
 			botMsg = await self.interaction.send(f"{self.interaction.user.mention}", embed=self.embed, view=self)
 			self.msg = await botMsg.fetch()
@@ -299,7 +314,10 @@ class Blackjack(nextcord.ui.View):
 			value = f"{pTotal}\n**Score**: {sum(self.pCardNum)}", 
 			inline=True)
 
-		self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+		if not self.showCardCount:
+			self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+		else:
+			self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}\nCount is {self.currCardCount[0]}")
 
 		# ends game if player busted or has 21
 		if (self.is_bust(self.pCardNum) or self.is_blackjack(self.pCardNum)):
@@ -319,11 +337,22 @@ class Blackjack(nextcord.ui.View):
 
 
 	async def EndGame(self):
+		self.CalculateCardCount(self.dealerNum[1])
 		winner = self.compare_between()
 		await self.displayWinner(winner) 
 
 
-	def take_card(self):
+	def CalculateCardCount(self, card):
+		try:
+			card = int(card)
+			if card <= 6:
+				self.currCardCount[0] += 1
+			elif card >= 10:
+				self.currCardCount[0] -= 1
+		except:
+			self.currCardCount[0] -= 1
+
+	def take_card(self, calculateCount:bool=True):
 		# if all 52 cards have been used, reset the deck
 		if len(self.cards) == 0:
 			self.cards = ["♣ A", "♣ 2", "♣ 3", "♣ 4", "♣ 5", "♣ 6", "♣ 7", "♣ 8", "♣ 9", "♣ 10", "♣ Jack", "♣ Queen", "♣ King",
@@ -333,6 +362,10 @@ class Blackjack(nextcord.ui.View):
 
 		randNum = randint(0, len(self.cards)-1)
 		drawnCard = self.cards.pop(randNum)
+
+		if calculateCount:
+			num = drawnCard.split(' ')[1]
+			self.CalculateCardCount(num)
 
 		return drawnCard
 
@@ -371,7 +404,11 @@ class Blackjack(nextcord.ui.View):
 			# else:
 			# 	dDrawnCard = "♦ 10"
 			# else:
-			dDrawnCard = self.take_card()
+			calculateCards = True
+			if x == 1:
+				calculateCards = False
+
+			dDrawnCard = self.take_card(calculateCount=calculateCards)
 			self.dealerHand.append(dDrawnCard)
 
 			dDrawnCard = dDrawnCard.split()
@@ -387,9 +424,20 @@ class Blackjack(nextcord.ui.View):
 			self.dealerNum.append(int(dDrawnCard[1]))
 
 			self.dealerNum = self.eval_ace(self.dealerNum)
+	
+	async def refresh_dealer_hand(self):
+		dTotal = ""
+		for x in self.dealerHand:
+			dTotal += f"{x} "
+
+		self.embed.set_field_at(1, name = f"{self.bot.user.name}' CARD", value = f"{dTotal}\n**Score**: {sum(self.dealerNum)}", inline=True)
+
+		await self.msg.edit(view=self, embed=self.embed)
+		await asyncio.sleep(0.6)
 
 
 	async def dealer_turn(self):
+		await self.refresh_dealer_hand()
 		# d will keep drawing until card values sum > 16
 		while sum(self.dealerNum) <= 16:
 			# grabs a card
@@ -409,17 +457,10 @@ class Blackjack(nextcord.ui.View):
 
 			self.dealerNum = self.eval_ace(self.dealerNum)
 
-			if self.usedDealerChip:
-				dTotal = ""
-				for x in self.dealerHand:
-					dTotal += f"{x} "
+			# if not self.usedDealerChip:
 
-				self.embed.set_field_at(1, name = f"{self.bot.user.name}' CARD", value = f"{dTotal}\n**Score**: {sum(self.dealerNum)}", inline=True)
-
-				print("adding!!!!!!!!")
-				await self.msg.edit(view=self, embed=self.embed)
-
-				await asyncio.sleep(0.6)
+			# if self.usedDealerChip:
+			await self.refresh_dealer_hand()
 		
 		if self.usedDealerChip:
 			self.add_item(Button(self.bot, label="Hit", style=nextcord.ButtonStyle.green))
@@ -541,7 +582,7 @@ class Blackjack(nextcord.ui.View):
 
 		await self.msg.edit(embed=self.embed, view=None)
 
-		await self.bot.get_cog("Totals").addTotals(self.interaction, self.amntbet, moneyToAdd, 1)	
+		self.bot.get_cog("Totals").addTotals(self.interaction, self.amntbet, moneyToAdd, "Blackjack")	
 		await self.bot.get_cog("Quests").AddQuestProgress(self.interaction, user, "BJ", profitInt)
 
 
@@ -552,6 +593,7 @@ class bj(commands.Cog):
 					  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
 					  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
 					  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
+		self.count = [0]
 
 	@nextcord.slash_command(description="Play BlackJack!")
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
@@ -565,7 +607,7 @@ class bj(commands.Cog):
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")
 		
-		view = Blackjack(self.bot, interaction.user.id, self.cards, amntbet)
+		view = Blackjack(self.bot, interaction.user.id, self.cards, amntbet, self.count)
 		await view.Start(interaction)
 
 
