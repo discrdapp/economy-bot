@@ -270,6 +270,8 @@ class View(nextcord.ui.View):
 
 		await self.msg.edit(embed=self.embed, view=None)
 
+		self.bot.get_cog("Totals").addTotals(interaction, self.amntBet, moneyToAdd, "DOND")
+
 
 class Dond(commands.Cog):
 	def __init__(self, bot):
@@ -282,17 +284,17 @@ class Dond(commands.Cog):
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author, cooldown_id='dond')
-	async def dond(self, interaction, betamnt:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
+	async def dond(self, interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
 				casecount:int = nextcord.SlashOption(choices=[5, 10])):
-		if betamnt < 1000:
+		if amntbet < 1000:
 			raise Exception("minBet 1000")
 
-		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, betamnt):
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")
 
 		multiplier = self.multipliers[casecount]
 		view = View(self.bot, interaction.user.id)
-		await view.Start(interaction, casecount, multiplier, betamnt)
+		await view.Start(interaction, casecount, multiplier, amntbet)
 
 def setup(bot):
 	bot.add_cog(Dond(bot))

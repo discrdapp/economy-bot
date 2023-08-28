@@ -31,7 +31,7 @@ class MinesButton(nextcord.ui.Button['MinesView']):
         # clicked already-revealed checkmark (to cashout)
         if self.emoji:
             currTimesAmnt = round(view.profit[view.spacesClicked-1], 2)
-            currProfit = int(view.betamnt * currTimesAmnt)
+            currProfit = int(view.amntbet * currTimesAmnt)
             embed = nextcord.Embed(color=1768431, title=f"The Casino | Roobet Mines")
             # embed.description = f"Game finished.\nAmount won: {currProfit:,} ({currTimesAmnt:,}x)"
             await view.Gameover(interaction, embed, currProfit)
@@ -39,7 +39,7 @@ class MinesButton(nextcord.ui.Button['MinesView']):
 
         view.spacesClicked += 1
         currTimesAmnt = round(view.profit[view.spacesClicked-1], 2)
-        currProfit = int(view.betamnt * currTimesAmnt)
+        currProfit = int(view.amntbet * currTimesAmnt)
 
         embed = nextcord.Embed(color=1768431, title=f"The Casino | Roobet Mines")
         msg = None
@@ -61,8 +61,8 @@ class MinesButton(nextcord.ui.Button['MinesView']):
 
         if not msg:
             nextTimesAmnt = round(view.profit[view.spacesClicked], 2)
-            nextProfit = int(view.betamnt * nextTimesAmnt)
-            msg = f"Current Profit to Withdraw: {(currProfit-view.betamnt):,} ({currTimesAmnt:,}x)\nNext Profit: {nextProfit-view.betamnt:,} ({nextTimesAmnt:,}x)"
+            nextProfit = int(view.amntbet * nextTimesAmnt)
+            msg = f"Current Profit to Withdraw: {(currProfit-view.amntbet):,} ({currTimesAmnt:,}x)\nNext Profit: {nextProfit-view.amntbet:,} ({nextTimesAmnt:,}x)"
             embed.set_footer(text="Click one of the checkmarks to withdraw your winnings")
 
         embed.description = msg
@@ -71,7 +71,7 @@ class MinesButton(nextcord.ui.Button['MinesView']):
 
 # This is our actual board View
 class MinesView(nextcord.ui.View):
-    def __init__(self, bot, ownerId:int, mineCount:int, profit, betamnt, priorbal):
+    def __init__(self, bot, ownerId:int, mineCount:int, profit, amntbet, priorbal):
         super().__init__()
         # self.current_player = self.X
         self.board = [
@@ -86,7 +86,7 @@ class MinesView(nextcord.ui.View):
         self.coin = "<:coins:585233801320333313>"
 
         self.profit = profit
-        self.betamnt = betamnt
+        self.amntbet = amntbet
         self.ownerId = ownerId
         self.mineCount = mineCount
         self.totalChecks = len(self.board) * len(self.board[0]) - self.mineCount 
@@ -119,18 +119,20 @@ class MinesView(nextcord.ui.View):
                 child.style = nextcord.ButtonStyle.success
         self.stop()
 
-        gameID = await self.bot.get_cog("Economy").addWinnings(self.ownerId, moneyToAdd, giveMultiplier=True, activityName="Mines", amntBet=self.betamnt)
+        gameID = await self.bot.get_cog("Economy").addWinnings(self.ownerId, moneyToAdd, giveMultiplier=True, activityName="Mines", amntBet=self.amntbet)
         
-        embed = await DB.addProfitAndBalFields(self, interaction, moneyToAdd-self.betamnt, embed)
-        embed = await DB.calculateXP(self, interaction, self.priorBal, self.betamnt, embed, gameID)
+        embed = await DB.addProfitAndBalFields(self, interaction, moneyToAdd-self.amntbet, embed)
+        embed = await DB.calculateXP(self, interaction, self.priorBal, self.amntbet, embed, gameID)
         
         await interaction.response.edit_message(embed=embed, view=self)
+
+        self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Mines")
 
 class Mines(commands.Cog):
     def __init__(self, bot):
         self.bot:commands.bot.Bot = bot
         self.profits = [
-            [1.01, 1.08, 1.12, 1.18, 1.24, 1.30, 1.37, 1.46, 1.55, 1.65, 1.77, 1.90, 2.06, 2.25, 2.47, 2.75, 3.09, 3.54, 4.12, 4.95, 6.19, 8.23, 12.37, 24.75],
+            [1.01, 1.07, 1.11, 1.17, 1.23, 1.29, 1.35, 1.45, 1.53, 1.62, 1.75, 1.88, 2.02, 2.22, 2.45, 2.73, 3.05, 3.52, 4.10, 4.93, 6.16, 8.21, 12.33, 24.73],
             [1.08, 1.17, 1.29, 1.41, 1.56, 1.74, 1.94, 2.18, 2.47, 2.83, 3.26, 3.81, 4.50, 5.4, 6.6, 8.25, 10.61, 14.14, 19.80, 29.70, 49.50, 99, 297],
             [1.12, 1.29, 1.48, 1.71, 2.00, 2.35, 2.79, 3.35, 4.07, 5.00, 6.25, 7.96, 10.35, 13.80, 18.97, 27.11, 40.66, 65.06, 113.85, 227.70, 569.25, 2277],
             [1.18, 1.41, 1.71, 2.09, 2.58, 3.23, 4.09, 5.26, 6.88, 9.17, 12.51, 17.52, 25.30, 37.95, 59.64, 99.39, 178.91, 357.81, 834.90, 2504, 12523],
@@ -162,23 +164,23 @@ class Mines(commands.Cog):
 
     @mines.subcommand()
     @cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='mines')
-    async def start(self, interaction:Interaction, betamnt:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
+    async def start(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
                           minecount:int = nextcord.SlashOption(required=True,name="minecount", choices=[x+1 for x in range(24)])):
-        if betamnt < 1000:
+        if amntbet < 1000:
             await interaction.send("Minimum bet is 1000", ephemeral=True)
             return
 
         priorbal = await self.bot.get_cog("Economy").getBalance(interaction.user)
-        if not await self.bot.get_cog("Economy").subtractBet(interaction.user, betamnt):
+        if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
             raise Exception("tooPoor")
         
         profit = self.profits[minecount-1]
 
-        nextProfit = int(betamnt * profit[0])
+        nextProfit = int(amntbet * profit[0])
 
-        msg = f"Roobet Mines\nCurrent Profit to Withdraw: 0 (1.00x)\nNext Profit: {(nextProfit-betamnt):,} ({profit[0]:,}x)"
+        msg = f"Roobet Mines\nCurrent Profit to Withdraw: 0 (1.00x)\nNext Profit: {(nextProfit-amntbet):,} ({profit[0]:,}x)"
         embed = nextcord.Embed(color=1768431, title=f"The Casino | Roobet Mines", description=msg)
-        await interaction.send(embed=embed, view=MinesView(self.bot, interaction.user.id, minecount, profit, betamnt, priorbal))
+        await interaction.send(embed=embed, view=MinesView(self.bot, interaction.user.id, minecount, profit, amntbet, priorbal))
 
     @mines.subcommand()
     async def profits(self, interaction: Interaction, minecount:int = nextcord.SlashOption(required=True,name="minecount", choices=[x+1 for x in range(24)])):
