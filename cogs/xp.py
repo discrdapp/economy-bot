@@ -73,7 +73,8 @@ class XP(commands.Cog):
 
 			embed.set_thumbnail(url="attachment://image.png")
 			embed.add_field(name = f"Credits Bonus!", value = f"**{credits}**{self.coin}")
-			await interaction.send(file=file, embed=embed)
+			await interaction.channel.send(file=file, embed=embed)
+			# await interaction.send(file=file, embed=embed)
 
 
 	async def getLevel(self, discordid):
