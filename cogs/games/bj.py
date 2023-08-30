@@ -597,7 +597,13 @@ class bj(commands.Cog):
 
 	@nextcord.slash_command(description="Play BlackJack!")
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
-	# @cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='blackjack')
+	async def bj(self, interaction:Interaction, amntbet):
+		await self.blackjack(interaction, amntbet)
+		
+
+	@nextcord.slash_command(description="Play BlackJack!")
+	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='blackjack')
 	async def blackjack(self, interaction:Interaction, amntbet):
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
