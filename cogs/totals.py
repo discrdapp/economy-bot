@@ -154,6 +154,30 @@ class Totals(commands.Cog):
 
 		await interaction.send(embed=embed, ephemeral=True)
 
+
+	def GetProfile(self, profileFile, userId, embedColor=None, textColor=None, background=None):
+		if f"{userId}" not in profileFile:
+			profileFile[f"{userId}"] = dict()
+			profileFile[f"{userId}"]["embedColor"] = 1768431
+			profileFile[f"{userId}"]["textColor"] = (170,126,0)
+			profileFile[f"{userId}"]["background"] = "scroll.png"
+
+			with open(r"profiles.json", 'w') as f:
+				json.dump(profileFile, f, indent=4)
+		
+		if embedColor or textColor or background:
+			if embedColor:
+				profileFile[f"{userId}"]["embedColor"] = embedColor
+			if textColor:
+				profileFile[f"{userId}"]["textColor"] = textColor
+			if background:
+				profileFile[f"{userId}"]["background"] = background
+			
+			with open(r"profiles.json", 'w') as f:
+				json.dump(profileFile, f, indent=4)
+		
+		return profileFile
+
 	@nextcord.slash_command()
 	async def profile(self, interaction:Interaction):
 		pass
@@ -178,21 +202,12 @@ class Totals(commands.Cog):
 		with open(r"profiles.json", 'r') as f:
 			profileFile = json.load(f)
 
-		try:
-			embedColor = profileFile[f"{interaction.user.id}"]["embedColor"]
-			textColor = profileFile[f"{interaction.user.id}"]["textColor"]
-			background = profileFile[f"{interaction.user.id}"]["background"]
-		except:
-			embedColor = 1768431
-			textColor = (170,126,0)
-			background = "scroll.png"
+		profileFile = self.GetProfile(profileFile, interaction.user.id)
+		profile = profileFile[f"{interaction.user.id}"]
 
-			profileFile[f"{interaction.user.id}"] = dict()
-			profileFile[f"{interaction.user.id}"]["embedColor"] = embedColor
-			profileFile[f"{interaction.user.id}"]["textColor"] = textColor
-			profileFile[f"{interaction.user.id}"]["background"] = background
-			with open(r"profiles.json", 'w') as f:
-				json.dump(profileFile, f, indent=4)
+		embedColor = profile["embedColor"]
+		textColor = profile["textColor"]
+		background = profile["background"]
 
 		embed = nextcord.Embed(color=embedColor, title=f"{self.bot.user.name} | Profile")
 		embed.set_thumbnail(url=interaction.user.avatar)
@@ -290,10 +305,8 @@ class Totals(commands.Cog):
 
 		with open(r"profiles.json", 'r') as f:
 			profileFile = json.load(f)
-
-		profileFile[f"{interaction.user.id}"]["embedColor"] = newColor
-		with open(r"profiles.json", 'w') as f:
-			json.dump(profileFile, f, indent=4)
+		
+		profileFile = self.GetProfile(profileFile, interaction.user.id, embedColor=newColor)
 
 		embed.add_field(name="Success!", value=f"Your profile's embed color has been changed to {choice}")
 		embed.color = newColor
@@ -317,7 +330,7 @@ class Totals(commands.Cog):
 		with open(r"profiles.json", 'r') as f:
 			profileFile = json.load(f)
 
-		profileFile[f"{interaction.user.id}"]["textColor"] = newColor
+		profileFile = self.GetProfile(profileFile, interaction.user.id, textColor=newColor)
 		with open(r"profiles.json", 'w') as f:
 			json.dump(profileFile, f, indent=4)
 
@@ -340,14 +353,11 @@ class Totals(commands.Cog):
 			background = "scroll.png"
 		elif choice == "inkpaper":
 			background = "inkpaper.png"
-		elif choice == "spiralnotebook":
+		else:
 			background = "spiralnotebook.png"
 
-		profileFile[f"{interaction.user.id}"]["background"] = background
-		with open(r"profiles.json", 'w') as f:
-			json.dump(profileFile, f, indent=4)
+		profileFile = self.GetProfile(profileFile, interaction.user.id, background=background)
 
-		background = profileFile[f"{interaction.user.id}"]["background"]
 		file = nextcord.File(f"./images/writingbackgrounds/{background}", filename="image.png")
 		embed.set_image(url="attachment://image.png")
 		embed.add_field(name="Edited!", value=f"Successfully changed to {choice}.")
