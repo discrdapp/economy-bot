@@ -35,7 +35,7 @@ class Fish(commands.Cog):
 			return
 
 		elif num == 1: # 50% chance to get a fishing item (37.5% total)
-			rarityChosen = self.bot.get_cog("Inventory").getRarity(4)
+			rarityChosen = self.bot.get_cog("Inventory").getRarity(3)
 			# get all fishing items (IDs between 200 & 300)
 			items = DB.fetchAll("SELECT * FROM Items WHERE ID >= 200 and ID < 300 AND Rarity = ? ORDER BY Price;", [rarityChosen])
 			itemToGive, itemEmoji = self.bot.get_cog("Inventory").getItemFromListBasedOnPrice(items)
