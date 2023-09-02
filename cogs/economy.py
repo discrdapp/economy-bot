@@ -191,11 +191,10 @@ class Economy(commands.Cog):
 			DB.update("UPDATE Economy SET Credits = Credits + ? WHERE DiscordID = ?;", [math.ceil(winnings), discordid])
 
 		gameID = None
+		balance = DB.fetchOne("SELECT Credits FROM Economy WHERE DiscordID = ?;", [discordid])[0]
 		if activityName and "Bought" in activityName: # if using shop
-			balance = DB.fetchOne("SELECT Credits FROM Economy WHERE DiscordID = ?;", [discordid])[0]
 			gameID = log(discordid, winnings, 0, activityName, balance)
 		elif activityName and amntBet != None:
-			balance = DB.fetchOne("SELECT Credits FROM Economy WHERE DiscordID = ?;", [discordid])[0]
 			gameID = log(discordid, amntBet, winnings, activityName, balance)
 			
 		return gameID
