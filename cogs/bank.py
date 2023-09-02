@@ -136,6 +136,3 @@ class Bank(commands.Cog):
 
 def setup(bot):
 	bot.add_cog(Bank(bot))
-
-def teardown(bot):
-	print("i am being removed..")
