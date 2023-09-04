@@ -4,11 +4,12 @@ from nextcord import Interaction
 
 import json, time, math, cooldowns
 
+import emojis
+
 class WeeklyMonthly(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
 		self.levelReward = [550, 1500, 3000, 7500, 13500, 18500, 24000, 29000, 35000, 42000, 50000]
-		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 604805, bucket=cooldowns.SlashBucket.author, cooldown_id='weekly')
@@ -41,7 +42,7 @@ class WeeklyMonthly(commands.Cog):
 		extraMoney = int(weeklyReward * (multiplier - 1))
 		logID = await self.bot.get_cog("Economy").addWinnings(userId, weeklyReward, giveMultiplier=True, activityName="Weekly Reward", amntBet=0)
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed.add_field(name = f"You got {(weeklyReward+extraMoney):,} {self.coin}", 
+		embed.add_field(name = f"You got {(weeklyReward+extraMoney):,} {emojis.coin}", 
 						value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
 		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
@@ -81,7 +82,7 @@ class WeeklyMonthly(commands.Cog):
 		logID = await self.bot.get_cog("Economy").addWinnings(userId, monthlyReward, giveMultiplier=True, activityName="Monthly Reward", amntBet=0)
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = nextcord.Embed(color=1768431)
-		embed.add_field(name = f"You got {(monthlyReward+extraMoney):,} {self.coin}", 
+		embed.add_field(name = f"You got {(monthlyReward+extraMoney):,} {emojis.coin}", 
 						value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
 		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)

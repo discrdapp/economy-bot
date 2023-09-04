@@ -5,13 +5,13 @@ from nextcord import Interaction
 from random import randint, choice
 import cooldowns
 
+import emojis
 from db import DB
 
 
 class Fish(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 1800, bucket=cooldowns.SlashBucket.author, cooldown_id='fish')

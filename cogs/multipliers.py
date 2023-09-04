@@ -3,6 +3,7 @@ from nextcord.ext import commands
 
 import math, datetime
 
+import emojis
 from db import DB
 
 class Multipliers(commands.Cog):

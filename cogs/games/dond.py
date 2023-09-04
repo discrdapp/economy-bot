@@ -4,6 +4,7 @@ from nextcord import Interaction
 
 import cooldowns, asyncio, random
 
+import emojis
 from db import DB
 
 
@@ -96,7 +97,6 @@ class OfferView(nextcord.ui.View):
 	def __init__(self, bot, view):
 		super().__init__(timeout=60)
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 		self.view = view
 
 		self.add_item(DealNoDealButton(label="Deal", style=nextcord.ButtonStyle.green))
@@ -120,7 +120,6 @@ class View(nextcord.ui.View):
 	def __init__(self, bot, ownerId):
 		super().__init__(timeout=60)
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 		self.amntBet = None
 
 		# self.multiplier = []
@@ -276,7 +275,6 @@ class View(nextcord.ui.View):
 class Dond(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 		self.multipliers = {
 			5: [0.01, 0.5, 1.0, 1.4, 2.0],
 			10: [0.01, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 2.0],

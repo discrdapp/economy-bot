@@ -28,6 +28,7 @@ from nextcord import Interaction
 from random import randint
 import asyncio, cooldowns
 
+import emojis
 from db import DB
 
 class CreditsToBet(nextcord.ui.TextInput):
@@ -124,7 +125,6 @@ class Blackjack(nextcord.ui.View):
 	def __init__(self, bot, id, cards, amntbet, currCount):
 		super().__init__(timeout=120)
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 		self.cards = cards
 		self.pCARD = list()

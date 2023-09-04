@@ -7,7 +7,6 @@ import random
 class CG(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 
 	@nextcord.slash_command(description="Play Color Guesser!")
@@ -101,7 +100,7 @@ class CG(commands.Cog):
 
 		msg = f"The color was {color}\n"
 		if winners:
-			msg += f"Congratulations to {congrats}, since there are {timesAmnt} colors, you win {timesAmnt}x ({timesAmnt * amntbet}{self.coin}) your bet!"
+			msg += f"Congratulations to {congrats}, since there are {timesAmnt} colors, you win {timesAmnt}x ({timesAmnt * amntbet}{emojis.coin}) your bet!"
 		else:
 			msg += "Unfortunately, no one picked that color. Try again next time!"
 

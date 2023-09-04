@@ -10,7 +10,7 @@ import asyncio
 
 from dataclasses import dataclass
 
-import emojiss as e
+import emojis as e
 import config
 from db import DB
 
@@ -18,7 +18,6 @@ from db import DB
 class Achievements(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 		self.games = ["Slt", "BJ", "Crsh", "Rltte", "CF", "RPS"]
 		self.realGameNames = ["Slots", "Blackjack", "Crash", "Roulette", "Coinflip", "Rock-Paper-Scissors"]
 		self.realGameNamesDict = {"Slt": "Slots", "BJ": "Blackjack", "Crsh": "Crash", "Rltte": "Roulette", "CF": "Coinflip", "RPS": "Rock-Paper-Scissors"}
@@ -37,7 +36,7 @@ class Achievements(commands.Cog):
 			await self.bot.get_cog("XP").addXP(interaction, 200)
 
 			await interaction.send(embed=nextcord.Embed(color=0x109D00, title="Achievement Complete!", description=f"Your achivement to {goal} in {self.realGameNamesDict[game]} is now complete!" +
-				f"\n5000{self.coin} and 200 XP has been added to your account!\n"))
+				f"\n5000{emojis.coin} and 200 XP has been added to your account!\n"))
 
 	async def IsAchievementComplete(self, goal, questType, user: nextcord.Member, activeQuest):
 		pass

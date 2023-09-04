@@ -5,14 +5,13 @@ from nextcord import Interaction
 import cooldowns, random, datetime, json
 import numpy as np
 
-import config
+import config, emojis
 
 class Lottery(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
 		self.CHANNEL_ID = 881421294866927686
 		self.userTickets = list()
-		self.coin = "<:coins:585233801320333313>"
 		self.lotteryTask.start()
 		self.sendToChannels = [self.CHANNEL_ID]
 
@@ -29,7 +28,7 @@ class Lottery(commands.Cog):
 		try:
 			timeRemaining = await self.getTime()
 			msg += "Each lottery lasts for 4 hours." 
-			msg += f"\nEach ticket is 1,000{self.coin}."
+			msg += f"\nEach ticket is 1,000{emojis.coin}."
 			msg += f"\n\nCurrent lottery ends in **{timeRemaining}**"
 			if len(self.userTickets):
 				msg += f"\nThere are currently {len(self.userTickets)} tickets purchased."
@@ -74,7 +73,7 @@ class Lottery(commands.Cog):
 		for _ in range(amnt):
 			self.userTickets.append(interaction.user)
 
-		embed.description = f"Purchased {amnt} tickets successfully for {cost:,}{self.coin}! Good luck!!!"
+		embed.description = f"Purchased {amnt} tickets successfully for {cost:,}{emojis.coin}! Good luck!!!"
 		await interaction.send(embed=embed)
 
 		if channels[f"{interaction.guild.id}"] not in self.sendToChannels:
@@ -135,14 +134,14 @@ class Lottery(commands.Cog):
 		if len(np.unique(uniqueList)) == 1:
 			prizeAmount = int(prizeAmount * 1.05)
 			winner = self.userTickets[0]
-			msg = f"{winner.mention} was the only one who entered the lottery.\nAs a reward, they got their money back + 5%!\nTotal received: {prizeAmount:,}{self.coin}"
+			msg = f"{winner.mention} was the only one who entered the lottery.\nAs a reward, they got their money back + 5%!\nTotal received: {prizeAmount:,}{emojis.coin}"
 		else:
 			winner = random.choice(self.userTickets)
-			msg = f"CONGRATULATIONS TO {winner.mention}.\nThey won {prizeAmount:,}{self.coin}"
+			msg = f"CONGRATULATIONS TO {winner.mention}.\nThey won {prizeAmount:,}{emojis.coin}"
 
 
 		gameID = await self.bot.get_cog("Economy").addWinnings(winner.id, prizeAmount, giveMultiplier=False, activityName="Lottery", amntBet=0)
-		msg += f"\nGame ID: {gameID}"
+		msg += f"\nGameID: {gameID}"
 
 		for chnlId in self.sendToChannels: # get each channel id to send lottery results to
 			chnl = self.bot.get_channel(chnlId) # convert to channel

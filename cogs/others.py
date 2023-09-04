@@ -3,12 +3,12 @@ from nextcord.ext import commands
 from nextcord import Interaction
 
 import cooldowns
-import config
+
+import config, emojis
 
 class Others(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 	@commands.Cog.listener()
 	async def on_guild_join(self, guild):
@@ -72,7 +72,7 @@ class Others(commands.Cog):
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, 7500, giveMultiplier=False, activityName="Claim", amntBet=0)
 
 		bal = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed.description = f"Successfully claimed reward! New balance is {bal:,}{self.coin}"
+		embed.description = f"Successfully claimed reward! New balance is {bal:,}{emojis.coin}"
 		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
 
@@ -99,10 +99,10 @@ class Others(commands.Cog):
 		embed.add_field(name="New commands! :bangbang:", value = "`feedback`, `highlow`, `cooldown`, `log`, `beg`, `crime`, `fish`, `dig`", inline=False)
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
-		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `.claim` for free 7,500{self.coin}")
+		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{emojis.coin}")
 						# value = "\n[Support](https://www.paypal.me/AutopilotJustin) gambling bot's development or [join support server](https://discord.gg/ggUksVN).")
 		embed.add_field(name = "_ _",
-						value = f"[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{self.coin}\nAdd this bot to your server - [Click Here](https://discord.com/api/oauth2/authorize?client_id=585235000459264005&permissions=387136&scope=bot)", inline=False)
+						value = f"[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{emojis.coin}\nAdd this bot to your server - [Click Here](https://discord.com/api/oauth2/authorize?client_id=585235000459264005&permissions=387136&scope=bot)", inline=False)
 		return embed
 
 	@nextcord.slash_command(description="The Casino Help Command")

@@ -9,7 +9,6 @@ from db import DB
 class Slots(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command(description="Pay to play the slots!")
 	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='slots')
@@ -27,11 +26,11 @@ class Slots(commands.Cog):
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")
 
-		emojis = "🍎🍋🍇🍓🍒"
+		slotEmojis = "🍎🍋🍇🍓🍒"
 
-		a = random.choice(emojis)
-		b = random.choice(emojis)
-		c = random.choice(emojis)
+		a = random.choice(slotEmojis)
+		b = random.choice(slotEmojis)
+		c = random.choice(slotEmojis)
 
 
 		embed.add_field(name="----------------------------\n| 🎰  [  ]  [  ]  [  ]  🎰 |\n----------------------------", value="_ _")

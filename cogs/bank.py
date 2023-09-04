@@ -7,13 +7,13 @@ from math import floor
 
 import cooldowns
 
+import emojis
 from cogs.totals import log
 from db import DB
 
 class Bank(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 	@commands.Cog.listener()
 	async def on_ready(self):
@@ -66,7 +66,7 @@ class Bank(commands.Cog):
 		balance = DB.fetchOne("SELECT Credits FROM Economy WHERE DiscordID = ?;", [interaction.user.id])[0]
 		logID = log(interaction.user.id, amnt, 0, "Deposit", balance)
 
-		embed.description = f"Successfully deposited {amnt:,}{self.coin}!"
+		embed.description = f"Successfully deposited {amnt:,}{emojis.coin}!"
 		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
 
@@ -99,7 +99,7 @@ class Bank(commands.Cog):
 
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, amnt, giveMultiplier=False, activityName="Withdraw", amntBet=0)
 
-		embed.description = f"Successfully withdrew {amnt:,}{self.coin}!"
+		embed.description = f"Successfully withdrew {amnt:,}{emojis.coin}!"
 		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
 
@@ -114,13 +114,13 @@ class Bank(commands.Cog):
 			if not await self.bot.get_cog("Economy").accCheck(user):
 				embed.description=f"{user.name} has not registered yet."
 			else:
-				embed.description=f"{user.name} has {self.getBankBal(user.id):,}{self.coin} in their bank."
+				embed.description=f"{user.name} has {self.getBankBal(user.id):,}{emojis.coin} in their bank."
 		else:
 			embed.set_thumbnail(url=interaction.user.avatar)
 			embed.set_footer(text=interaction.user)
 			
 			bankBal = self.getBankBal(interaction.user.id)
-			embed.description=f"You have {bankBal:,}{self.coin} in your bank."
+			embed.description=f"You have {bankBal:,}{emojis.coin} in your bank."
 
 			if bankBal < 10000:
 				embed.set_footer(text=f"You must deposit at least {(10000-bankBal):,} more credits in order to get interest")

@@ -5,7 +5,7 @@ from nextcord import Interaction
 import cooldowns
 from random import randint
 
-import config
+import config, emojis
 from db import DB
 
 
@@ -52,7 +52,6 @@ class ScratchTicket(nextcord.ui.View):
 	def __init__(self, bot, amntbet, ownerId):
 		super().__init__(timeout=60)
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 		self.amntbet = amntbet
 		self.ownerId = ownerId
@@ -141,7 +140,6 @@ class ScratchTicket(nextcord.ui.View):
 class Scratch(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])

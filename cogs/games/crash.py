@@ -6,6 +6,7 @@ from nextcord import Interaction
 
 import cooldowns, asyncio, random
 
+import emojis
 from db import DB
 
 class Button(nextcord.ui.Button):
@@ -29,7 +30,6 @@ class View(nextcord.ui.View):
 		self.task = None
 		self.multiplier = 1.0
 		self.crashNum = 1.2
-		self.coin = "<:coins:585233801320333313>"
 		self.crash = False
 		self.amntbet = amntbet
 		self.embed = None
@@ -50,7 +50,7 @@ class View(nextcord.ui.View):
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crash")
 		embed.add_field(name = "Multiplier:", value = f"{str(self.multiplier)}x", inline=True)
-		embed.add_field(name = "Profit", value = f"{str(round(self.multiplier * self.amntbet - self.amntbet))}{self.coin}", inline=True)
+		embed.add_field(name = "Profit", value = f"{str(round(self.multiplier * self.amntbet - self.amntbet))}{emojis.coin}", inline=True)
 
 		self.botMsg = await interaction.send(embed=embed, view=self, ephemeral=True)
 
@@ -81,7 +81,7 @@ class View(nextcord.ui.View):
 			self.multiplier = round(self.multiplier, 1)
 			#await self.bot.wait_for('message', check=is_stop, timeout=2)
 			embed.set_field_at(0, name = f"Multiplier", value = f"{str(self.multiplier)}x", inline=True)
-			embed.set_field_at(1, name = "Profit", value = f"{round(self.multiplier * self.amntbet - self.amntbet):,}{self.coin}", inline=True)
+			embed.set_field_at(1, name = "Profit", value = f"{round(self.multiplier * self.amntbet - self.amntbet):,}{emojis.coin}", inline=True)
 			await self.botMsg.edit(embed=embed)
 			if self.multiplier == self.crashNum: # if the current multiplier number is the number to crash on 
 				self.crash = True

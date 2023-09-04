@@ -4,6 +4,7 @@ from nextcord import Interaction
 
 import random, cooldowns
 
+import emojis
 from cogs.economy import Economy
 from db import DB
 
@@ -83,7 +84,6 @@ class MinesView(nextcord.ui.View):
         ]
 
         self.bot:commands.bot.Bot = bot
-        self.coin = "<:coins:585233801320333313>"
 
         self.profit = profit
         self.amntbet = amntbet

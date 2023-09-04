@@ -6,7 +6,7 @@ from typing import Optional
 
 import sqlite3
 
-import emojiss as e
+import emojis
 import config
 from db import DB
 
@@ -18,14 +18,13 @@ from db import DB
 class Quests(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 		self.games = ["Slt", "BJ", "Crsh", "Rltte", "CF", "RPS"]
 		self.realGameNames = ["Slots", "Blackjack", "Crash", "Roulette", "Coinflip", "Rock-Paper-Scissors"]
 		self.realGameNamesDict = {"Slt": "Slots", "BJ": "Blackjack", "Crsh": "Crash", "Rltte": "Roulette", "CF": "Coinflip", "RPS": "Rock-Paper-Scissors"}
 		self.quests = ["Games", "Wins", "Profit"]
 
 		self.goals = {"Games": 30, "Wins": 20, "Profit": 50000}
-		self.objectives = {"Games": "play 30 games", "Wins": "win 20 games", "Profit": f"earn a profit of 50,000{self.coin}"}
+		self.objectives = {"Games": "play 30 games", "Wins": "win 20 games", "Profit": f"earn a profit of 50,000{emojis.coin}"}
 
 	@nextcord.slash_command()
 	async def quests(self, interaction:Interaction):
@@ -37,7 +36,7 @@ class Quests(commands.Cog):
 																			"Roulette":4, "Coinflip":5, "Rock-Paper-Scissors":6})):
 		if gameselection:
 			embed=nextcord.Embed(color=0x109D00, title=f"{self.realGameNames[gameselection-1]}",
-					description = f"{gameselection}1. Play 30 games\n{gameselection}2. Win 20 games\n{gameselection}3. Earn a profit of 50,000{self.coin}")
+					description = f"{gameselection}1. Play 30 games\n{gameselection}2. Win 20 games\n{gameselection}3. Earn a profit of 50,000{emojis.coin}")
 			embed.set_footer(text=f"Type /quests start to start a quest")
 
 			await interaction.send(embed=embed)
@@ -153,7 +152,7 @@ class Quests(commands.Cog):
 			embed = nextcord.Embed(color=0x109D00)
 			embed.title = "Quest Complete!"
 			embed.description = f"Your quest to {goal} in {self.realGameNamesDict[game]} is now complete!" + \
-				f"\n5,000{self.coin} and 200 XP has been added to your account!\n"
+				f"\n5,000{emojis.coin} and 200 XP has been added to your account!\n"
 			embed.set_footer(text=f"Log ID: {logID}")
 			await interaction.send(embed=embed)
 
@@ -194,7 +193,7 @@ class Quests(commands.Cog):
 		if questType == "Wins":
 			return "win 20 games"
 		if questType == "Profit":
-			return f"earn a profit of 50,000{self.coin}"
+			return f"earn a profit of 50,000{emojis.coin}"
 
 	async def PrintProgress(self, interaction:Interaction, percentFilled):
 		if percentFilled <= 0.03:
@@ -210,37 +209,37 @@ class Quests(commands.Cog):
 		for x in range(1, 11):
 			if x == 1: # left side 
 				if x <= percentFilled:
-					progress += e.tlf
+					progress += emojis.tlf
 				else:
-					progress += e.tl
+					progress += emojis.tl
 			elif x == 10: # right side
 				if x <= percentFilled:
-					progress += e.trf
+					progress += emojis.trf
 				else:
-					progress += e.tr
+					progress += emojis.tr
 			else: # middle
 				if x <= percentFilled:
-					progress += e.tf
+					progress += emojis.tf
 				else:
-					progress += e.t
+					progress += emojis.t
 
 		progress += "\n"
 		for x in range(1, 11):
 			if x == 1: # left side 
 				if x <= percentFilled:
-					progress += e.blf
+					progress += emojis.blf
 				else:
-					progress += e.bl
+					progress += emojis.bl
 			elif x == 10: # right side
 				if x <= percentFilled:
-					progress += e.brf
+					progress += emojis.brf
 				else:
-					progress += e.br
+					progress += emojis.br
 			else: # middle
 				if x <= percentFilled:
-					progress += e.bf
+					progress += emojis.bf
 				else:
-					progress += e.b
+					progress += emojis.b
 
 		return progress
 

@@ -4,7 +4,7 @@ from nextcord import Interaction
 
 import math, datetime
 
-import config
+import config, emojis
 from db import DB
 
 class Admin(commands.Cog):

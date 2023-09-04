@@ -2,20 +2,11 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import cooldowns, config
+import cooldowns
 from random import randint
 
+import config, emojis
 from db import DB
-
-# class BlockList():
-# 	blocks = [
-# 		{"name": "dirt", "value": 5, "emoji": emojiss.grass},
-# 		{"name": "cobblestone", "value": 10, "emoji": emojiss.cobblestone},
-# 		{"name": "coal", "value": 20, "emoji": emojiss.coal},
-# 		{"name": "iron", "value": 35, "emoji": emojiss.iron},
-# 		{"name": "gold", "value": 40, "emoji": emojiss.gold},
-# 		{"name": "diamond", "value": 50, "emoji": emojiss.diamond}
-# 	]
 
 def GetBlocks():
 	itemNameList = DB.fetchAll('SELECT * FROM MinerBlocks;')
@@ -29,7 +20,6 @@ def GetHighestLevelBlock():
 class Miner(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 		self.blocks = GetBlocks()
 		self.highestLevelBlock = GetHighestLevelBlock()
 
@@ -130,7 +120,7 @@ class Miner(commands.Cog):
 			count += 1
 			if item == 0:
 				continue
-			sellMsg += f"Sold {item} {self.blocks[count][3]} for {item * self.blocks[count][2]}{self.coin}\n"
+			sellMsg += f"Sold {item} {self.blocks[count][3]} for {item * self.blocks[count][2]}{emojis.coin}\n"
 			totalMoney += item * self.blocks[count][2]
 		
 		if totalMoney == 0:
@@ -140,10 +130,10 @@ class Miner(commands.Cog):
 		
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, totalMoney, giveMultiplier=True, activityName="Miner", amntBet=0)
-		sellMsg += f"Total earned: {totalMoney} (+{int(totalMoney * (multiplier - 1))}){self.coin}"
+		sellMsg += f"Total earned: {totalMoney} (+{int(totalMoney * (multiplier - 1))}){emojis.coin}"
 
 		embed.description = sellMsg
-		embed.set_footer(text=f"\nGame ID: {gameID}")
+		embed.set_footer(text=f"\nGameID: {gameID}")
 		await interaction.send(embed=embed)
 
 		DB.update(f"UPDATE MinerInventory SET Dirt = 0, Cobblestone = 0, Coal = 0, Iron = 0, Gold = 0, Emerald = 0, Diamond = 0 WHERE DiscordID = ?;", [interaction.user.id])

@@ -7,7 +7,7 @@ from random import randint, choice, choices
 import datetime
 from cooldowns import cooldown, SlashBucket
 
-import config
+import config, emojis
 from db import DB, allItemNamesList, usableItemNamesList, highestRarity, allItems
 
 class MySource(menus.ListPageSource):
@@ -28,7 +28,6 @@ class MySource(menus.ListPageSource):
 class Inventory(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
@@ -156,7 +155,7 @@ class Inventory(commands.Cog):
 				totalAmnt += amntToGive
 			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, totalAmnt, giveMultiplier=False, activityName=f"8 Ball", amntBet=0)
 			
-			text += f"\nAdded {totalAmnt:,}{self.coin} to your balance"
+			text += f"\nAdded {totalAmnt:,}{emojis.coin} to your balance"
 			embed.description = text
 
 			embed.set_footer(text=f"Log ID: {logID}")

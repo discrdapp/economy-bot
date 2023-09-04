@@ -2,14 +2,14 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import cooldowns
-import json
+import cooldowns, json
+
+import emojis
 
 
 class Vote(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 	@nextcord.slash_command(description="Vote")
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
@@ -42,7 +42,7 @@ class Vote(commands.Cog):
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName=f"{numOfVotes} {voteMsg}", amntBet=0)
 		self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, numOfVotes, 'Voter Chip')
 				
-		embed.add_field(name=f"Thanks for Voting {numOfVotes} {times}!", value=f"{moneyToAdd:,}{self.coin} has been added to your account and you received {numOfVotes} Voter {chip}!")
+		embed.add_field(name=f"Thanks for Voting {numOfVotes} {times}!", value=f"{moneyToAdd:,}{emojis.coin} has been added to your account and you received {numOfVotes} Voter {chip}!")
 		embed.set_footer(text=f"/use to use your Voter Chip\nLog ID {logID}")
 		msg = await interaction.send(embed=embed)
 		msg = await msg.fetch()

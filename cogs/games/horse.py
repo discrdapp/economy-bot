@@ -4,6 +4,7 @@ from nextcord import Interaction, InteractionMessage
 
 import cooldowns, asyncio, random
 
+import emojis
 from db import DB
 
 import time
@@ -41,10 +42,9 @@ class Button(nextcord.ui.Button):
 
 
 class View(nextcord.ui.View):
-	def __init__(self, bot, interaction:Interaction, amntbet:int, horse:str):
+	def __init__(self, bot:commands.bot.Bot, interaction:Interaction, amntbet:int, horse:str):
 		super().__init__()
 		self.bot = bot
-		self.coin = "<:coins:585233801320333313>"
 		self.interaction = interaction
 		self.userId = interaction.user.id
 		self.msg:InteractionMessage = None
@@ -169,7 +169,6 @@ class View(nextcord.ui.View):
 class Horse(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 
 	@nextcord.slash_command()

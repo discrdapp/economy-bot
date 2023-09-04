@@ -4,6 +4,7 @@ from nextcord import Interaction
 
 import math, cooldowns
 
+import emojis
 from db import DB
 
 class XP(commands.Cog):
@@ -16,7 +17,6 @@ class XP(commands.Cog):
 			self.XPtoLevelUp.append(5000 + (x * 500)) 
 		# for x in range(0,101):
 		# 	self.levelReward.append((x + 1) * 500) 
-		self.coin = "<:coins:585233801320333313>"
 
 
 	@nextcord.slash_command()
@@ -72,7 +72,7 @@ class XP(commands.Cog):
 			embed.add_field(name = f"{interaction.user.name}, you Leveled Up!", value = "_ _", inline=False)
 
 			embed.set_thumbnail(url="attachment://image.png")
-			embed.add_field(name = f"Credits Bonus!", value = f"**{credits}**{self.coin}")
+			embed.add_field(name = f"Credits Bonus!", value = f"**{credits}**{emojis.coin}")
 			await interaction.channel.send(file=file, embed=embed)
 			# await interaction.send(file=file, embed=embed)
 

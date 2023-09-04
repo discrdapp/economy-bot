@@ -5,6 +5,7 @@ from nextcord import Interaction
 import random, cooldowns
 from PIL import Image
 
+import emojis
 from db import DB
 
 class GetAmountToBet(nextcord.ui.TextInput):
@@ -80,23 +81,6 @@ class Button(nextcord.ui.Button):
 		self.disabled = True
 		view.ProcessBets()
 
-		# numberBet = ""
-		# highLowBet = ""
-		# colorBet = ""
-		# parityBet = ""
-		# if view.number.bet:
-		# 	numberBet = f"{view.displayNumberBet} {view.number.bet}{view.coin}"
-		# if view.highOrLow.bet:
-		# 	highLowBet = f"{view.displayHighLowBet} {view.highOrLow.bet}{view.coin}"
-		# if view.color.bet:
-		# 	colorBet = f"{view.displayColorBet} {view.color.bet}{view.coin}"
-		# if view.parity.bet:
-		# 	parityBet = f"{view.displayParityBet} {view.parity.bet}{view.coin}"
-		# view.embed.set_field_at(0, name="Picks", 
-		# 	  value=f"Number bet: {numberBet}\n \
-		# 	  High/low bet: {highLowBet}\n \
-		# 	  Color bet: {colorBet}\n \
-		# 	  Parity bet: {parityBet}",inline=True)
 		view.embed.set_field_at(0, name="Picks", value=view.getFullBetsDisplay(), inline=True)
 
 		await interaction.edit_original_message(embed=view.embed, view=view)
@@ -126,7 +110,6 @@ class View(nextcord.ui.View):
 		super().__init__()
 		self.bot:commands.bot.Bot = bot
 		self.previousNums = previousNums
-		self.coin = "<:coins:585233801320333313>"
 
 		self.ownerId = ownerId
 
@@ -173,13 +156,13 @@ class View(nextcord.ui.View):
 		colorBet = ""
 		parityBet = ""
 		if self.number.option:
-			numberBet = f"{self.displayNumberBet} {self.number.bet}{self.coin}"
+			numberBet = f"{self.displayNumberBet} {self.number.bet}{emojis.coin}"
 		if self.highOrLow.option:
-			highLowBet = f"{self.displayHighLowBet} {self.highOrLow.bet}{self.coin}"
+			highLowBet = f"{self.displayHighLowBet} {self.highOrLow.bet}{emojis.coin}"
 		if self.color.option:
-			colorBet = f"{self.displayColorBet} {self.color.bet}{self.coin}"
+			colorBet = f"{self.displayColorBet} {self.color.bet}{emojis.coin}"
 		if self.parity.option:
-			parityBet = f"{self.displayParityBet} {self.parity.bet}{self.coin}"
+			parityBet = f"{self.displayParityBet} {self.parity.bet}{emojis.coin}"
 		return f"Number bet: {numberBet}\n \
 			  High/low bet: {highLowBet}\n \
 			  Color bet: {colorBet}\n \
@@ -288,13 +271,13 @@ class View(nextcord.ui.View):
 			gameID = None
 
 		if moneyToAdd > amntSpent:
-			# \n**Profit:** {moneyToAdd - amntSpent}{self.coin}
-			result = f"You won a grand total of {moneyToAdd}{self.coin} after betting {amntSpent}{self.coin}"
+			# \n**Profit:** {moneyToAdd - amntSpent}{emojis.coin}
+			result = f"You won a grand total of {moneyToAdd}{emojis.coin} after betting {amntSpent}{emojis.coin}"
 		elif moneyToAdd < amntSpent:
 			if moneyToAdd > 0:
-				result = f"You got back {moneyToAdd:,}{self.coin} after betting {amntSpent:,}{self.coin}"
+				result = f"You got back {moneyToAdd:,}{emojis.coin} after betting {amntSpent:,}{emojis.coin}"
 			else:
-				result = f"You lost {amntSpent:,}{self.coin}"
+				result = f"You lost {amntSpent:,}{emojis.coin}"
 		else:
 			result = "You didn't lose or win anything!"
 
@@ -419,7 +402,6 @@ class Roulette(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
 		self.previousNums = []
-		self.coin = "<:coins:585233801320333313>"
 		self.totalBet = 0
 
 	@nextcord.slash_command(description="Play Roulette!")
