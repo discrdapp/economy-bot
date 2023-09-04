@@ -6,7 +6,7 @@ from math import floor, ceil
 
 import cooldowns, requests
 
-import config
+import config, emojis
 from db import DB
 
 import json
@@ -16,16 +16,11 @@ cryptos = ["Bitcoin", "Ethereum", "Litecoin"]
 class Crypto(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 		self.bitcoinPrice = -1
 		self.ethereumPrice = -1
 		self.litecoinPrice = -1
 		self.minAmountToBuy = 0.1
 		self.tax = 0.05
-
-		self.bitcoinEmoji = "<:bitcoin:1143401555656196237>"
-		self.litecoinEmoji = "<:Litecoin:1143402028832407633>"
-		self.ethereumEmoji = "<:Ethereum:1143402400581959691>"
 
 	@commands.Cog.listener()
 	async def on_ready(self):
@@ -80,6 +75,21 @@ class Crypto(commands.Cog):
 	async def crypto(self, interaction:Interaction):
 		pass
 
+	@crypto.subcommand()
+	@cooldowns.shared_cooldown("crypto")
+	async def prices(self, interaction=Interaction):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto")
+		msg = ""
+
+		msg += f"Bitcoin {emojis.bitcoinEmoji}\n{self.bitcoinPrice:,}{emojis.coin}\n\n"
+		msg += f"Litecoin {emojis.litecoinEmoji}\n{self.litecoinPrice:,}{emojis.coin}\n\n"
+		msg += f"Ethereum {emojis.ethereumEmoji}\n{self.ethereumPrice:,}{emojis.coin}"
+
+		embed.description = msg
+
+		await interaction.send(embed=embed)
+		
+
 
 	async def ResetCooldownSendEmbed(self, interaction:Interaction, errorMsg:str, embed:nextcord.Embed):
 		cooldowns.reset_bucket(self.crypto.callback, interaction)
@@ -97,34 +107,33 @@ class Crypto(commands.Cog):
 			embed.description = "You have no crypto"
 			await interaction.send(embed=embed)
 			return
-
 		balanceText = ""
 		total = 0
 		for coin in balances:
 			if coin[0] == "Bitcoin":
 				coinPrice = self.bitcoinPrice
-				emoji = self.bitcoinEmoji
+				emoji = emojis.bitcoinEmoji
 			elif coin[0] == "Litecoin":
 				coinPrice = self.litecoinPrice
-				emoji = self.litecoinEmoji
+				emoji = emojis.litecoinEmoji
 			elif coin[0] == "Ethereum":
 				coinPrice = self.ethereumPrice
-				emoji = self.ethereumEmoji
+				emoji = emojis.ethereumEmoji
 			
 			worth = floor(coin[1] * coinPrice)
 			total += worth
-			balanceText += f"{coin[1]:,} {emoji} _ _ \t _ _ ({worth:,} {self.coin})\n"
+			balanceText += f"{coin[1]:,} {emoji} _ _ \t _ _ ({worth:,} {emojis.coin})\n"
 		
 		embed.description = balanceText
 		embed.description += "-----------------------\n"
 		embed.description += "**Total**\n"
-		embed.description += f"{total:,} {self.coin}"
+		embed.description += f"{total:,} {emojis.coin}"
 		
 		await interaction.send(embed=embed)
 
 	@crypto.subcommand()
 	@cooldowns.shared_cooldown("crypto")
-	async def buy(self, interaction:Interaction, crypto = nextcord.SlashOption(required=True, choices=cryptos), amnt:float=1):
+	async def buy(self, interaction:Interaction, crypto = nextcord.SlashOption(required=True, choices=cryptos), amnt:float=1.0):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto")
 
 		if amnt <= 0:
@@ -143,27 +152,27 @@ class Crypto(commands.Cog):
 		
 		if crypto == "Bitcoin":
 			coinPrice = self.bitcoinPrice
-			emoji = self.bitcoinEmoji
+			emoji = emojis.bitcoinEmoji
 		elif crypto == "Litecoin":
 			coinPrice = self.litecoinPrice
-			emoji = self.litecoinEmoji
+			emoji = emojis.litecoinEmoji
 		elif crypto == "Ethereum":
 			coinPrice = self.ethereumPrice
-			emoji = self.ethereumEmoji
+			emoji = emojis.ethereumEmoji
 
 		
 		cost = ceil(amnt * coinPrice)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)	
 		if balance < cost:
-			await self.ResetCooldownSendEmbed(interaction, f"That will cost you {cost:,}{self.coin}, but you only have {balance:,}{self.coin}", embed)
+			await self.ResetCooldownSendEmbed(interaction, f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
 			return
 		
 		self.AddCrypto(interaction.user.id, crypto, amnt)
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, giveMultiplier=False, activityName=f"Bought {amnt} {crypto}")
 
 		embed.set_footer(text=f"Log ID: {logID}")
-		embed.description = f"Purchased {amnt:,} {emoji} for {cost:,} {self.coin}"
+		embed.description = f"Purchased {amnt:,} {emoji} for {cost:,} {emojis.coin}"
 		await interaction.send(embed=embed)
 
 	@crypto.subcommand()
@@ -188,13 +197,13 @@ class Crypto(commands.Cog):
 
 		if crypto == "Bitcoin":
 			coinPrice = self.bitcoinPrice
-			emoji = self.bitcoinEmoji
+			emoji = emojis.bitcoinEmoji
 		elif crypto == "Litecoin":
 			coinPrice = self.litecoinPrice
-			emoji = self.litecoinEmoji
+			emoji = emojis.litecoinEmoji
 		elif crypto == "Ethereum":
 			coinPrice = self.ethereumPrice
-			emoji = self.ethereumEmoji
+			emoji = emojis.ethereumEmoji
 
 		creditAmnt = floor(amnt * coinPrice * (1.00-self.tax))
 
@@ -205,7 +214,7 @@ class Crypto(commands.Cog):
 
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, creditAmnt, giveMultiplier=False, activityName=f"Sold {amnt} {crypto}", amntBet=0)
 
-		embed.description = f"Successfully sold {amnt:,} {emoji} for {creditAmnt:,} {self.coin} after a {int(self.tax*100)}% fee"
+		embed.description = f"Successfully sold {amnt:,} {emoji} for {creditAmnt:,} {emojis.coin} after a {int(self.tax*100)}% fee"
 		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
 
