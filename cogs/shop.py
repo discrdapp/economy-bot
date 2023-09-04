@@ -3,10 +3,12 @@ from nextcord.ext import commands, menus
 from nextcord import Interaction
 
 from random import randint
-import cooldowns
+import cooldowns, difflib
 
-from db import DB, buyableItems, buyableItemNamesList, usableItemNamesList
+import emojis
+from db import DB, buyableItems, buyableItemNamesList, sellableItems, sellableItemNamesList, usableItemNamesList
 from cogs.totals import log
+
 
 
 ################
@@ -36,7 +38,6 @@ class MySource(menus.ListPageSource):
 class Shop(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 		self.itemsDict = dict()
 		for item in buyableItems:
@@ -44,11 +45,15 @@ class Shop(commands.Cog):
 				"Name": item[1],
 				"Description": item[2],
 				"Type": item[3],
-				"InventoryRowName": item[1],
 				"Price": item[4]
 			}
-		# self.itemsDict[1]["InventoryRowName"] = "Crates"
-		# self.itemsDict[2]["InventoryRowName"] = "Keyss"
+	
+	def GetItem(self, itemList, itemName):
+		for x in itemList:
+			if itemName == x[1]:
+				return x
+		
+		return None
 
 	@nextcord.slash_command()
 	async def shop(self, interaction:Interaction):
@@ -103,7 +108,7 @@ class Shop(commands.Cog):
 
 		# troll-proof		
 		if balance < cost:
-			embed.description = f"That will cost you {cost}{self.coin}, but you only have {balance}{self.coin}"
+			embed.description = f"That will cost you {cost}{emojis.coin}, but you only have {balance}{emojis.coin}"
 			await interaction.send(embed=embed)
 			return
 
@@ -111,7 +116,7 @@ class Shop(commands.Cog):
 		if theid == 3:
 			dailyReward = await self.bot.get_cog("Daily").getDailyReward(interaction)
 			if dailyReward >= 200000:
-				embed.description = f"Sorry, but the max Daily Reward allowed is 200,000{self.coin}."
+				embed.description = f"Sorry, but the max Daily Reward allowed is 200,000{emojis.coin}."
 				await interaction.send(embed=embed)
 				return
 
@@ -120,14 +125,14 @@ class Shop(commands.Cog):
 		
 		if theid == 3:
 			DB.update("UPDATE Economy SET DailyReward = DailyReward + ? WHERE DiscordID = ?;", [amnt*1000, discordId])
-			embed.description = f"Successfully added {amnt * 1000}{self.coin} to daily reward"
+			embed.description = f"Successfully added {amnt * 1000}{emojis.coin} to daily reward"
 
 		elif theid == 999:
 			DB.update("UPDATE Economy SET DonatorReward = DonatorReward + ? WHERE DiscordID = ?;", [amnt*1500, discordId])
-			embed.description = f"Successfully added {amnt * 1500}{self.coin} to donator reward"
+			embed.description = f"Successfully added {amnt * 1500}{emojis.coin} to donator reward"
 
 		else:
-			rowName = self.itemsDict[theid]["InventoryRowName"]
+			rowName = self.itemsDict[theid]["Name"]
 			
 			self.bot.get_cog("Inventory").addItemToInventory(discordId, amnt, rowName)
 
@@ -142,6 +147,39 @@ class Shop(commands.Cog):
 
 		if theid == 1 or theid == 2:
 			await self.bot.get_cog("Economy").balance(interaction)
+
+	@shop.subcommand()
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='sell')
+	async def sell(self, interaction:Interaction, 
+						itemSelected = nextcord.SlashOption(
+										required=True,
+										name="item", 
+										choices=sellableItemNamesList), 
+						amnt:int=1):
+		
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Shop")
+		
+		# troll-proof
+		if amnt <= 0:
+			embed.description = "Amount must be greater than 0"
+			await interaction.send(embed=embed)
+			return
+		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, itemSelected, amnt):
+			embed.description = "You do not have that item in your inventory!"
+			await interaction.send(embed=embed)
+			return
+		
+		item = self.GetItem(sellableItems, itemSelected)
+		
+		self.bot.get_cog("Inventory").removeItemFromInventory(interaction.user, itemSelected, amnt)
+		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, item[6]*amnt, giveMultiplier=False, activityName=f"Sold {amnt} {itemSelected}", amntBet=0)
+
+		embed.description = f"Successfully sold {amnt} {itemSelected} for {item[6]*amnt}{emojis.coin}"
+		embed.set_footer(text=f"Log ID: {logID}")
+
+		await interaction.send(embed=embed)
+		
+		
 
 
 	# @crate.subcommand()
@@ -202,12 +240,12 @@ class Shop(commands.Cog):
 
 			elif choice <= 70:
 				bal = randint(2500, 12000)
-				embed.description += f"You found {bal}{self.coin}!\n"
+				embed.description += f"You found {bal}{emojis.coin}!\n"
 				moneyToAdd += bal
 
 			elif choice <= 80:
 				bal = randint(50, 250)
-				embed.description += f"You found {bal}{self.coin}!\n"
+				embed.description += f"You found {bal}{emojis.coin}!\n"
 				moneyToAdd += bal
 			else:
 				embed.description = "The crate was empty... Better luck next time!\n"
