@@ -4,12 +4,108 @@ from nextcord import Interaction
 
 import cooldowns, asyncio, random
 
+import emojis
 from db import DB
+
+
+class MultiplayerButton(nextcord.ui.Button):
+	def __init__(self, label, style):
+		super().__init__(label=label, style=style)
+	
+	async def callback(self, interaction:Interaction):
+		assert self.view is not None
+		view: MultiplayerView = self.view
+		
+		if interaction.user.id != view.opponent.id:
+			if interaction.user.id == view.player.id:
+				await interaction.send(f"This button must be clicked by {view.opponent.mention}", ephemeral=True)
+				return
+			else:
+				await interaction.send(f"This is not your game", ephemeral=True)
+				return
+
+		view.children.clear()
+
+		if self.label == "Deny": 
+			view.embed.color = nextcord.Color(0xff2020)
+			view.embed.description = "This request has been denied."
+			await interaction.edit(embed=view.embed, view=view)
+			return
+		
+		await interaction.edit(view=view)
+		
+		await view.Play(interaction)
+			
+
+class MultiplayerView(nextcord.ui.View):
+	def __init__(self, bot:commands.bot.Bot):
+		super().__init__()
+		self.bot = bot
+
+		self.player = None
+		self.opponent = None
+		self.sidebet = None
+		self.amntbet = None
+
+		self.embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Coinflip")
+	
+	async def Initiate(self, interaction, player:nextcord.Member, opponent:nextcord.Member, sidebet, amntbet):
+		self.player=player
+		self.opponent=opponent
+		print(self.player.id)
+		print(self.opponent.id)
+		self.sidebet = sidebet
+		self.amntbet = amntbet
+
+		acceptButton = MultiplayerButton("Accept", nextcord.ButtonStyle.green)
+		denyButton = MultiplayerButton("Deny", nextcord.ButtonStyle.red)
+		
+		self.add_item(acceptButton)
+		self.add_item(denyButton)
+
+		self.embed.description = f"{self.opponent} must click Accept to begin... They have 30 seconds"
+		
+		await interaction.send(embed=self.embed, view=self)
+	
+	async def Play(self, interaction:Interaction):
+		if not await self.bot.get_cog("Economy").subtractBet(self.player, self.amntbet):
+			raise Exception("tooPoor")
+
+		if not await self.bot.get_cog("Economy").subtractBet(self.opponent, self.amntbet):
+			await self.bot.get_cog("Economy").addWinnings(self.player.id, self.amntbet)
+			await interaction.send(f"{self.opponent.mention} does not have enough money for this")
+			return
+		
+		side = random.choice(["heads", "tails"]) # computer picks result
+
+		file = None
+		if side == "heads":
+			file = nextcord.File("./images/coinheads.png", filename="image.png")
+		else:
+			file = nextcord.File("./images/cointails.png", filename="image.png")
+		if self.sidebet == side: # if author bets on correct side
+			winner = self.player
+			loser = self.opponent
+		else: # else, user bet on correct side
+			winner = self.opponent
+			loser = self.player
+		self.embed.set_thumbnail(url="attachment://image.png")
+		self.embed.description = f"The coin landed on {side}\n_ _{winner.mention} wins {self.amntbet*2}{emojis.coin}!"
+
+		winnerLogID = await self.bot.get_cog("Economy").addWinnings(winner.id, self.amntbet*2, giveMultiplier=False, activityName="CF", amntBet=self.amntbet)
+		loserLogID = await self.bot.get_cog("Economy").addWinnings(loser.id, 0, giveMultiplier=False, activityName="CF", amntBet=self.amntbet)
+
+		self.embed.set_footer(text=f"{winner}'s GameID: {winnerLogID}\n{loser}'s GameID: {loserLogID}")
+
+		await interaction.edit(file=file, embed=self.embed)
+
+
+
 
 class Coinflip(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
+
 
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, use_external_emojis=True)
@@ -22,41 +118,18 @@ class Coinflip(commands.Cog):
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
 		if user:
-			def is_me(m):
-				return m.channel.id == interaction.channel.id and m.author.id == user.id and m.content == "accept"
+			if user.id == interaction.user.id:
+				await interaction.send(f"You cannot play with yourself", ephemeral=True)
 
-			msg = await interaction.send(f"{user.mention}, type: `accept`")
-			try:
-				await self.bot.wait_for('message', check=is_me, timeout=45)
-			except:
-				# await msg.edit(content=f"Timed out...")
-				raise Exception("timeoutError")
-				return
+			# if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
+			# 	raise Exception("tooPoor")
 
-			if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
-				raise Exception("tooPoor")
-
-			if not await self.bot.get_cog("Economy").subtractBet(user, amntbet):
-				await interaction.send(f"{user.mention} has either not typed /start yet or does not have enough money for this.")
-				return
-
-			side = random.choice(["Heads", "Tails"]).lower() # computer picks result
-
-			file = None
-			if side == "Heads":
-				file = nextcord.File("./images/coinheads.png", filename="image.png")
-			else:
-				file = nextcord.File("./images/cointails.png", filename="image.png")
-			if sidebet == side: # if author bets on correct side
-				winner = interaction.user
-			else: # else, user bet on correct side
-				winner = user
-			embed = nextcord.Embed(color=0x23f518)
-			embed.set_thumbnail(url="attachment://image.png")
-			embed.add_field(name=f"{self.bot.user.name} | Coinflip", value=f"The coin landed on {side}\n_ _{winner.mention} wins!", inline=False)
-
-			await interaction.send(file=file, embed=embed)
-			await self.bot.get_cog("Economy").addWinnings(winner.id, amntbet*2)
+			# if not await self.bot.get_cog("Economy").subtractBet(user, amntbet):
+			# 	await interaction.send(f"{user.mention} has either not typed /start yet or does not have enough money for this.", ephemeral=True)
+			# 	return
+			
+			view = MultiplayerView(self.bot)
+			await view.Initiate(interaction, interaction.user, user, sidebet, amntbet)			
 
 			return
 
