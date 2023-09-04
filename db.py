@@ -125,7 +125,7 @@ usableItemNamesList = [item for sublist in usableItemNames for item in sublist]
 collectibleItems = DB.fetchAll("SELECT * FROM Items WHERE Type = 'Collectible';")
 
 randomItemList = DB.fetchAll("SELECT * FROM Items WHERE Type = 'Usable' or TYPE = 'Collectible';")
-highestRarity = DB.fetchOne("SELECT * FROM Items WHERE Type = 'Usable' or TYPE = 'Collectible' ORDER BY Rarity DESC LIMIT 1;")[6]
+highestRarity = DB.fetchOne("SELECT * FROM Items WHERE Type = 'Usable' or TYPE = 'Collectible' ORDER BY Rarity DESC LIMIT 1;")[7]
 
 def setup(bot):
 	bot.add_cog(DB(bot))
