@@ -6,13 +6,13 @@ from nextcord import Interaction
 
 import cooldowns, asyncio, random, math
 
+import emojis
 from db import DB
 from cogs.totals import log
 
 class Economy(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 
 	@nextcord.slash_command()
@@ -69,21 +69,25 @@ class Economy(commands.Cog):
 		multiplier, expiration = self.bot.get_cog("Multipliers").getMultiplierAndExpiration(interaction.user.id)
 
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
-		embed.add_field(name = "Daily", value = f"{dailyReward}{self.coin}", inline=True)
+		embed.add_field(name = "Daily", value = f"{dailyReward}{emojis.coin}", inline=True)
+		embed.add_field(name = "Weekly", value = f"12,500{emojis.coin}", inline=True)
+		embed.add_field(name = "Monthly", value = f"36,000{emojis.coin}", inline=True)
 		embed.add_field(name = "Multiplier", value = f"{multiplier}x", inline=True)
 		if expiration:
 			embed.add_field(name = "Expires In", value=f"{expiration}", inline=True)
 
 
-		# embed.add_field(name = "Weekly", value = f"12500{self.coin}", inline=False)
-		# embed.add_field(name = "Monthly", value = f"36000{self.coin}", inline=True)
+		# embed.add_field(name = "Weekly", value = f"12500{emojis.coin}", inline=False)
+		# embed.add_field(name = "Monthly", value = f"36000{emojis.coin}", inline=True)
 
 		if self.isDonator(interaction.user.id):
-			embed.add_field(name = "_ _\nDonator Reward", value = f"{self.getDonatorReward(interaction.user.id)}{self.coin}", inline=False)
+			embed.add_field(name = "_ _\nDonator Reward", value = f"{self.getDonatorReward(interaction.user.id)}{emojis.coin}", inline=False)
 		else:
 			embed.add_field(name = "_ _\nDonator Reward", value = f"You are not a donator", inline=False)
+
+		embed.set_footer(text="Don't forget to /work /vote /beg and /crime for extra credits")
 		await interaction.send(embed=embed)
-		
+
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='balance')
@@ -100,12 +104,27 @@ class Economy(commands.Cog):
 				return
 
 		balance = await self.getBalance(user)
-		crates, keys = self.bot.get_cog("Inventory").getInventory(user)
+		cryptoBalances = DB.fetchAll(f"SELECT Name, Quantity FROM Crypto WHERE DiscordID = ?;", [interaction.user.id])
+		# crates, keys = self.bot.get_cog("Inventory").getInventory(user)
 
-		embed.add_field(name = "Credits", value = f"{pronouns} have **{balance:,}**{self.coin}", inline=False)
-		embed.add_field(name = "_ _\nCrates", value = f"{pronouns} have **{crates}** crates", inline=True)
-		embed.add_field(name = "_ _\nKeys", value = f"{pronouns} have **{keys}** keys", inline=True)
-		embed.set_footer(text="Use /vote, /search, /daily, and /work to get credits")
+		embed.add_field(name = "Credits", value = f"{pronouns} have **{balance:,}**{emojis.coin}", inline=False)
+
+		if not cryptoBalances:
+			embed.add_field(name="Crypto", value="You have no crypto.")
+		else:
+			for crypto in cryptoBalances:
+				if crypto[0] == "Bitcoin":
+					emoji = emojis.bitcoinEmoji
+				elif crypto[0] == "Litecoin":
+					emoji = emojis.litecoinEmoji
+				elif crypto[0] == "Ethereum":
+					emoji = emojis.ethereumEmoji
+				
+				embed.add_field(name=f"{crypto[0]} {emoji}", value=crypto[1])
+
+		# embed.add_field(name = "_ _\nCrates", value = f"{pronouns} have **{crates}** crates", inline=True)
+		# embed.add_field(name = "_ _\nKeys", value = f"{pronouns} have **{keys}** keys", inline=True)
+		embed.set_footer(text="Want easy money? Don't forget to check out your /rewards")
 		
 		await interaction.send(embed=embed)
 		
@@ -118,9 +137,9 @@ class Economy(commands.Cog):
 			await self.addWinnings(interaction.user.id, amnt)
 			balance = await self.getBalance(interaction.user)
 			
-			embed.add_field(name = f"You found {amnt}{self.coin}", value = f"You have {balance}{self.coin}", inline=False)
+			embed.add_field(name = f"You found {amnt}{emojis.coin}", value = f"You have {balance}{emojis.coin}", inline=False)
 		else:
-			embed.add_field(name = f"Error", value = f"{interaction.user.mention}, you can only use this if you have less than 300{self.coin}.", inline=False)
+			embed.add_field(name = f"Error", value = f"{interaction.user.mention}, you can only use this if you have less than 300{emojis.coin}.", inline=False)
 
 		await interaction.send(embed=embed)
 		
@@ -149,7 +168,7 @@ class Economy(commands.Cog):
 
 		balance = await self.getBalance(interaction.user)
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
-		embed.add_field(name = f"You got {donatorReward:,} {self.coin}", 
+		embed.add_field(name = f"You got {donatorReward:,} {emojis.coin}", 
 						value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
 		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
@@ -239,7 +258,7 @@ class Economy(commands.Cog):
 
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 120, bucket=cooldowns.SlashBucket.author, cooldown_id='position')
+	@cooldowns.cooldown(1, 30, bucket=cooldowns.SlashBucket.author, cooldown_id='position')
 	async def position(self, interaction:Interaction, usr: nextcord.Member=None, option = nextcord.SlashOption(
 																required=False,
 																name="option", 
@@ -252,45 +271,26 @@ class Economy(commands.Cog):
 			return
 
 
-		await interaction.send("Command is temporarily down due to high increase in players...")
-		return
-
 		if option and option != "Balance":
 			if option == "Level":
-				sql = f"""SELECT DiscordID, Level
-					  	  FROM Economy ORDER BY Level DESC"""
+				sql = f"""SELECT Position from (SELECT ROW_NUMBER () OVER ( 
+								ORDER BY Level DESC
+							) Position, DiscordID
+						  FROM Economy) WHERE DiscordID = ?;"""
 			elif option == "Profit":
-				sql = f"""SELECT DiscordID, Profit
-					  	  FROM Totals ORDER BY Profit DESC"""
+				sql = f"""SELECT Position from (SELECT ROW_NUMBER () OVER ( 
+								ORDER BY Profit DESC
+							) Position, DiscordID
+						  FROM Totals) WHERE DiscordID = ?;"""
 		else:
-			sql = f"""SELECT DiscordID, Credits
-					  FROM Economy ORDER BY Credits DESC"""
+			sql = f"""SELECT Position from (SELECT ROW_NUMBER () OVER ( 
+								ORDER BY Credits DESC
+							) Position, DiscordID
+						  FROM Economy) WHERE DiscordID = ?;"""
 		
-		data = DB.fetchAll(sql, None)
+		position = DB.fetchOne(sql, [usr.id])[0]
 
-		pos = 0
-		for x in data:
-			if str(usr.id) == x[0]:
-				break
-			pos += 1
-
-		diff = ""
-		if pos > 0:
-			diff = f" and needs {str(data[pos-1][1] - data[pos][1] + 1)} coin(s) to beat the person above them"
-		# else:
-		# 	diff = " so no one is beating them!"
-		topUsers = ""
-		for x in range(-3, 4):
-			if pos + x < 0 or pos + x > len(data):
-				continue
-			user = await self.bot.fetch_user(data[pos+x][0])
-			if x == 0:
-				topUsers += f"** {pos+x+1}. < {user.name} > - {data[pos+x][1]} **\n"
-			else:
-				topUsers += f"{pos+x+1}. < {user.name} > - {data[pos+x][1]}\n"
-
-		await interaction.send(f"```MD\n{user.name} is #{pos+1}{diff}\n======\n{topUsers}```") # send the list with the top 10
-
+		await interaction.send(f"You are in position #{position}") # send the list with the top 10
 
 
 	async def accCheck(self, user):
@@ -309,18 +309,6 @@ class Economy(commands.Cog):
 		embed.set_footer(text=interaction.user)
 
 		await interaction.send(embed=embed)
-
-
-	async def getInput(self, interaction:Interaction, user, timeout):
-		def is_me(m):
-			return m.author == user
-		try:
-			msg = await self.bot.wait_for('message', check=is_me, timeout=timeout)
-		except asyncio.TimeoutError:
-			raise Exception("timeoutError")
-		return msg
-
-
 
 
 def setup(bot):
