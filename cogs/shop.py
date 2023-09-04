@@ -30,7 +30,7 @@ class MySource(menus.ListPageSource):
 		embed = nextcord.Embed(color=1768431, title=f"The Casino | Shop")
 
 		for x in range(0, len(entries)):
-			embed.add_field(name=f"{entries[x][1]} {entries[x][7]} ─ {entries[x][4]:,}<:coins:585233801320333313>", value=f"{entries[x][2]}", inline=False)
+			embed.add_field(name=f"{entries[x][1]} {entries[x][8]} ─ {entries[x][4]:,}<:coins:585233801320333313>", value=f"{entries[x][2]}", inline=False)
 		
 		embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
 		return embed
