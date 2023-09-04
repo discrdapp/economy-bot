@@ -7,12 +7,11 @@ import sqlite3
 from math import ceil
 from random import randint
 
-import config
+import config, emojis
 
 class DB(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.coin = "<:coins:585233801320333313>"
 
 	@staticmethod
 	def fetchOne(sql, values: list=None):
@@ -93,21 +92,32 @@ class DB(commands.Cog):
 		else:
 			embed.color = nextcord.Color(0xff2020)
 		if profit > 0:
-			embed.add_field(name=name, value=f"+{profit:,} (+{int(profit * (multiplier - 1))}){self.coin}", inline=True)
+			embed.add_field(name=name, value=f"+{profit:,} (+{int(profit * (multiplier - 1))}){emojis.coin}", inline=True)
 		else:
-			embed.add_field(name=name, value=f"{profit:,}{self.coin}", inline=True)
+			embed.add_field(name=name, value=f"{profit:,}{emojis.coin}", inline=True)
 
-		embed.add_field(name="Credits", value=f"{balance:,}{self.coin}", inline=True)
+		embed.add_field(name="Credits", value=f"{balance:,}{emojis.coin}", inline=True)
 		return embed
 
 
 allItems = DB.fetchAll('SELECT * FROM Items')
-allItemNames = DB.fetchAll('SELECT Name FROM Items;')
+allItemNames = list()
+for x in allItems:
+	allItemNames.append((x[1],))
+
 allItemNamesList = [item for sublist in allItemNames for item in sublist]
 
 buyableItems = DB.fetchAll('SELECT * FROM Items WHERE Buyable = 1;')
-buyableItemNames = DB.fetchAll("SELECT Name FROM Items WHERE Buyable = 1;")
+buyableItemNames = list()
+for x in buyableItems:
+	buyableItemNames.append((x[1],))
 buyableItemNamesList = [item for sublist in buyableItemNames for item in sublist]
+
+sellableItems = DB.fetchAll("SELECT * FROM Items WHERE SellPrice > 0;")
+sellableItemNames = list()
+for x in sellableItems:
+	sellableItemNames.append((x[1],))
+sellableItemNamesList = [item for sublist in sellableItemNames for item in sublist]
 
 usableItemNames = DB.fetchAll("SELECT Name FROM Items WHERE Type = 'Usable';")
 usableItemNamesList = [item for sublist in usableItemNames for item in sublist]
