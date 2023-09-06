@@ -262,7 +262,7 @@ class Inventory(commands.Cog):
 		# now that we have our chosen rarity... let's get all items of that rarity
 
 		if len(items) == 1:
-			return items[0][1], items[0][7]
+			return items[0][1], items[0][8]
 
 		# count how many unique prices there are (think of it as another form of rarity)
 		# if type(items[0]) == tuple:
@@ -275,7 +275,7 @@ class Inventory(commands.Cog):
 		# randomly choose item. all items will have same rarity & same price
 		itemChosenInList = choice(itemsToChooseFromGivenPrice)
 		
-		return itemChosenInList[1], itemChosenInList[7]
+		return itemChosenInList[1], itemChosenInList[8]
 
 	async def GiveRandomItem(self, interaction, userId=None):
 		if not userId:
