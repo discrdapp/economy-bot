@@ -10,13 +10,9 @@ from db import DB
 class XP(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		# self.XPtoLevelUp = [5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000]
 		self.XPtoLevelUp = []
-		# self.levelReward = []
 		for x in range(0,101):
 			self.XPtoLevelUp.append(5000 + (x * 500)) 
-		# for x in range(0,101):
-		# 	self.levelReward.append((x + 1) * 500) 
 
 
 	@nextcord.slash_command()
@@ -26,8 +22,7 @@ class XP(commands.Cog):
 		level = getRow[2]
 		xp = getRow[0]
 		requiredXP = self.XPtoLevelUp[level]
-		#levelReward = getRow[0]
-		progress = round((xp / requiredXP) * 100)
+
 		totalXP = getRow[1]
 
 		multiplier, expiration = self.bot.get_cog("Multipliers").getMultiplierAndExpiration(interaction.user.id)
@@ -60,11 +55,9 @@ class XP(commands.Cog):
 		level = getRow[1]
 
 		if xp >= self.XPtoLevelUp[level]:
-			count = 0
 
 			embed = nextcord.Embed(color=1768431, title="Level Up!")
 			file = nextcord.File("./images/levelup.png", filename="image.png")
-			multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 
 			credits = (level+1)*5000
 
@@ -77,9 +70,12 @@ class XP(commands.Cog):
 			# await interaction.send(file=file, embed=embed)
 
 
-	async def getLevel(self, discordid):
+	def getLevel(self, discordid):
 		level = DB.fetchOne("SELECT Level FROM Economy WHERE DiscordID = ?;", [discordid])[0]
 		return level
+	
+	def IsHighEnoughLevel(self, discordId, levelRequirement):
+		return self.getLevel(discordId) >= levelRequirement
 
 
 		
