@@ -17,8 +17,11 @@ class Crypto(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
 		self.bitcoinPrice = -1
+		self.bitcoin24hrChange = -1
 		self.ethereumPrice = -1
+		self.ethereum24hrChange = -1
 		self.litecoinPrice = -1
+		self.litecoin24hrChange = -1
 		self.minAmountToBuy = 0.1
 		self.tax = 0.05
 
@@ -46,12 +49,16 @@ class Crypto(commands.Cog):
 		for crypto in data["data"]:
 			if crypto["symbol"] == "BTC":
 				self.bitcoinPrice = round(crypto["quote"]["USD"]["price"])
+				self.bitcoin24hrChange = round(crypto["quote"]["USD"]["percent_change_24h"], 4)
+				print(self.bitcoin24hrChange)
 				continue
 			if crypto["symbol"] == "ETH":
 				self.ethereumPrice = round(crypto["quote"]["USD"]["price"])
+				self.ethereum24hrChange = round(crypto["quote"]["USD"]["percent_change_24h"], 4)
 				continue
 			if crypto["symbol"] == "LTC":
 				self.litecoinPrice = round(crypto["quote"]["USD"]["price"])
+				self.litecoin24hrChange = round(crypto["quote"]["USD"]["percent_change_24h"], 4)
 				continue
 			if self.bitcoinPrice != -1 and self.ethereumPrice != -1 and self.litecoinPrice != -1:
 				break
@@ -81,14 +88,27 @@ class Crypto(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto")
 		msg = ""
 
-		msg += f"Bitcoin {emojis.bitcoinEmoji}\n{self.bitcoinPrice:,}{emojis.coin}\n\n"
-		msg += f"Litecoin {emojis.litecoinEmoji}\n{self.litecoinPrice:,}{emojis.coin}\n\n"
-		msg += f"Ethereum {emojis.ethereumEmoji}\n{self.ethereumPrice:,}{emojis.coin}"
+		if self.bitcoin24hrChange > 0:
+			graph = ":chart_with_upwards_trend:"
+		else:
+			graph = ":chart_with_downwards_trend:"
+		msg += f"Bitcoin {emojis.bitcoinEmoji}\n{self.bitcoinPrice:,}{emojis.coin} ({self.bitcoin24hrChange}% {graph})\n\n"
+		
+		if self.litecoin24hrChange > 0:
+			graph = ":chart_with_upwards_trend:"
+		else:
+			graph = ":chart_with_downwards_trend:"
+		msg += f"Litecoin {emojis.litecoinEmoji}\n{self.litecoinPrice:,}{emojis.coin} ({self.litecoin24hrChange}% {graph})\n\n"
+		
+		if self.ethereum24hrChange > 0:
+			graph = ":chart_with_upwards_trend:"
+		else:
+			graph = ":chart_with_downwards_trend:"
+		msg += f"Ethereum {emojis.ethereumEmoji}\n{self.ethereumPrice:,}{emojis.coin} ({self.ethereum24hrChange}% {graph})"
 
 		embed.description = msg
 
 		await interaction.send(embed=embed)
-		
 
 
 	async def ResetCooldownSendEmbed(self, interaction:Interaction, errorMsg:str, embed:nextcord.Embed):
