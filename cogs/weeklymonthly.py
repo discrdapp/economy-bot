@@ -12,7 +12,7 @@ class WeeklyMonthly(commands.Cog):
 		self.levelReward = [550, 1500, 3000, 7500, 13500, 18500, 24000, 29000, 35000, 42000, 50000]
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 604805, bucket=cooldowns.SlashBucket.author, cooldown_id='weekly')
+	@cooldowns.cooldown(1, 120, bucket=cooldowns.SlashBucket.author)
 	async def weekly(self, interaction:Interaction):
 		userId = interaction.user.id
 
@@ -50,7 +50,7 @@ class WeeklyMonthly(commands.Cog):
 
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 2592005, bucket=cooldowns.SlashBucket.author, cooldown_id='monthly')
+	@cooldowns.cooldown(1, 120, bucket=cooldowns.SlashBucket.author)
 	async def monthly(self, interaction:Interaction):
 		userId = interaction.user.id
 
