@@ -1,6 +1,6 @@
 # economy-related stuff like betting and gambling, etc.
 import nextcord
-from nextcord.ext import commands 
+from nextcord.ext import commands, application_checks 
 from nextcord import Interaction
 
 import sqlite3, datetime, json, cooldowns, uuid
@@ -222,36 +222,45 @@ class Totals(commands.Cog):
 
 		img = Image.open(f"./images/writingbackgrounds/{background}")
 
+		badgeList = list()
 		if games >= self.gameBadge:
 			img250 = Image.open("./images/badges/250.png")
-			newSize = (60, 48)
+			newSize = (50, 50)
 			img250 = img250.resize(newSize)
-			img.paste(img250, (100, 270), img250)
+			badgeList.append(img250)
 
 		if balance >= self.balBadge:
 			img10k = Image.open("./images/badges/10k.png")
-			newSize = (75, 55)
+			newSize = (50, 50)
 			img10k = img10k.resize(newSize)
-			img.paste(img10k, (200, 267), img10k)
+			badgeList.append(img10k)
 
 		if profit >= self.profitBadge:
 			img1k = Image.open("./images/badges/1k.png")
-			newSize = (75, 75)
+			newSize = (50, 50)
 			img1k = img1k.resize(newSize)
-			img.paste(img1k, (320, 256), img1k)
+			badgeList.append(img1k)
 
 		if level >= self.lvlBadge:
-			img1k = Image.open("./images/badges/level5.png")
-			newSize = (75, 75)
-			img1k = img1k.resize(newSize)
-			img.paste(img1k, (430, 256), img1k)
+			level5 = Image.open("./images/badges/level5.png")
+			newSize = (50, 50)
+			level5 = level5.resize(newSize)
+			badgeList.append(level5)
+
+		yPos = 215
+		xPos = 100
+		for x in range(len(badgeList)):
+			if x != 0 and x % 7 == 0:
+				yPos += 50
+				xPos -= 420
+			img.paste(badgeList[x-1], (xPos+(x*60), yPos), badgeList[x-1])
 
 		font_type = ImageFont.truetype('arial.ttf',25)
 		draw = ImageDraw.Draw(img)
-		draw.text(xy=(100,100), text=f"{interaction.user.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript.ttf',55))
-		draw.text(xy=(420,160), text=f"Level {level:,}", fill=tuple(textColor), font=font_type)
-		draw.text(xy=(100,160), text=f"Balance: {balance:,}", fill=tuple(textColor), font=font_type)
-		draw.text(xy=(100,230), text=f"Badges", fill=tuple(textColor), font=font_type)
+		draw.text(xy=(100,70), text=f"{interaction.user.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript.ttf',55))
+		draw.text(xy=(420,130), text=f"Level {level:,}", fill=tuple(textColor), font=font_type)
+		draw.text(xy=(100,130), text=f"Balance: {balance:,}", fill=tuple(textColor), font=font_type)
+		draw.text(xy=(100,180), text=f"Badges", fill=tuple(textColor), font=font_type)
 		img.save("images/profile.png")
 		file = nextcord.File("images/profile.png", filename="image.png")
 		embed.set_image(url="attachment://image.png")
@@ -259,6 +268,95 @@ class Totals(commands.Cog):
 		embed.set_footer(text=f"Customize your profile with /profile edit")
 
 		await interaction.send(file=file, embed=embed)
+	
+	@nextcord.slash_command(guild_ids=[config.adminServerID])
+	@application_checks.is_owner()
+	async def profileeverything(self, interaction:Interaction):
+		if interaction.user.id != config.botOwnerDiscordID:
+			await interaction.send("No.")
+			return
+
+		eco = DB.fetchOne("SELECT Credits, Level, XP FROM Economy WHERE DiscordID = ?;", [interaction.user.id])
+		balance = eco[0]
+		level = eco[1]
+
+
+		with open(r"profiles.json", 'r') as f:
+			profileFile = json.load(f)
+
+		profileFile = self.GetProfile(profileFile, interaction.user.id)
+		profile = profileFile[f"{interaction.user.id}"]
+
+		embedColor = profile["embedColor"]
+		textColor = profile["textColor"]
+
+		embed = nextcord.Embed(color=embedColor, title=f"{self.bot.user.name} | Profile")
+		for x in range(3):
+			if x == 0:
+				img = Image.open(f"./images/writingbackgrounds/inkpaper.png")
+			elif x == 1:
+				img = Image.open(f"./images/writingbackgrounds/scroll.png")
+			elif x == 2:
+				img = Image.open(f"./images/writingbackgrounds/spiralnotebook.png")
+
+			badgeList = list()
+			# if games >= self.gameBadge:
+			img250 = Image.open("./images/badges/250.png")
+			newSize = (50, 50)
+			img250 = img250.resize(newSize)
+			badgeList.append(img250)
+			badgeList.append(img250)
+
+			# if balance >= self.balBadge:
+			img10k = Image.open("./images/badges/10k.png")
+			newSize = (50, 50)
+			img10k = img10k.resize(newSize)
+			badgeList.append(img10k)
+			badgeList.append(img250)
+
+			# if profit >= self.profitBadge:
+			img1k = Image.open("./images/badges/1k.png")
+			newSize = (50, 50)
+			img1k = img1k.resize(newSize)
+			badgeList.append(img1k)
+			badgeList.append(img1k)
+			badgeList.append(img1k)
+			badgeList.append(img1k)
+			badgeList.append(img1k)
+			badgeList.append(img1k)
+			badgeList.append(img1k)
+			badgeList.append(img1k)
+			badgeList.append(img1k)
+			badgeList.append(img1k)
+			badgeList.append(img1k)
+
+			# if level >= self.lvlBadge:
+			level5 = Image.open("./images/badges/level5.png")
+			newSize = (50, 50)
+			level5 = level5.resize(newSize)
+			badgeList.append(level5)
+			badgeList.append(img1k)
+
+			yPos = 215
+			xPos = 100
+			for x in range(len(badgeList)):
+				if x != 0 and x % 7 == 0:
+					yPos += 50
+					xPos -= 420
+				img.paste(badgeList[x-1], (xPos+(x*60), yPos), badgeList[x-1])
+
+			font_type = ImageFont.truetype('arial.ttf',25)
+			draw = ImageDraw.Draw(img)
+			draw.text(xy=(100,70), text=f"{interaction.user.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript.ttf',55))
+			draw.text(xy=(420,130), text=f"Level {level:,}", fill=tuple(textColor), font=font_type)
+			draw.text(xy=(100,130), text=f"Balance: {balance:,}", fill=tuple(textColor), font=font_type)
+			draw.text(xy=(100,180), text=f"Badges", fill=tuple(textColor), font=font_type)
+			img.save("images/profile.png")
+			file = nextcord.File("images/profile.png", filename="image.png")
+			embed.set_image(url="attachment://image.png")
+
+
+			await interaction.send(file=file, embed=embed)
 
 
 	@nextcord.slash_command()
@@ -294,8 +392,12 @@ class Totals(commands.Cog):
 	@edit.subcommand(description="Get color list from /colors")
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='embedcolor')
 	async def embedcolor(self, interaction:Interaction, choice):
+		if not self.bot.get_cog("XP").IsHighEnoughLevel(interaction.user.id, 1):
+			raise Exception("lowLevel 1")	
+
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
 		embed.set_thumbnail(url=interaction.user.avatar)
+
 		try:
 			newColor = self.colors[choice]
 		except:
@@ -311,10 +413,12 @@ class Totals(commands.Cog):
 		embed.add_field(name="Success!", value=f"Your profile's embed color has been changed to {choice}")
 		embed.color = newColor
 		await interaction.send(embed=embed)
-	
+
 	@edit.subcommand(description="Get color list from /colors")
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='textcolor')
 	async def textcolor(self, interaction:Interaction, choice):
+		if not self.bot.get_cog("XP").IsHighEnoughLevel(interaction.user.id, 2):
+			raise Exception("lowLevel 2")
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
 		embed.set_thumbnail(url=interaction.user.avatar)
 		try:
@@ -326,7 +430,7 @@ class Totals(commands.Cog):
 		newColor = "#" + "0"*(8-len(newColor))+ newColor[2:] # append trailing 0's and switch out 0x for #
 
 		newColor = ImageColor.getcolor(newColor, "RGB") # get RGB version of color 
-		
+
 		with open(r"profiles.json", 'r') as f:
 			profileFile = json.load(f)
 
