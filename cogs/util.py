@@ -294,8 +294,10 @@ class Util(commands.Cog):
 
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 20, bucket=cooldowns.SlashBucket.author, cooldown_id='rob')
+	@cooldowns.cooldown(1, 45, bucket=cooldowns.SlashBucket.author, cooldown_id='rob')
 	async def rob(self, interaction:Interaction, *, member: nextcord.Member):
+		if not self.bot.get_cog("XP").IsHighEnoughLevel(interaction.user.id, 1):
+			raise Exception("lowLevel 1")
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Rob")
 		if interaction.user == member:
 			embed.description = "Trying to rob yourself? That doesn't make sense. :joy:"
@@ -351,7 +353,7 @@ class Util(commands.Cog):
 				thebal = 2501
 			amnt = random.randrange(2500, thebal)
 		else:
-			amnt = random.randrange(2500, 25001)
+			amnt = random.randrange(2500, 25000)
 
 		if choice <= 4: # 0 - 4		(50%)
 			message = f"While {member.mention} was sleeping, you took {amnt:,}{emojis.coin} out of their pockets."
