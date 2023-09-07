@@ -115,8 +115,8 @@ class Shop(commands.Cog):
 		# maxed daily reward
 		if theid == 3:
 			dailyReward = await self.bot.get_cog("Daily").getDailyReward(interaction)
-			if dailyReward >= 200000:
-				embed.description = f"Sorry, but the max Daily Reward allowed is 200,000{emojis.coin}."
+			if dailyReward + (amnt*1000) > 100000:
+				embed.description = f"Sorry, but the max Daily Reward allowed is 100,000{emojis.coin}."
 				await interaction.send(embed=embed)
 				return
 
