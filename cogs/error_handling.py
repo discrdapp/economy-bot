@@ -13,8 +13,8 @@ from difflib import get_close_matches
 
 
 class ErrorHandling(commands.Cog):
-	def __init__(self, bot):
-		self.bot:commands.bot.Bot = bot
+	def __init__(self, bot:commands.bot.Bot):
+		self.bot = bot
 		bot.event(self.on_application_command_error)
 
 	# @commands.Cog.listener()
@@ -29,8 +29,9 @@ class ErrorHandling(commands.Cog):
 
 		elif isinstance(error, commands.CommandOnCooldown) or isinstance(error, CallableOnCooldown):
 			a = datetime.timedelta(seconds=error.retry_after)
+
 			cooldown = str(a).split(".")[0]
-			embed.description = f"{commandName} is on cooldown. Please retry again in {cooldown}"
+			embed.description = f"{commandName} is on cooldown. Please retry again <t:{int(error.resets_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>"
 			embed.set_footer(text="See all your cooldowns with /cooldown")
 
 		elif isinstance(error, commands.CheckFailure):
@@ -80,7 +81,7 @@ class ErrorHandling(commands.Cog):
 				except:
 					pass
 				return
-			
+
 			if "minBet" in err:
 				embed.description = f"Minimum bet is {err[7:]} credits" 
 				await interaction.send(embed=embed, ephemeral=True)
@@ -90,12 +91,18 @@ class ErrorHandling(commands.Cog):
 					pass
 				return
 
+			if "lowLevel" in err:
+				embed.description = f"You must be level {err[9:]} or higher to use this command!" 
+				embed.set_footer(text="Check your progress in /level")
+				await interaction.send(embed=embed, ephemeral=True)
+				return
+
 			exc = ''.join(traceback.format_exception(type(error), error, error.__traceback__, chain=False))
 			exc = exc.split("kwargs)", 1)[1]
 
 			if "MySQL server" in exc:
 				embed.description = "We're having difficulties connecting to the database... Apologies for the inconvenience... Please try again later!"
-			
+
 			ch = self.bot.get_channel(config.channelIDForErrors)
 			if len(exc) > 1999:
 				await ch.send(f"{exc[:1999]}")
