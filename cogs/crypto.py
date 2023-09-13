@@ -50,7 +50,6 @@ class Crypto(commands.Cog):
 			if crypto["symbol"] == "BTC":
 				self.bitcoinPrice = round(crypto["quote"]["USD"]["price"])
 				self.bitcoin24hrChange = round(crypto["quote"]["USD"]["percent_change_24h"], 4)
-				print(self.bitcoin24hrChange)
 				continue
 			if crypto["symbol"] == "ETH":
 				self.ethereumPrice = round(crypto["quote"]["USD"]["price"])
