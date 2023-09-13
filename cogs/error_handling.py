@@ -43,7 +43,10 @@ class ErrorHandling(commands.Cog):
 
 		elif isinstance(error, commands.BadArgument):
 			embed.description = f"{error}"
-			reset_bucket(interaction.application_command.callback, interaction)
+			try:
+				reset_bucket(interaction.application_command.callback, interaction)
+			except:
+				pass
 
 		else:
 			err = str(error)
