@@ -49,11 +49,9 @@ class MultiplayerView(nextcord.ui.View):
 
 		self.embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Coinflip")
 	
-	async def Initiate(self, interaction, player:nextcord.Member, opponent:nextcord.Member, sidebet, amntbet):
+	async def Initiate(self, interaction:Interaction, player:nextcord.Member, opponent:nextcord.Member, sidebet, amntbet):
 		self.player=player
 		self.opponent=opponent
-		print(self.player.id)
-		print(self.opponent.id)
 		self.sidebet = sidebet
 		self.amntbet = amntbet
 
