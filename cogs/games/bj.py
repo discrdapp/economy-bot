@@ -25,7 +25,7 @@ from nextcord.ext import commands
 from nextcord import Interaction
 
 # import cooldowns
-from random import randint
+from random import randint, shuffle
 import asyncio, cooldowns
 
 import emojis
@@ -143,9 +143,10 @@ class Blackjack(nextcord.ui.View):
 
 		self.amntbet = amntbet
 
-		self.usedDealerChip = False
-		self.usedAceofSpades = False
-		self.showCardCount = False
+		self.usedDealerChip = False # forces dealer to go first
+		self.usedAceofSpades = False # forces player's first card to be an Ace
+		self.showCardCount = False # big blind chip
+		self.usedDeckOfCards = False # player cannot bust
 
 		self.doubleDown = Button(bot, label="Double Down", style=nextcord.ButtonStyle.blurple, row=1)
 		self.add_item(self.doubleDown)
@@ -165,6 +166,8 @@ class Blackjack(nextcord.ui.View):
 		self.usedAceofSpades = False
 		self.usedDealerChip = False
 		self.showCardCount = False
+		self.usedDeckOfCards = False
+
 		# generate the starting cards
 		if self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Dealer Chip"):
 			self.bot.get_cog("Inventory").removeActiveItemFromDB(interaction.user, "Dealer Chip")
@@ -172,10 +175,12 @@ class Blackjack(nextcord.ui.View):
 		elif self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Big Blind Chip"):
 			self.bot.get_cog("Inventory").removeActiveItemFromDB(interaction.user, "Big Blind Chip")
 			self.showCardCount = True
-		
-		if self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Ace of Spades"):
+		elif self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Ace of Spades"):
 			self.bot.get_cog("Inventory").removeActiveItemFromDB(interaction.user, "Ace of Spades")
 			self.usedAceofSpades = True
+		elif self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Deck of Cards"):
+			self.bot.get_cog("Inventory").removeActiveItemFromDB(interaction.user, "Deck of Cards")
+			self.usedDeckOfCards = True
 
 
 		self.embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack")
@@ -205,6 +210,11 @@ class Blackjack(nextcord.ui.View):
 			self.msg = await botMsg.fetch()
 
 			await self.dealer_turn()
+		elif self.usedDeckOfCards:
+			self.remove_item(self.doubleDown)
+			self.remove_item(self.insurance)
+			self.add_item(Button(self.bot, label="Hit", style=nextcord.ButtonStyle.green))
+			self.add_item(Button(self.bot, label="Stand", style=nextcord.ButtonStyle.red))
 
 		else:
 			self.add_item(Button(self.bot, label="Hit", style=nextcord.ButtonStyle.green))
@@ -280,22 +290,28 @@ class Blackjack(nextcord.ui.View):
 
 
 	async def hit(self, isDoubleDown=False):
-		# player draws a card 
 		pDrawnCard = self.take_card()
-		self.pCARD.append(pDrawnCard)
 
 		# splits the number and the suit 
-		pDrawnCard = pDrawnCard.split()
+		splitpDrawnCard = pDrawnCard.split()
 
 		# converts to number
-		if pDrawnCard[1] == "Jack" or pDrawnCard[1] == "Queen" or pDrawnCard[1] == "King":
-			pDrawnCard[1] = "10"
-		elif pDrawnCard[1] == "A":
-			pDrawnCard[1] = "11"
+		if splitpDrawnCard[1] == "Jack" or splitpDrawnCard[1] == "Queen" or splitpDrawnCard[1] == "King":
+			splitpDrawnCard[1] = "10"
+		elif splitpDrawnCard[1] == "A":
+			splitpDrawnCard[1] = "11"
 
-		# adds the card to the player's hand
-		self.pCardNum.append(int(pDrawnCard[1]))
-		
+		if self.usedDeckOfCards:
+			if sum(self.pCardNum) + int(splitpDrawnCard[1]) > 21:
+				await self.interaction.send(f"This would bust you at {sum(self.pCardNum) + int(splitpDrawnCard[1])}", ephemeral=True)
+				self.cards.append(pDrawnCard)
+				return
+
+		# adds card to player hand
+		self.pCARD.append(pDrawnCard)
+		# adds the card num to the player's hand
+		self.pCardNum.append(int(splitpDrawnCard[1]))
+	
 		# checks if player has an ace
 		self.pCardNum = self.eval_ace(self.pCardNum)
 
@@ -359,9 +375,9 @@ class Blackjack(nextcord.ui.View):
 						  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
 						  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
 						  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
+			shuffle(self.cards)
 
-		randNum = randint(0, len(self.cards)-1)
-		drawnCard = self.cards.pop(randNum)
+		drawnCard = self.cards.pop()
 
 		if calculateCount:
 			num = drawnCard.split(' ')[1]
@@ -593,6 +609,7 @@ class bj(commands.Cog):
 					  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
 					  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
 					  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
+		shuffle(self.cards)
 		self.count = [0]
 
 	@nextcord.slash_command(description="Play BlackJack!")
