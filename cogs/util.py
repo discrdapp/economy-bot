@@ -132,6 +132,7 @@ class Util(commands.Cog):
 		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, "Shovel"):
 			embed.description = "You need a Shovel to dig.\nYou can buy one from the /shop"
 			await interaction.send(embed=embed)
+			cooldowns.reset_bucket(self.dig.callback, interaction)
 			return
 		
 		# 33% chance to not get anything
