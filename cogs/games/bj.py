@@ -198,8 +198,8 @@ class Blackjack(nextcord.ui.View):
 			for x in self.dealerHand:
 				dTotal += f"{x} "
 
-			self.embed.add_field(name = f"{self.interaction.user.name}'s CARD:", value = f"Waiting...", inline=True)
-			self.embed.add_field(name = f"{self.bot.user.name}' CARD", value = f"{dTotal}\n**Score**: {sum(self.dealerNum)}\n", inline=True)
+			self.embed.add_field(name = f"{self.interaction.user.name}'s cards:", value = f"Waiting...", inline=True)
+			self.embed.add_field(name = f"{self.bot.user.name}'s cards", value = f"{dTotal}\n**Score**: {sum(self.dealerNum)}\n", inline=True)
 			self.embed.add_field(name = "_ _", value = "**Options:** hit or stay", inline=False)
 			if not self.showCardCount:
 				self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
@@ -262,11 +262,11 @@ class Blackjack(nextcord.ui.View):
 	
 	async def player_turn(self, pTotal):
 		if self.usedDealerChip:
-			self.embed.set_field_at(0, name = f"{self.interaction.user.name}'s CARD:", value = f"{pTotal}\n**Score**: {sum(self.pCardNum)}", inline=True)
+			self.embed.set_field_at(0, name = f"{self.interaction.user.name}'s cards:", value = f"{pTotal}\n**Score**: {sum(self.pCardNum)}", inline=True)
 			await self.msg.edit(embed=self.embed)
 		else:	
-			self.embed.add_field(name = f"{self.interaction.user.name}'s CARD:", value = f"{pTotal}\n**Score**: {sum(self.pCardNum)}", inline=True)
-			self.embed.add_field(name = f"{self.bot.user.name}' CARD", value = f"{self.dealerHand[0]}\n**Score**: {self.dealerNum[0]}\n", inline=True)
+			self.embed.add_field(name = f"{self.interaction.user.name}'s cards:", value = f"{pTotal}\n**Score**: {sum(self.pCardNum)}", inline=True)
+			self.embed.add_field(name = f"{self.bot.user.name}'s cards", value = f"{self.dealerHand[0]}\n**Score**: {self.dealerNum[0]}\n", inline=True)
 			self.embed.add_field(name = "_ _", value = "**Options:** hit or stay", inline=False)
 			
 			if not self.showCardCount:
@@ -326,7 +326,7 @@ class Blackjack(nextcord.ui.View):
 			dTotal += f"{x} "
 
 		self.embed.set_field_at(0, 
-			name = f"{self.interaction.user.name}'s CARD:", 
+			name = f"{self.interaction.user.name}'s cards:", 
 			value = f"{pTotal}\n**Score**: {sum(self.pCardNum)}", 
 			inline=True)
 
@@ -446,7 +446,7 @@ class Blackjack(nextcord.ui.View):
 		for x in self.dealerHand:
 			dTotal += f"{x} "
 
-		self.embed.set_field_at(1, name = f"{self.bot.user.name}' CARD", value = f"{dTotal}\n**Score**: {sum(self.dealerNum)}", inline=True)
+		self.embed.set_field_at(1, name = f"{self.bot.user.name}'s cards", value = f"{dTotal}\n**Score**: {sum(self.dealerNum)}", inline=True)
 
 		await self.msg.edit(view=self, embed=self.embed)
 		await asyncio.sleep(0.6)
@@ -535,7 +535,7 @@ class Blackjack(nextcord.ui.View):
 
 		#self.embed.add_field(name = f"{author.name}'s' CARD:", value = f"{pTotal}\n**Score**: {sum(player_num)}", inline=True)
 
-		self.embed.set_field_at(1, name = f"{self.bot.user.name}' CARD", value = f"{dTotal}\n**Score**: {sum(self.dealerNum)}", inline=True)
+		self.embed.set_field_at(1, name = f"{self.bot.user.name}'s cards", value = f"{dTotal}\n**Score**: {sum(self.dealerNum)}", inline=True)
 		self.embed.color = nextcord.Color(0xff2020)
 		result = ""
 
