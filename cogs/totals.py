@@ -291,72 +291,78 @@ class Totals(commands.Cog):
 		textColor = profile["textColor"]
 
 		embed = nextcord.Embed(color=embedColor, title=f"{self.bot.user.name} | Profile")
-		for x in range(3):
-			if x == 0:
-				img = Image.open(f"./images/writingbackgrounds/inkpaper.png")
-			elif x == 1:
-				img = Image.open(f"./images/writingbackgrounds/scroll.png")
-			elif x == 2:
-				img = Image.open(f"./images/writingbackgrounds/spiralnotebook.png")
+		# for x in range(3):
+		# if x == 0:
+		img = Image.open(f"./images/writingbackgrounds/inkpaper.png")
+		# elif x == 1:
+		# 	img = Image.open(f"./images/writingbackgrounds/scroll.png")
+		# elif x == 2:
+		# 	img = Image.open(f"./images/writingbackgrounds/spiralnotebook.png")
 
-			badgeList = list()
-			# if games >= self.gameBadge:
-			img250 = Image.open("./images/badges/250.png")
-			newSize = (50, 50)
-			img250 = img250.resize(newSize)
-			badgeList.append(img250)
-			badgeList.append(img250)
+		badgeList = list()
+		# if games >= self.gameBadge:
+		img250 = Image.open("./images/badges/250.png")
+		img250 = img250.resize((50, 45))
+		badgeList.append(img250)
 
-			# if balance >= self.balBadge:
-			img10k = Image.open("./images/badges/10k.png")
-			newSize = (50, 50)
-			img10k = img10k.resize(newSize)
-			badgeList.append(img10k)
-			badgeList.append(img250)
+		# if balance >= self.balBadge:
+		img10k = Image.open("./images/badges/10k.png")
+		img10k = img10k.resize((50, 50))
+		badgeList.append(img10k)
 
-			# if profit >= self.profitBadge:
-			img1k = Image.open("./images/badges/1k.png")
-			newSize = (50, 50)
-			img1k = img1k.resize(newSize)
-			badgeList.append(img1k)
-			badgeList.append(img1k)
-			badgeList.append(img1k)
-			badgeList.append(img1k)
-			badgeList.append(img1k)
-			badgeList.append(img1k)
-			badgeList.append(img1k)
-			badgeList.append(img1k)
-			badgeList.append(img1k)
-			badgeList.append(img1k)
-			badgeList.append(img1k)
+		# if profit >= self.profitBadge:
+		img1k = Image.open("./images/badges/1k.png")
+		img1k = img1k.resize((50, 50))
+		badgeList.append(img1k)
 
-			# if level >= self.lvlBadge:
-			level5 = Image.open("./images/badges/level5.png")
-			newSize = (50, 50)
-			level5 = level5.resize(newSize)
-			badgeList.append(level5)
-			badgeList.append(img1k)
+		# if level >= self.lvlBadge:
+		level5 = Image.open("./images/badges/level5.png")
+		level5 = level5.resize((50, 50))
+		badgeList.append(level5)
 
-			yPos = 215
-			xPos = 100
-			for x in range(len(badgeList)):
-				if x != 0 and x % 7 == 0:
-					yPos += 50
-					xPos -= 420
+		#if has aceofspades
+		aceOfSpades = Image.open("./images/emojis/AceofSpades.png")
+		aceOfSpades = aceOfSpades.resize((40, 50))
+		badgeList.append(aceOfSpades)
+
+		#if has threeofakind
+		threeOfAKind = Image.open("./images/emojis/3ofakind.png")
+		threeOfAKind = threeOfAKind.resize((50, 50))
+		badgeList.append(threeOfAKind)
+
+		#if has straight
+		straight = Image.open("./images/emojis/straight.png")
+		straight = straight.resize((50, 50))
+		badgeList.append(straight)
+
+		#if has fourofakind
+		fourOfAKind = Image.open("./images/emojis/4ofakind.png")
+		fourOfAKind = fourOfAKind.resize((50, 50))
+		badgeList.append(fourOfAKind)
+
+		yPos = 215
+		xPos = 100
+		for x in range(len(badgeList)):
+			if x != 0 and x % 7 == 0:
+				yPos += 55
+				xPos -= 420
+			try:
 				img.paste(badgeList[x-1], (xPos+(x*60), yPos), badgeList[x-1])
+			except Exception as e:
+				print(e)
 
-			font_type = ImageFont.truetype('arial.ttf',25)
-			draw = ImageDraw.Draw(img)
-			draw.text(xy=(100,70), text=f"{interaction.user.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript.ttf',55))
-			draw.text(xy=(420,130), text=f"Level {level:,}", fill=tuple(textColor), font=font_type)
-			draw.text(xy=(100,130), text=f"Balance: {balance:,}", fill=tuple(textColor), font=font_type)
-			draw.text(xy=(100,180), text=f"Badges", fill=tuple(textColor), font=font_type)
-			img.save("images/profile.png")
-			file = nextcord.File("images/profile.png", filename="image.png")
-			embed.set_image(url="attachment://image.png")
+		font_type = ImageFont.truetype('arial.ttf',25)
+		draw = ImageDraw.Draw(img)
+		draw.text(xy=(100,70), text=f"{interaction.user.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript.ttf',55))
+		draw.text(xy=(420,130), text=f"Level {level:,}", fill=tuple(textColor), font=font_type)
+		draw.text(xy=(100,130), text=f"Balance: {balance:,}", fill=tuple(textColor), font=font_type)
+		draw.text(xy=(100,180), text=f"Badges", fill=tuple(textColor), font=font_type)
+		img.save("images/profile.png")
+		file = nextcord.File("images/profile.png", filename="image.png")
+		embed.set_image(url="attachment://image.png")
 
 
-			await interaction.send(file=file, embed=embed)
+		await interaction.send(file=file, embed=embed)
 
 
 	@nextcord.slash_command()
