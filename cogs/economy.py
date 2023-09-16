@@ -146,9 +146,8 @@ class Economy(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='freemoney')
 	async def freemoney(self, interaction:Interaction):
-		prefix = "/"
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
-		embed.add_field(name="Free Money Commands", value=f"`{prefix}vote`\n`{prefix}search`\n`{prefix}daily`\n`{prefix}weekly`\n`{prefix}monthly`\n`{prefix}work`")
+		embed.add_field(name="Free Money Commands", value="`/vote`\n`/search`\n`/daily`\n`/weekly`\n`/monthly`\n`/work`\n`/crime`\n`/beg`")
 		await interaction.send(embed=embed)
 
 	@nextcord.slash_command()
