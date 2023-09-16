@@ -115,6 +115,7 @@ class Others(commands.Cog):
 							choices=("bank",
 									"roulette",
 									"crash",
+									"crypto",
 									"blackjack",
 									# "colorguesser",
 									"slots",
@@ -122,6 +123,7 @@ class Others(commands.Cog):
 									"coinflip",
 									"dond",
 									"mines", 
+									"horse",
 									"balance", 
 									"top", 
 									"shop", 
@@ -169,12 +171,18 @@ class Others(commands.Cog):
 		elif option == "coinflip":
 			helpMsg = "Bet the side the coin will land on"
 			usageMsg = "**/coinflip <heads/tails> <bet>**"
+		elif option == "crypto":
+			helpMsg = "Invest in your favorite crypto. BTC, LTC, and ETH available"
+			usageMsg = "**/crypto**"
 		elif option == "dond":
 			helpMsg = "Play Deal or No Deal!\n**NOTE: This game is a WIP.**"
 			usageMsg = "**/dond <bet>**"
 		elif option == "mines":
 			helpMsg = "Play Roobet Mines! Select number of bombs and try finding spaces that don't have one!\n**NOTE: This game is a WIP.**"
 			usageMsg = "**/mines <bet>**"
+		elif option == "horse":
+			helpMsg = "Horse racing! Bet on the horse you think will win\n**NOTE: This game is a WIP.**"
+			usageMsg = "**/horse <bet>**"
 		elif option == "balance":
 			helpMsg = "Look at your balance"
 			usageMsg = "**/balance**"
