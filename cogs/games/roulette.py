@@ -2,8 +2,9 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import random, cooldowns
+from random import randrange, choices, choice
 from PIL import Image
+import cooldowns, asyncio
 
 import emojis
 from db import DB
@@ -133,6 +134,9 @@ class View(nextcord.ui.View):
 		self.displayColorBet = ""
 		self.displayHighLowBet = ""
 
+		# 75% chance to get red
+		self.usedThreeOfAKind = False
+
 	def ProcessBets(self):
 		self.totalBet = 0
 		if self.number.option:
@@ -169,7 +173,12 @@ class View(nextcord.ui.View):
 			  Parity bet: {parityBet}"
 
 
-	async def Start(self, interaction):
+	async def Start(self, interaction:Interaction):
+		self.usedThreeOfAKind = False
+		if self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Three of a Kind"):
+			self.bot.get_cog("Inventory").removeActiveItemFromDB(interaction.user, "Three of a Kind")
+			self.usedThreeOfAKind = True
+
 		self.totalBet = 0
 		
 		# modal = GetBets()
@@ -208,8 +217,21 @@ class View(nextcord.ui.View):
 
 		await self.Spin(interaction)
 
-	async def Spin(self, interaction):
-		n = random.randrange(0, 37)
+	async def Spin(self, interaction:Interaction):
+		toDelete = await interaction.send("The wheel is spinning...", ephemeral=True)
+		await asyncio.sleep(1.5)
+
+		red = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
+		black = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35]
+
+		# 75% chance to pick 1
+		if self.usedThreeOfAKind:
+			chosenList = choices(population=[red, black], weights=[0.75, 0.25], k=1)[0]
+			n = choice(chosenList)
+			print(f"75% chance and chose red: {n in red}")
+		else:
+			n = randrange(0, 37)
+		
 
 		roulette = Image.open('images/roulette/roulette.png')
 		whiteChip = Image.open('images/roulette/whitechip.png')
@@ -304,6 +326,8 @@ class View(nextcord.ui.View):
 		if len(self.previousNums) == 8:  # display only 8 previous numbers
 			self.previousNums.pop()
 		self.previousNums.insert(0, f"{colorResult} {str(n)}")  # insert the resulting color and number
+
+		await toDelete.delete()
 
 
 
