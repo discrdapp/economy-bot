@@ -69,13 +69,13 @@ class Admin(commands.Cog):
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def resetmultipliers(self, interaction:Interaction):
-		DB.update(f"DELETE FROM Multipliers;")
+		DB.delete(f"DELETE FROM Multipliers;")
 		await interaction.send(f"All multipliers have been reset.\nUpdated all rows.")
 
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
-	async def addmultiplier(self, interaction, user:nextcord.Member, multiplier:float, duration:int):
+	async def addmultiplier(self, interaction:Interaction, user:nextcord.Member, multiplier:float, duration:int):
 		msg = self.bot.get_cog("Multipliers").addMultiplier(user.id, multiplier, datetime.datetime.now() + datetime.timedelta(seconds=duration))
 		await interaction.send(msg)
 
