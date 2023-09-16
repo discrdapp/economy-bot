@@ -20,6 +20,7 @@ class Fish(commands.Cog):
 		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, "Fishing Pole"):
 			embed.description = "You need a fishing pole to fish.\nYou can buy one from the /shop"
 			await interaction.send(embed=embed)
+			cooldowns.reset_bucket(self.fish.callback, interaction)
 			return
 		
 		num = randint(0,2)
@@ -38,12 +39,13 @@ class Fish(commands.Cog):
 			rarityChosen = self.bot.get_cog("Inventory").getRarity(3)
 			# get all fishing items (IDs between 200 & 300)
 			items = DB.fetchAll("SELECT * FROM Items WHERE ID >= 200 and ID < 300 AND Rarity = ? ORDER BY Price;", [rarityChosen])
-			itemToGive, itemEmoji = self.bot.get_cog("Inventory").getItemFromListBasedOnPrice(items)
+			itemName, itemRarity, itemEmoji = self.bot.get_cog("Inventory").getItemFromListBasedOnPrice(items)
 
-			self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, 1, itemToGive)
+			self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, 1, itemName)
 
-			aan = "an" if itemToGive in "aeiou" else "a"
-			embed.description = f"You caught {aan} {itemToGive} {itemEmoji}"
+			aan = "an" if itemName[0].lower() in "aeiou" else "a"
+			embed.description = f"You caught {aan} {itemName} {itemEmoji}"
+			embed.set_footer(text=f"This item is {itemRarity}")
 			await interaction.send(embed=embed)
 
 		elif num == 2: # 50% chance to get any random item (37.5% total)
