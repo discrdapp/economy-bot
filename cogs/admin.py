@@ -2,7 +2,7 @@ import nextcord
 from nextcord.ext import commands, application_checks
 from nextcord import Interaction
 
-import math, datetime
+import math, datetime, cooldowns
 
 import config, emojis
 from db import DB
@@ -35,8 +35,19 @@ class Admin(commands.Cog):
 
 		await interaction.send(msg)
 
-	@nextcord.slash_command(guild_ids=[821015960931794964, 585226670361804827, 825179206958055425, 467084194200289280, 601446508121817088, 670038316271403021])
+	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='send')
 	async def send(self, interaction:Interaction, user: nextcord.Member, amnt):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Send")
+		if interaction.guild_id not in [821015960931794964, 585226670361804827, 825179206958055425, 467084194200289280, 670038316271403021]:
+			embed.description = "This command can only be used in [Donator](https://docs.justingrah.am/thecasino/donator) servers and the [Support Server](https://discord.gg/ggUksVN)."
+			await interaction.send(embed=embed, ephemeral=True)
+			return
+		
+		if not await self.bot.get_cog("Economy").accCheck(user):
+			embed.description = f"{user} has not registered. Cannot send money to them."
+			await interaction.send(embed=embed, ephemeral=True)
+			return
 
 		amnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, amnt)
 		amntToReceive = math.floor(amnt * .95)
@@ -46,7 +57,7 @@ class Admin(commands.Cog):
 
 		await self.bot.get_cog("Economy").addWinnings(user.id, amntToReceive)
 
-		await interaction.send(f"Successfully sent {amntToReceive} (5% tax)!")
+		await interaction.send(f"{interaction.user.mention} successfully sent {amntToReceive:,}{emojis.coin} ({amnt} - 5% tax) to {user.mention}!")
 
 
 
@@ -119,7 +130,7 @@ class Admin(commands.Cog):
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def uses(self, interaction:Interaction):
-		amnt = DB.fetchAll("select DateTime from logs;")
+		amnt = DB.fetchAll("select DateTime, Activity from logs;")
 
 		totalUses = len(amnt) + 96934
 
@@ -128,6 +139,10 @@ class Admin(commands.Cog):
 		monthsUses = 0
 		sixHourUses = 0
 		hourUses = 0
+
+		todayActivities = {}
+		weeksActivities = {}
+		
 		for record in amnt:
 			# print(record)
 			dateStr = record[0]
@@ -139,17 +154,50 @@ class Admin(commands.Cog):
 				monthsUses += 1
 				if diff.total_seconds() <= 604800:
 					weeksUses += 1
+					if record[1] in weeksActivities:
+						weeksActivities[record[1]] += 1
+					else:
+						weeksActivities[record[1]] = 1
 					if diff.total_seconds() <= 86400:
 						todaysUses += 1
+						if record[1] in todayActivities:
+							todayActivities[record[1]] += 1
+						else:
+							todayActivities[record[1]] = 1
 						if diff.total_seconds() <= 21600:
 							sixHourUses += 1
 							if diff.total_seconds() <= 3600:
 								hourUses += 1
 
 
+		sortedTodayActivities = dict(sorted(todayActivities.items(), key=lambda item: item[1], reverse=True))
+		todayActivitiesMsg = ""
+		count = 1
+		for key, val in sortedTodayActivities.items():
+			todayActivitiesMsg += f"**{count})** {key} (**{val}** times)\n"
 
+			count += 1
+			if count == 6:
+				break
+		
+		sortedWeekActivities = dict(sorted(weeksActivities.items(), key=lambda item: item[1], reverse=True))
+		weekActivitiesMsg = ""
+		count = 1
+		for key, val in sortedWeekActivities.items():
+			weekActivitiesMsg += f"**{count})** {key} (**{val}** times)\n"
 
-		await interaction.send(f"I have been used:\n\t\t**{monthsUses}** times this month.\n\t\t**{weeksUses}** times this week.\n\t\t**{todaysUses}** times today.\n\t\t**{sixHourUses}** times in the past 6 hours.\n\t\t**{hourUses}** times in the past hour.\nAnd in total, over **{totalUses:,}** times.")
+			count += 1
+			if count == 6:
+				break
+
+		
+		msg = f"I have been used:\n\t\t**{monthsUses}** times this month.\n\
+\t\t**{weeksUses}** times this week.\n\t\t**{todaysUses}** times today.\n\
+\t\t**{sixHourUses}** times in the past 6 hours.\n\t\t**{hourUses}** times in the past hour.\n\
+And in total, over **{totalUses:,}** times.\n\n\
+Today's top uses:\n{todayActivitiesMsg}\n\n\
+Week's top uses:\n{weekActivitiesMsg}\n\n"
+		await interaction.send(msg)
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
