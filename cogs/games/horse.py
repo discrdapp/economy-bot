@@ -143,7 +143,7 @@ class View(nextcord.ui.View):
 		await self.EndGame(interaction, winner)
 	
 	
-	async def EndGame(self, interaction, winner):
+	async def EndGame(self, interaction:Interaction, winner):
 		if winner == self.horseChosen:
 			# PLAYER WINS
 			moneyToAdd = self.amntbet * 4

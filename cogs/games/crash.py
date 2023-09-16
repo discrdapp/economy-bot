@@ -36,7 +36,7 @@ class View(nextcord.ui.View):
 		self.cashoutButton = Button("Cashout", nextcord.ButtonStyle.green)
 		self.botMsg = None
 
-	async def Start(self, interaction):
+	async def Start(self, interaction:Interaction):
 		self.add_item(self.cashoutButton)
 		
 		pC = random.randint(1, 10)

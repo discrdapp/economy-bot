@@ -77,7 +77,7 @@ class TicTacToe(nextcord.ui.View):
 		self.GenerateMines()
 		self.SetCounts()
 	
-	async def Start(self, interaction):
+	async def Start(self, interaction:Interaction):
 		grid = self.draw_grid()
 		msg = await interaction.send(content=grid, view=self)
 		fetchMsg = await msg.fetch()
@@ -276,7 +276,7 @@ class Minesweeper(commands.Cog):
 		self.bot:commands.bot.Bot = bot
 	
 	@nextcord.slash_command()
-	async def play(self, interaction, minecount:int = nextcord.SlashOption(required=True,name="Number of Mines", choices=[x for x in range(20, 141, 10)])):
+	async def play(self, interaction:Interaction, minecount:int = nextcord.SlashOption(required=True,name="Number of Mines", choices=[x for x in range(20, 141, 10)])):
 		ttt = TicTacToe(interaction, self.bot, minecount)
 		await ttt.Start(interaction)
 

@@ -62,10 +62,10 @@ class ScratchTicket(nextcord.ui.View):
 		self.GenerateTicket()
 	
 
-	async def Start(self, interaction):
+	async def Start(self, interaction:Interaction):
 		await interaction.send(content=f"Current Profit: -{self.amntbet}", view=self)
 	
-	async def EndGame(self, interaction, profit):
+	async def EndGame(self, interaction:Interaction, profit):
 		self.stop()
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)

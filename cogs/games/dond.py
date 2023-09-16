@@ -182,7 +182,7 @@ class View(nextcord.ui.View):
 		return msg
 
 
-	async def Start(self, interaction, casecount, multiplier, amntBet):
+	async def Start(self, interaction:Interaction, casecount, multiplier, amntBet):
 		self.ownerId = interaction.user.id
 		self.amntBet = amntBet
 		self.totalCasesLeft = casecount
@@ -282,7 +282,7 @@ class Dond(commands.Cog):
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author, cooldown_id='dond')
-	async def dond(self, interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
+	async def dond(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
 				casecount:int = nextcord.SlashOption(choices=[5, 10])):
 		if amntbet < 1000:
 			raise Exception("minBet 1000")
