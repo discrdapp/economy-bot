@@ -14,22 +14,25 @@ extensions = ["db",
 			  "cogs.games.color_guesser",	# removable
 			  "cogs.games.crash", 			# removable
 			  "cogs.games.dond",			# removable
+			  "cogs.games.hangman",
 			  "cogs.games.horse",			# removable
 			  "cogs.games.lottery",			# removable
 			  "cogs.games.miner",			# removable
 			  "cogs.games.mines",			# removable
+			  "cogs.games.poker",			# removable
 			  "cogs.games.roulette", 		# removable
 			  "cogs.games.rps",				# removable
 			  "cogs.games.scratch", 		# removable
 			  "cogs.games.slots", 			# removable
 			  "cogs.admin", 				# removable
 			  "cogs.bank", 					# removable
-			  "cogs.crypto",				# removable
+			  "cogs.crypto",
 			  "cogs.daily",					# removable
 			  "cogs.economy", 
 			  "cogs.error_handling",
 			  "cogs.fish",					# removable
 			  "cogs.inventory",
+			  "cogs.monopoly",
 			  "cogs.multipliers",
 			  "cogs.others", 				# removable
 			  "cogs.quests", 
@@ -63,7 +66,7 @@ async def on_interaction(interaction: Interaction):
 	if not await bot.get_cog("Economy").accCheck(interaction.user):
 		await bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		if interaction.data['name'] == 'blackjack':
-			await interaction.send("You can now play blackjack now that you're registered. Please run command again.", ephemeral=True)
+			await interaction.send("You can now play blackjack, now that you're registered. Please run command again.", ephemeral=True)
 			return
 
 	await bot.process_application_commands(interaction)
