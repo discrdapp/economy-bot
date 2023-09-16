@@ -6,7 +6,7 @@ from random import randint
 import cooldowns, difflib
 
 import emojis
-from db import DB, buyableItems, buyableItemNamesList, sellableItems, sellableItemNamesList, usableItemNamesList
+from db import DB, allItems, buyableItems, buyableItemNamesList, sellableItems, sellableItemNamesList
 from cogs.totals import log
 
 
@@ -20,17 +20,31 @@ from cogs.totals import log
 #	Tool
 
 
-class MySource(menus.ListPageSource):
+class ShopPages(menus.ListPageSource):
 	def __init__(self, data):
 		super().__init__(data, per_page=5)
 
 	async def format_page(self, menu, entries):
-		offset = menu.current_page * self.per_page
-
 		embed = nextcord.Embed(color=1768431, title=f"The Casino | Shop")
 
 		for x in range(0, len(entries)):
-			embed.add_field(name=f"{entries[x][1]} {entries[x][8]} ─ {entries[x][4]:,}<:coins:585233801320333313>", value=f"{entries[x][2]}", inline=False)
+			embed.add_field(name=f"{entries[x][1]} {entries[x][8]} ─ {entries[x][4]:,}{emojis.coin}", value=f"{entries[x][2]}", inline=False)
+		
+		embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
+		return embed
+
+class ItemList(menus.ListPageSource):
+	def __init__(self, data):
+		super().__init__(data, per_page=5)
+
+	async def format_page(self, menu, entries):
+		embed = nextcord.Embed(color=1768431, title=f"The Casino | Shop")
+
+		for x in range(0, len(entries)):
+			if entries[x][6] > 0:
+				embed.add_field(name=f"{entries[x][1]} {entries[x][8]} ─ B {entries[x][4]:,}{emojis.coin} | S {entries[x][6]:,}{emojis.coin}", value=f"{entries[x][2]}", inline=False)
+			else:
+				embed.add_field(name=f"{entries[x][1]} {entries[x][8]} ─ {entries[x][4]:,}{emojis.coin}", value=f"{entries[x][2]}", inline=False)
 		
 		embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
 		return embed
@@ -62,10 +76,18 @@ class Shop(commands.Cog):
 	@shop.subcommand()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='list')
 	async def list(self, interaction:Interaction):
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Shop")
-
 		pages = menus.ButtonMenuPages(
-			source=MySource(buyableItems),
+			source=ShopPages(buyableItems),
+			clear_buttons_after=True,
+			style=nextcord.ButtonStyle.primary,
+		)
+		await pages.start(interaction=interaction)
+	
+	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='items')
+	async def items(self, interaction:Interaction):
+		pages = menus.ButtonMenuPages(
+			source=ItemList(allItems),
 			clear_buttons_after=True,
 			style=nextcord.ButtonStyle.primary,
 		)
@@ -145,9 +167,6 @@ class Shop(commands.Cog):
 
 		await interaction.send(embed=embed)
 
-		if theid == 1 or theid == 2:
-			await self.bot.get_cog("Economy").balance(interaction)
-
 	@shop.subcommand()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='sell')
 	async def sell(self, interaction:Interaction, 
@@ -224,10 +243,10 @@ class Shop(commands.Cog):
 			# 20% chance to get 0 - 500 credits
 			choice = randint(0, 100)
 			if choice <= 40: # 50% chance to find random item.
-				itemName, emoji = self.bot.get_cog("Inventory").getRandomItem(3)
+				itemName, itemRarity, itemEmoji = self.bot.get_cog("Inventory").getRandomItem(3)
 				self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, 1, itemName)
-				aan = "an" if itemName in "aeiou" else "a"
-				embed.description += f"You found {aan} {itemName} {emoji}\n"
+				aan = "an" if itemRarity[0].lower() in "aeiou" else "a"
+				embed.description += f"You found {aan} {itemRarity} {itemName} {itemEmoji}\n"
 			elif choice <= 50:
 				amntToAdd = randint(0, 3)
 				embed.description += f"You found {amntToAdd} crates!\n"
