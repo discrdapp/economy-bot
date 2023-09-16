@@ -115,6 +115,35 @@ class Crypto(commands.Cog):
 		embed.description = errorMsg
 		await interaction.send(embed=embed)
 	
+	@crypto.subcommand()
+	@cooldowns.shared_cooldown("crypto")
+	async def miner(self, interaction:Interaction):
+		pass
+	
+	@miner.subcommand()
+	@cooldowns.shared_cooldown("crypto")
+	async def start(self, interaction:Interaction):
+		pass
+
+	@miner.subcommand()
+	@cooldowns.shared_cooldown("crypto")
+	async def stop(self, interaction:Interaction):
+		pass
+
+	@miner.subcommand()
+	@cooldowns.shared_cooldown("crypto")
+	async def upgrade(self, interaction:Interaction, option = nextcord.SlashOption(
+																required=False,
+																name="option", 
+																choices=("Cooler", "Power Supply", "Storage"))):
+		# if miner is on
+		await interaction.send("Your miner must be turned off before you can upgrade it!")
+		return
+	
+		# cooler cools down bitcoin miner to prevent overheating
+		# power supply makes miner last longer
+		# storage increases cap
+	
 
 	@crypto.subcommand()
 	@cooldowns.shared_cooldown("crypto")
