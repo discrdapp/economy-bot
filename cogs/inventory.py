@@ -142,9 +142,13 @@ class Inventory(commands.Cog):
 
 		if itemSelected == "Voter Chip":
 			embed.description = self.bot.get_cog("Multipliers").addMultiplier(interaction.user.id, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=(150*amnt)))
-		if itemSelected == "Dealer Chip" or itemSelected == "Ace of Spades" or itemSelected == "Big Blind Chip":
+		if itemSelected == "Dealer Chip" or itemSelected == "Ace of Spades" or itemSelected == "Big Blind Chip" or itemSelected == "Deck of Cards" or itemSelected == "Three of a Kind":
 			self.addActiveItemToDB(interaction.user, itemSelected, amnt)
-			embed.description = f"{itemSelected} has been activated! Proceed with your blackjack game."
+			if itemSelected != "Three of a Kind":
+				gameName = "Blackjack"
+			else:
+				gameName = "Roulette"
+			embed.description = f"{itemSelected} has been activated! Proceed with your {gameName} game."
 		elif itemSelected == "Magic 8 Ball":
 			text = ""
 			totalAmnt = 0
@@ -172,6 +176,14 @@ class Inventory(commands.Cog):
 			return DB.fetchAll("SELECT Item, Quantity, Type, Description, Emoji \
 		     				FROM Inventory LEFT JOIN Items ON Inventory.Item = Items.Name \
 		     				WHERE DiscordID = ? AND Quantity > 0;", [user.id])
+
+	def getCountForItem(self, user: nextcord.user, item: str):
+		amnt = DB.fetchOne("SELECT Quantity FROM Inventory WHERE DiscordID = ? AND Item = ?;", [user.id, item])
+		
+		if not amnt: 
+			return 0
+		return amnt[0]
+
 
 	# returns the amount of crates and keys a user has
 	def getInventory(self, user: nextcord.user): # grabs all the crates and keys from database
@@ -245,6 +257,17 @@ class Inventory(commands.Cog):
 		elif rarity == 7:
 			return choices(population=[x for x in range(8)], weights=[0.25, 0.12, 0.13, 0.14, 0.11, 0.12, 0.08, 0.05], k=1)[0]
 		print(f"ERROR!!! RARITY IS {rarity}")
+	
+	def getRarityName(self, rarity):
+		if rarity == 0: return "Uncommon"
+		elif rarity == 1: return "Common"
+		elif rarity == 2: return "Unique"
+		elif rarity == 3: return "Rare"
+		elif rarity == 4: return "Mythic"
+		elif rarity == 5: return "Exotic"
+		elif rarity == 6: return "Legendary"
+		elif rarity == 7: return "Artifact"
+		else: "Error. Please report this to PyCord for a reward."
 
 	def getRandomItem(self, rarityToSearch:int=None):
 		if rarityToSearch == None:
@@ -254,15 +277,15 @@ class Inventory(commands.Cog):
 
 		allItems = DB.fetchAll("SELECT * FROM Items WHERE (Type = 'Usable' or TYPE = 'Collectible') and Rarity = ? and (ID < 200 or ID >= 300) ORDER BY Price;", [rarityChosen])
 		
-		itemToGive, itemEmoji = self.getItemFromListBasedOnPrice(allItems)
+		itemName, itemRarity, itemEmoji = self.getItemFromListBasedOnPrice(allItems)
 
-		return itemToGive, itemEmoji
+		return itemName, itemRarity, itemEmoji
 
 	def getItemFromListBasedOnPrice(self, items):
 		# now that we have our chosen rarity... let's get all items of that rarity
 
 		if len(items) == 1:
-			return items[0][1], items[0][8]
+			return items[0][1], self.getRarityName(items[0][7]), items[0][8]
 
 		# count how many unique prices there are (think of it as another form of rarity)
 		# if type(items[0]) == tuple:
@@ -275,18 +298,19 @@ class Inventory(commands.Cog):
 		# randomly choose item. all items will have same rarity & same price
 		itemChosenInList = choice(itemsToChooseFromGivenPrice)
 		
-		return itemChosenInList[1], itemChosenInList[8]
+		return itemChosenInList[1], self.getRarityName(itemChosenInList[7]), itemChosenInList[8]
 
-	async def GiveRandomItem(self, interaction, userId=None):
+	async def GiveRandomItem(self, interaction:Interaction, userId=None):
 		if not userId:
 			userId = interaction.user.id
-		itemToGive, itemEmoji = self.getRandomItem()
+		itemName, itemRarity, itemEmoji = self.getRandomItem()
 			
-		self.addItemToInventory(userId, 1, itemToGive)
+		self.addItemToInventory(userId, 1, itemName)
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Item Found!")
-		aan = "an" if itemToGive in "aeiou" else "a"
-		embed.description = f"You found {aan} {itemToGive} {itemEmoji}"
+		aan = "an" if itemName[0].lower() in "aeiou" else "a"
+		embed.description = f"You found {aan} {itemName} {itemEmoji}"
+		embed.set_footer(text=f"This item is {itemRarity}")
 
 		await interaction.send(embed=embed)
 
