@@ -2,13 +2,14 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import sqlite3
+import sqlite3, datetime
 
 from math import ceil
 from random import randint
 
 import config, emojis
 
+# conn = sqlite3.connect(config.db)
 class DB(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
@@ -68,6 +69,10 @@ class DB(commands.Cog):
 			conn.execute(sql)
 		conn.commit()
 		conn.close()
+	
+	@staticmethod
+	def ConvertDatetimeToSQLTime(time:datetime.datetime):
+		return time.strftime('%Y-%d-%m %H:%M:%S')
 
 	@staticmethod
 	async def calculateXP(self, interaction:Interaction, initBal, amntBet, embed, gameID):
@@ -82,7 +87,7 @@ class DB(commands.Cog):
 		return embed
 
 	@staticmethod
-	async def addProfitAndBalFields(self, interaction, profit:int, embed, redEmbed=False):
+	async def addProfitAndBalFields(self, interaction:Interaction, profit:int, embed, redEmbed=False):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 
