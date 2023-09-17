@@ -32,12 +32,17 @@ class Button(nextcord.ui.Button['PokerView']):
 				return
 			view.amntbet += view.initialBet
 			if await view.FlipCards(interaction): return
-			await view.UpdateMsg(interaction)
 
+		elif self.label == "Check":
+			if await view.FlipCards(interaction): return
 
 		elif self.label == "Fold":
-			await view.GameOver(interaction, folded=True)
-		elif self.label == "Check":
+			await view.GameOver(interaction, "Folded.", folded=True)
+			return
+		await view.UpdateMsg(interaction)
+		try:
+			await interaction.response.defer()
+		except:
 			pass
 
 class PokerView(nextcord.ui.View):
@@ -68,6 +73,8 @@ class PokerView(nextcord.ui.View):
 
 		self.foldCheckButton = Button(self.bot, "Fold", nextcord.ButtonStyle.red)
 		self.add_item(self.foldCheckButton)
+
+		# self.foldCheckButton = Button(self.bot, "Check", nextcord.ButtonStyle.red)
 	
 	# async def on_timeout(self):
 	# 	self.clear_items()
@@ -80,6 +87,11 @@ class PokerView(nextcord.ui.View):
 			for x in range(3):
 				self.riverCards[x] = self.TakeCard()
 			self.cardsDealt = 3
+			self.foldCheckButton.label = "Check"
+			self.foldCheckButton.style = nextcord.ButtonStyle.green
+			self.clear_items()
+			self.add_item(self.betButton)
+			self.add_item(self.foldCheckButton)
 		elif self.cardsDealt == 3:
 			self.riverCards.append(self.TakeCard())
 			self.cardsDealt = 4
@@ -94,16 +106,16 @@ class PokerView(nextcord.ui.View):
 		self.embed.set_field_at(0, name = f"{interaction.user.display_name}'s cards", value = f"{self.GetCardsString(self.pCards)}", inline=False)
 		self.embed.set_field_at(1, name = f"_ _\nRiver Cards", value = f"{self.GetCardsString(self.riverCards)}", inline=False)
 		self.embed.set_field_at(2, name = f"_ _\n{self.bot.user.name}'s cards", value = f":question: :question:", inline=False)
-
+		self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
 		await self.msg.edit(view=self, embed=self.embed)
 
 	def TakeCard(self):
 		# if all 52 cards have been used, reset the deck
 		if len(self.cards) == 0:
-			self.cards = ["♣ A", "♣ 2", "♣ 3", "♣ 4", "♣ 5", "♣ 6", "♣ 7", "♣ 8", "♣ 9", "♣ 10", "♣ Jack", "♣ Queen", "♣ King",
-						  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
-						  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
-						  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
+			self.cards = ["♣ A", "♣ 2", "♣ 3", "♣ 4", "♣ 5", "♣ 6", "♣ 7", "♣ 8", "♣ 9", "♣ 10", "♣ J", "♣ Q", "♣ K",
+						  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ J", "♦ Q", "♦ K",
+						  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ J", "♥ Q", "♥ K",
+						  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ J", "♠ Q", "♠ K"]
 			shuffle(self.cards)
 
 		drawnCard = self.cards.pop()
@@ -114,7 +126,7 @@ class PokerView(nextcord.ui.View):
 	def GetCardsString(self, cards):
 		msg = ""
 		for x in cards:
-			msg += f"{x} "
+			msg += f"{x} | "
 		return msg
 
 
@@ -127,37 +139,29 @@ class PokerView(nextcord.ui.View):
 
 		self.PlayerDrawCards()
 
+
 		self.embed.description = f"Your bet: {self.amntbet}{emojis.coin}"
 		self.embed.add_field(name = f"{interaction.user.display_name}'s cards", value = f"{self.GetCardsString(self.pCards)}", inline=False)
 		self.embed.add_field(name = f"_ _\nRiver Cards", value = f"{self.GetCardsString(self.riverCards)}", inline=False)
 		self.embed.add_field(name = f"_ _\n{self.bot.user.name}'s cards", value = f":question: :question:", inline=False)
-
-		self.msg = await interaction.send(view=self, embed=self.embed)
+		self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+		
+		# user is all in, so cannot place initial bet after anne. 
+		if await self.bot.get_cog("Economy").getBalance(interaction.user) < self.amntbet:
+			# start game, but flip all cards and end it right after
+			await self.FlipCards(interaction)
+			await asyncio.sleep(0.6)
+			await self.FlipCards(interaction)
+			await asyncio.sleep(0.6)
+			await self.FlipCards(interaction)
+		else:
+			self.msg = await interaction.send(view=self, embed=self.embed)
 
 	# pass in either dealer or player hand
 	def GetBestHand(self, isPlayer:bool):
-		def ConvertToReadableFormat(cards):
-			readable = list()
-			for card in cards:
-				currCard = ""
-				card = card.split()
-
-				if card[1] == "10":
-					currCard += "T"
-				elif card[1] == "Jack":
-					currCard += "J"
-				elif card[1] == "Queen":
-					currCard += "Q"
-				elif card[1] == "King":
-					currCard += "K"
-				else:
-					currCard += card[1]
-				currCard += card[0]
-				readable.append(currCard)
-			return readable
-
 		def num_of_kind(cards):
-			return Counter(c[0] for c in cards)
+			count = Counter(c[-1] for c in cards)
+			return count
 
 		def count_pairs(cards):
 			return sum(i > 1 for i in num_of_kind(cards).values())
@@ -166,27 +170,27 @@ class PokerView(nextcord.ui.View):
 			return max(num_of_kind(cards).values())
 
 		def is_straight(cards):
-			values = [c[0] for c in cards]
+			values = [c[-1] for c in cards]
 			index = "A23456789TJQKA"["K" in values:].index
 			indices = sorted(index(v) for v in values)
-			return all(x == y for x, y in enumerate(indices, indices[0]))
+			return all(x == y for x, y in enumerate(indices, indices[-1]))
 
 		def is_flush(cards):
-			suit_pop = Counter(c[1] for c in cards)
+			suit_pop = Counter(c[0] for c in cards)
 			return any(s > 4 for s in suit_pop.values())
 
 		def straight_sort(cards):
 			values = [c[0] for c in cards]
 			index = "A23456789TJQKA"["K" in values:].index
-			return sorted(cards, key=lambda x:index(x[0]), reverse=True)
+			return sorted(cards, key=lambda x:index(x[-1]), reverse=True)
 
 		def flush_sort(cards):
-			suit_pop = Counter(c[1] for c in cards)
-			return sorted(cards, key=lambda x: suit_pop[x[1]], reverse=True)
+			suit_pop = Counter(c[0] for c in cards)
+			return sorted(cards, key=lambda x: suit_pop[x[0]], reverse=True)
 
 		def pair_sort(cards):
 			num = num_of_kind(cards)
-			return sorted(cards, key=lambda x: num[x[0]], reverse=True)
+			return sorted(cards, key=lambda x: num[x[-1]], reverse=True)
 
 		def score_hand(cards):
 			pairs = count_pairs(cards)
@@ -210,48 +214,75 @@ class PokerView(nextcord.ui.View):
 				hand_score, cards = 3, pair_sort(cards)
 			else:
 				hand_score, cards = pairs, pair_sort(cards)
-			return hand_score
 
+			print(f"cards is {cards}")
+			return cards, hand_score
+
+		tempCards = self.riverCards.copy()
 		if isPlayer:
-			tempCards = self.pCards + self.riverCards
+			tempCards += self.pCards.copy()
 		else:
-			tempCards = self.dCards + self.riverCards
+			tempCards += self.dCards.copy()
 
-		cards = ConvertToReadableFormat(tempCards)
-		print(cards)
-		cards = max(list(combinations(cards, 5)), key=score_hand)
-		score = score_hand(cards)
+		cards = max(list(combinations(tempCards, 7)), key=score_hand)
+		cards, score = score_hand(cards)
 
-		return score
+		return cards, score
 
 
 	async def AfterFlop(self, interaction:Interaction):
 		self.OpponentDrawCards()
 
-		playerResult = self.GetBestHand(True)
-		dealerResult = self.GetBestHand(False)
+		pSorted, playerResult = self.GetBestHand(True)
+		dSorted, dealerResult = self.GetBestHand(False)
+
+		index = "23456789TJQKA"
+		print(pSorted)
+		print(dSorted)
+
+		pMsgAddon = ""
+		dMsgAddon = ""
+		if self.scores[playerResult] == "High Card" or self.scores[playerResult] == "Pair":
+			pMsgAddon = f" of {pSorted[0][-1]}"
+		if self.scores[dealerResult] == "High Card" or self.scores[dealerResult] == "Pair":
+			dMsgAddon = f" of {dSorted[0][-1]}"
 
 		if playerResult > dealerResult:
-			await self.GameOver(interaction, playerResult, dealerResult, winner=True)
+			msg = f"**Player wins!**\nPlayer had {self.scores[playerResult]}{pMsgAddon}.\nOpponent had {self.scores[dealerResult]}{dMsgAddon}"
+			await self.GameOver(interaction, msg, winner=True)
 		elif playerResult < dealerResult:
-			await self.GameOver(interaction, playerResult, dealerResult, winner=False)
+			msg = f"**Player lost.**\nOpponent had {self.scores[dealerResult]}{dMsgAddon}.\nPlayer had {self.scores[playerResult]}{pMsgAddon}"
+			await self.GameOver(interaction, msg, winner=False)
 		else:
-			print(f"same scores? player has {playerResult} dealer is {dealerResult}")
+			index = "23456789TJQKA"
+			pScore = index.find(pSorted[0][-1])
+			dScore = index.find(dSorted[0][-1])
+			if pScore == dScore:
+				msg = f"**It is a tie.**\nBoth have {self.scores[playerResult]}{pMsgAddon}"
+				await self.GameOver(interaction, msg, tie=True)
+			elif pScore > dScore:
+				msg = f"**Player wins!**\nBoth have {self.scores[playerResult]}, but player has {pSorted[0][-1]} high\nDealer only has {dSorted[0][-1]} high"
+				await self.GameOver(interaction, msg, winner=True)
+			else:
+				msg = f"**Player lost.**\nBoth have {self.scores[playerResult]}, but dealer has {dSorted[0][-1]} high\nPlayer only has {pSorted[0][-1]} high"
+				await self.GameOver(interaction, msg, winner=False)
 
-
-	async def GameOver(self, interaction:Interaction, pResult, dResult, winner:bool=False, folded:bool=False):
+	async def GameOver(self, interaction:Interaction, msg, winner:bool=False, folded:bool=False, tie:bool=False):
 		if folded:
 			moneyToAdd = 0
 		else: 
-			if winner:
+			if tie:
+				moneyToAdd = self.amntbet
+			elif winner:
 				moneyToAdd = self.amntbet * 2
-				msg = f"Player wins with {self.scores[pResult]}. Opponent had {self.scores[dResult]}"
 			else:
 				moneyToAdd = 0
-				msg = f"Player lost. Opponent has {self.scores[dResult]} while player has {self.scores[pResult]}"
 		
-			self.embed.description = msg	
+			self.embed.description = msg
 		
+		self.embed.set_field_at(1, name = f"_ _\nRiver Cards", value = f"{self.GetCardsString(self.riverCards)}", inline=False)
+		self.embed.set_field_at(2, name = f"_ _\n{self.bot.user.name}'s cards", value = f"{self.GetCardsString(self.dCards)}", inline=False)
+
 		profitInt = moneyToAdd - self.amntbet
 
 		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="Poker", amntBet=self.amntbet)
@@ -266,7 +297,10 @@ class PokerView(nextcord.ui.View):
 
 		# await interaction.send(content=f"{interaction.user.mention}", file=file, embed=self.embed)
 
-		await self.msg.edit(view=None, embed=self.embed)
+		if self.msg:
+			await self.msg.edit(view=None, embed=self.embed)
+		else:
+			await interaction.send(embed=self.embed)
 
 	def PlayerDrawCards(self):
 		for _ in range(2):
@@ -275,19 +309,17 @@ class PokerView(nextcord.ui.View):
 	
 	def OpponentDrawCards(self):
 		for _ in range(2):
-			print("adding card??")
 			card = self.TakeCard()
 			self.dCards.append(card)
-		print(f"11{self.dCards}")
 
 
 class Poker(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
-		self.cards = ["♣ A", "♣ 2", "♣ 3", "♣ 4", "♣ 5", "♣ 6", "♣ 7", "♣ 8", "♣ 9", "♣ 10", "♣ Jack", "♣ Queen", "♣ King",
-					  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ 10", "♦ Jack", "♦ Queen", "♦ King",
-					  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ 10", "♥ Jack", "♥ Queen", "♥ King",
-					  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ 10", "♠ Jack", "♠ Queen", "♠ King"]
+		self.cards = ["♣ A", "♣ 2", "♣ 3", "♣ 4", "♣ 5", "♣ 6", "♣ 7", "♣ 8", "♣ 9", "♣ T", "♣ J", "♣ Q", "♣ K",
+					  "♦ A", "♦ 2", "♦ 3", "♦ 4", "♦ 5", "♦ 6", "♦ 7", "♦ 8", "♦ 9", "♦ T", "♦ J", "♦ Q", "♦ K",
+					  "♥ A", "♥ 2", "♥ 3", "♥ 4", "♥ 5", "♥ 6", "♥ 7", "♥ 8", "♥ 9", "♥ T", "♥ J", "♥ Q", "♥ K",
+					  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ T", "♠ J", "♠ Q", "♠ K"]
 		shuffle(self.cards)
 
 	@nextcord.slash_command(description="Play BlackJack!")
