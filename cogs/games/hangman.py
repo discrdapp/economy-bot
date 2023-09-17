@@ -19,6 +19,12 @@ class Modal(nextcord.ui.Modal):
 		self.add_item(nextcord.ui.TextInput("Enter the phrase below", placeholder="It is not case-sensitive"))
 	
 	async def callback(self, interaction:Interaction):
+		assert self.view is not None
+		view: View = self.view
+		if interaction.user.id != view.userId:
+			await interaction.send(f"This is not your game", ephemeral=True)
+			return
+
 		await interaction.response.defer()
 		self.stop()
 
@@ -30,17 +36,21 @@ class Button(nextcord.ui.Button):
 		assert self.view is not None
 		view: View = self.view
 
+		if interaction.user.id != view.userId:
+			await interaction.send(f"This is not your game", ephemeral=True)
+			return
+
+
 		await view.GuessThePhrase(interaction)
 
 
 
 class View(nextcord.ui.View):
-	def __init__(self, bot:commands.bot.Bot, userId, amntbet):
+	def __init__(self, bot:commands.bot.Bot, userId):
 		super().__init__()
 		self.bot = bot
 
 		self.userId = userId
-		self.amntbet = amntbet
 		self.interaction = None
 		self.embed = None
 
@@ -50,18 +60,18 @@ class View(nextcord.ui.View):
 
 		self.modal = Modal()
 
-		# self.sentence = random.choice(["Vote for us to get a usable multiplier",
-		# 						 "I am the best bot out there",
-		# 						 "Make sure to check out all my games",
-		# 						 "Thank you for choosing me",
-		# 						 "Invest in your favorite stocks today",
-		# 						 "The spooky season is among us",
-		# 						 "I do not have a gambling problem",
-		# 						 "Counting cards should be allowed",
-		#						 "Blackjack is my favorite game"
-		# 						 ""])
+		self.sentence = random.choice(["vote for us to get a usable multiplier",
+								 "i am the best bot out there",
+								 "make sure to check out all my games",
+								 "thank you for choosing me",
+								 "invest in your favorite stocks today",
+								 "the spooky season is among us",
+								 "i do not have a gambling problem",
+								 "counting cards should be allowed",
+								 "blackjack is my favorite game"
+								 ""])
 
-		self.sentence = "a bc"
+		# self.sentence = "a bc"
 		
 		self.hiddenMsg = ""
 		for letter in self.sentence:
@@ -135,32 +145,37 @@ class View(nextcord.ui.View):
 		
 		if won:
 			self.embed.description = f"{self.attempts} attempts left\n{GetPrintableMsg(self.sentence)}\n\nYou win!"
-			moneyToAdd = round(self.amntbet * 1.5)
+			moneyToAdd = 2500
+			self.embed.color = nextcord.Color(0x23f518)
+			msg = f"+2,500{emojis.coin}"
 		else:
-			moneyToAdd = 0
 			self.embed.description = f"{self.attempts} attempts left\n{GetPrintableMsg(self.hiddenMsg)}\n\nYou ran out of attempts!"
-		profitInt = moneyToAdd - self.amntbet
+			moneyToAdd = 0
+			self.embed.color = nextcord.Color(0xff2020)
+			msg = f"0{emojis.coin}"
 
-
-
-		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="Hangman", amntBet=self.amntbet)
+		gameID = None
+		if moneyToAdd > 0:
+			gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=False, activityName="Hangman", amntBet=0)
 		
-		self.embed = await DB.addProfitAndBalFields(self, interaction, profitInt, self.embed)
-
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		self.embed = await DB.calculateXP(self, interaction, balance - profitInt, self.amntbet, self.embed, gameID)
+
+		self.embed.add_field(name="Money Added", value=msg, inline=True)
+		self.embed.add_field(name="Credits", value=f"{balance:,}{emojis.coin}", inline=True)
+
+		if gameID:
+			self.embed.set_footer(text=f"GameID: {gameID}")
 
 		await self.interaction.edit(view=self, embed=self.embed)
 	
 	async def Start(self, interaction:Interaction):
-		
 		self.RefreshSelect()
 		self.add_item(self.select)
 		self.add_item(self.button)
 
 		self.embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Hangman")
 
-		self.embed.description = f"{self.attempts} attempts left\n{self.hiddenMsg}"
+		self.embed.description = f"{self.attempts} attempts left\n{GetPrintableMsg(self.hiddenMsg)}"
 
 		self.interaction = await interaction.send(view=self, embed=self.embed)
 
@@ -174,15 +189,9 @@ class Hangman(commands.Cog):
 
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='crash')
-	async def hangman(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 100")): # actual command
-		if amntbet < 100:
-			raise Exception("minBet 100")
-
-		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
-			raise Exception("tooPoor")
-
-		view = View(self.bot, interaction.user.id, amntbet)
+	@cooldowns.cooldown(1, 300, bucket=cooldowns.SlashBucket.author, cooldown_id='hangman')
+	async def hangman(self, interaction:Interaction, ):
+		view = View(self.bot, interaction.user.id)
 		await view.Start(interaction)
 
 
