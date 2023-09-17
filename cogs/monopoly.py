@@ -13,8 +13,8 @@ from config import channelIDForMonopoly
 gameStartingTimes = list()
 gameEndingTimes = list()
 for x in range(0, 24, 2):
-	gameStartingTimes.append(datetime.time(hour=x, minute=36, second=0))
-	gameEndingTimes.append(datetime.time(hour=x, minute=50, second=0))
+	gameStartingTimes.append(datetime.time(hour=x, minute=0, second=0))
+	gameEndingTimes.append(datetime.time(hour=x, minute=40, second=0))
 
 
 class Monopoly(commands.Cog):
@@ -123,8 +123,8 @@ class Monopoly(commands.Cog):
 			self.EndGame.start()
 
 	# runs every 2 hours, on the hour
-	# @tasks.loop(time=gameStartingTimes)
-	@tasks.loop(minutes=30)
+	@tasks.loop(time=gameStartingTimes)
+	# @tasks.loop(minutes=30)
 	async def StartGame(self):
 		try:
 			self.isGameInProgress = True
@@ -153,12 +153,12 @@ class Monopoly(commands.Cog):
 				sqlStatement = sqlStatement[:-2] + ");"
 				DB.delete(sqlStatement)
 		except Exception as e:
-			print(e)
+			print(f"error in StartGame monopoly:\n{e}")
 
 	
 	# runs every 2 hours, 00:40 after the hour
-	# @tasks.loop(time=gameEndingTimes)
-	@tasks.loop(minutes=30)
+	@tasks.loop(time=gameEndingTimes)
+	# @tasks.loop(minutes=30)
 	async def EndGame(self):
 		self.isGameInProgress = False
 		try:
@@ -212,7 +212,7 @@ class Monopoly(commands.Cog):
 			await chnl.send(embed=embed)
 
 		except Exception as e:
-			print(e)
+			print(f"error in StopGame monopoly:\n{e}")
 
 
 	def GetGameEndTimestamp(self):
@@ -267,7 +267,6 @@ class Monopoly(commands.Cog):
 			embed.description = "You had no people who played in the previous game"
 			await interaction.send(embed=embed)
 			return
-		print(data)
 		
 		msg = ""
 		for count in range(len(data)):
@@ -346,9 +345,9 @@ class Monopoly(commands.Cog):
 	@hire.subcommand()
 	@cooldowns.shared_cooldown("monopoly")
 	async def person(self, interaction:Interaction, amnt:int):
-		# if self.isGameInProgress:
-		# 	await interaction.send(f"You cannot hire people while a game is in progress. Please check back <t:{int(self.EndGame.next_iteration.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>")
-		# 	return
+		if self.isGameInProgress:
+			await interaction.send(f"You cannot hire people while a game is in progress. Please check back <t:{int(self.EndGame.next_iteration.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>")
+			return
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Monopoly | Help")
 
@@ -367,7 +366,7 @@ class Monopoly(commands.Cog):
 
 		# DB.update("UPDATE Monopoly SET PeopleCount = PeopleCount + ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
 
-		expires = datetime.datetime.now() + datetime.timedelta(minutes=2)
+		expires = datetime.datetime.now() + datetime.timedelta(days=2)
 		count = peopleCount + 1
 		for _ in range(amnt):
 			name = choice(["Zeus", "Apollo", "Heracles", "Poseidon", "Hermes", "Ares", "Hephaestus", "Hades", "Chronos", 
