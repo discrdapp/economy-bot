@@ -36,15 +36,26 @@ class ShopPages(menus.ListPageSource):
 class ItemList(menus.ListPageSource):
 	def __init__(self, data):
 		super().__init__(data, per_page=5)
+		
 
 	async def format_page(self, menu, entries):
-		embed = nextcord.Embed(color=1768431, title=f"The Casino | Shop")
+		embed = nextcord.Embed(color=1768431, title=f"The Casino | Item List")
 
 		for x in range(0, len(entries)):
+			if entries[x][7] == 0: rarity = "Uncommon"
+			elif entries[x][7] == 1: rarity = "Common"
+			elif entries[x][7] == 2: rarity = "Unique"
+			elif entries[x][7] == 3: rarity = "Rare"
+			elif entries[x][7] == 4: rarity = "Mythic"
+			elif entries[x][7] == 5: rarity = "Exotic"
+			elif entries[x][7] == 6: rarity = "Legendary"
+			elif entries[x][7] == 7: rarity = "Artifact"
+			else: rarity = "Error. Please report this to PyCord for a reward."
 			if entries[x][6] > 0:
-				embed.add_field(name=f"{entries[x][1]} {entries[x][8]} ─ B {entries[x][4]:,}{emojis.coin} | S {entries[x][6]:,}{emojis.coin}", value=f"{entries[x][2]}", inline=False)
+				name = f"{entries[x][1]} {entries[x][8]} ─ B {entries[x][4]:,}{emojis.coin} | S {entries[x][6]:,}{emojis.coin}"
 			else:
-				embed.add_field(name=f"{entries[x][1]} {entries[x][8]} ─ {entries[x][4]:,}{emojis.coin}", value=f"{entries[x][2]}", inline=False)
+				name = f"{entries[x][1]} {entries[x][8]} ─ {entries[x][4]:,}{emojis.coin}"
+			embed.add_field(name=name, value=f"{rarity}\n{entries[x][2]}", inline=False)
 		
 		embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
 		return embed
@@ -139,6 +150,14 @@ class Shop(commands.Cog):
 			dailyReward = await self.bot.get_cog("Daily").getDailyReward(interaction)
 			if dailyReward + (amnt*1000) > 100000:
 				embed.description = f"Sorry, but the max Daily Reward allowed is 100,000{emojis.coin}."
+				await interaction.send(embed=embed)
+				return
+		
+		
+		if theid == 60:
+			tableCount = self.bot.get_cog("Inventory").getCountForItem(interaction.user, 'Table')
+			if amnt + tableCount > 10:
+				embed.description = f"You can only own 10 tables.\nYou are trying to buy {amnt}, but you already own {tableCount}"
 				await interaction.send(embed=embed)
 				return
 
