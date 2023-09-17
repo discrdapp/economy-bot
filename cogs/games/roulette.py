@@ -224,11 +224,10 @@ class View(nextcord.ui.View):
 		red = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
 		black = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35]
 
-		# 75% chance to pick 1
+		# 70% chance to pick a red
 		if self.usedThreeOfAKind:
-			chosenList = choices(population=[red, black], weights=[0.75, 0.25], k=1)[0]
+			chosenList = choices(population=[red, black], weights=[0.70, 0.30], k=1)[0]
 			n = choice(chosenList)
-			print(f"75% chance and chose red: {n in red}")
 		else:
 			n = randrange(0, 37)
 		
