@@ -3,8 +3,9 @@ from nextcord.ext import commands, tasks
 from nextcord import Interaction
 
 from math import floor, ceil
+from random import randrange
 
-import cooldowns, requests
+import cooldowns, requests, datetime
 
 import config, emojis
 from db import DB
@@ -12,6 +13,11 @@ from db import DB
 import json
 
 cryptos = ["Bitcoin", "Ethereum", "Litecoin"]
+
+miningProcessTimes = list()
+for x in range(0, 24):
+	# every hour:30, ex 2:30, 3:30, 4:30
+	miningProcessTimes.append(datetime.time(hour=x, minute=30, second=0))
 
 class Crypto(commands.Cog):
 	def __init__(self, bot):
@@ -36,6 +42,22 @@ class Crypto(commands.Cog):
 
 
 	cooldowns.define_shared_cooldown(1, 7, cooldowns.SlashBucket.author, cooldown_id="crypto")
+
+	@tasks.loop(time=miningProcessTimes)
+	async def ProcessCryptoMining():
+		# between 150 - 205 an hour
+		hourlyAmnt = randrange(150, 205)
+
+		# get crypto value.. delete when ready
+		# minedBTCAmnt = hourlyAmnt/self.bitcoinPrice
+		# minedLTCAmnt = hourlyAmnt/self.litecoinPrice
+		# minedETCAmnt = hourlyAmnt/self.ethereumPrice
+
+		DB.update("""UPDATE CryptoMiner SET CryptoToCollect = CASE
+			WHEN CryptoToCollect + ? > Storage THEN Storage
+			ELSE CryptoToCollect + ? END 
+			WHERE isMining = 1 AND CryptoToCollect < Storage;""", [hourlyAmnt, hourlyAmnt])
+
 
 	@tasks.loop(minutes=10)
 	async def UpdateCryptoPrices(self):
@@ -62,13 +84,15 @@ class Crypto(commands.Cog):
 			if self.bitcoinPrice != -1 and self.ethereumPrice != -1 and self.litecoinPrice != -1:
 				break
 
-	def GetBalance(self, discordID, crypto):
-		balance = DB.fetchOne(f"SELECT Quantity FROM Crypto WHERE DiscordID = ? AND Name = ?;", [discordID, crypto])[0]
-		return balance
-	
-	def GetAllBalances(self, discordID):
-		balances = DB.fetchAll(f"SELECT Name, Quantity FROM Crypto WHERE DiscordID = ?;", [discordID])
-		return balances
+	def GetBalance(self, discordID, crypto=None):
+		if crypto:
+			balance = DB.fetchOne(f"SELECT Quantity FROM Crypto WHERE DiscordID = ? AND Name = ?;", [discordID, crypto])
+			if not balance:
+				return 0
+			return balance[0]
+		else:
+			balances = DB.fetchAll(f"SELECT Name, Quantity FROM Crypto WHERE DiscordID = ?;", [discordID])
+			return balances
 
 
 	def AddCrypto(self, discordId, crypto, quantity):
@@ -84,7 +108,7 @@ class Crypto(commands.Cog):
 	@crypto.subcommand()
 	@cooldowns.shared_cooldown("crypto")
 	async def prices(self, interaction=Interaction):
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto")
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Prices")
 		msg = ""
 
 		if self.bitcoin24hrChange > 0:
@@ -122,34 +146,130 @@ class Crypto(commands.Cog):
 	
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("crypto")
-	async def start(self, interaction:Interaction):
-		pass
+	async def start(self, interaction:Interaction, id=nextcord.SlashOption(choices = [str(x) for x in range(1, 4)])):
+		doesExist = DB.fetchOne("SELECT count(1) FROM CryptoMiner WHERE DiscordID = ? AND ID = ? AND isMining = 1", [interaction.user.id, id])
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Start")
+		if not doesExist:
+			embed.description = "Cannot find a miner with that ID that is currently off"
+			await interaction.send(embed=embed)
+			return
+
+		DB.update("UPDATE CryptoMiner SET isMining = 1 WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
+		embed.description = f"Successfully started up crypto miner with ID#{id}"
+
+		await interaction.send(embed=embed)
 
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("crypto")
-	async def stop(self, interaction:Interaction):
-		pass
+	async def stop(self, interaction:Interaction, id=nextcord.SlashOption(choices = [str(x) for x in range(1, 4)])):
+		doesExist = DB.fetchOne("SELECT count(1) FROM CryptoMiner WHERE DiscordID = ? AND ID = ? AND isMining = 0", [interaction.user.id, id])
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Stop")
+		if not doesExist:
+			embed.description = "Cannot find a miner with that ID that is currently on"
+			await interaction.send(embed=embed)
+			return
+			
+		DB.update("UPDATE CryptoMiner SET isMining = 0 WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
+		embed.description = f"Successfully stopped with ID#{id}"
+
+		await interaction.send(embed=embed)
 
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("crypto")
-	async def upgrade(self, interaction:Interaction, option = nextcord.SlashOption(
-																required=False,
-																name="option", 
-																choices=("Cooler", "Power Supply", "Storage"))):
-		# if miner is on
+	async def upgrade(self, interaction:Interaction, 
+				   id = nextcord.SlashOption(choices=[str(x) for x in range(3)]),
+				   option = nextcord.SlashOption(
+						required=False,
+						name="option", 
+						choices=("Storage", "Speed"))):
+
 		await interaction.send("Your miner must be turned off before you can upgrade it!")
 		return
-	
+
 		# cooler cools down bitcoin miner to prevent overheating
 		# power supply makes miner last longer
 		# storage increases cap
-	
+
+	@miner.subcommand()
+	@cooldowns.shared_cooldown("crypto")
+	async def status(self, interaction:Interaction):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Status")
+		cryptoMiners = DB.fetchAll("SELECT ID, CryptoName, CryptoToCollect, isMining FROM CryptoMiner WHERE DiscordID = ? ORDER BY ID;", [interaction.user.id])
+
+		if not cryptoMiners:
+			embed.description = "You have no crypto miners"
+			return
+
+		statusMsg = ""
+		for cryptoMiner in cryptoMiners:
+			mining = "ON" if cryptoMiner[3] == 1 else "OFF"
+			embed.add_field(name=f"Miner #{cryptoMiner[0]} ({mining})", value=f"Mining {cryptoMiner[1]}\n{cryptoMiner[2]} available")
+
+		await interaction.send(embed=embed)
+
+	@miner.subcommand()
+	@cooldowns.shared_cooldown("crypto")
+	async def edit(self, interaction:Interaction):
+		pass
+
+	@miner.subcommand()
+	@cooldowns.shared_cooldown("crypto")
+	async def setcrypto(self, interaction:Interaction, id = nextcord.SlashOption(choices=[str(x) for x in range(1, 4)]), choice=nextcord.SlashOption(choices=(["Bitcoin", "Litecoin", "Ethereum"]))):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Edit | CryptoCurrency")
+		cryptoMiner = DB.fetchOne("SELECT CryptoName, isMining, CryptoToCollect FROM CryptoMiner WHERE DiscordID = ? AND ID = ?;", [interaction.user.id, id])
+
+		if cryptoMiner[1] == 1:
+			embed.description = f"You cannot change the crypto miner while it is on. \nPlease first do /miner stop {id} and make sure you withdraw your funds"
+			await interaction.send(embed=embed)
+			return
+		if cryptoMiner[0] == choice:
+			embed.description = f"Your bitcoin miner ID#{id} is already mining {choice}. Nothing was changed."
+			await interaction.send(embed=embed)
+			return
+		if cryptoMiner[2] != 0:
+			embed.description = f"You cannot change this while you have crypto stored in the miner.\nPlease withdraw it and try again"
+			await interaction.send(embed=embed)
+			return
+		
+		DB.update("UPDATE CryptoMiner SET CryptoName = ? WHERE ID = ? AND DiscordID = ?", [choice, id, interaction.user.id])
+
+
+	@miner.subcommand()
+	@cooldowns.shared_cooldown("crypto")
+	async def withdraw(self, interaction:Interaction):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Withdraw")
+		balances = DB.fetchAll("SELECT CryptoName, SUM(CryptoToCollect) FROM CryptoMiner WHERE DiscordID = ? AND IsMining = 0 AND CryptoToCollect >= 0.1 GROUP BY CryptoName;", [interaction.user.id])
+
+		if not balances:
+			embed.description = "You must have miners, and they must be off for you to withdraw.\nYou must also have at least 0.1 crypto in the miner to withdraw"
+			await interaction.send(embed=embed)
+			return
+
+		withdrewMsg = "Successfully withdrew:\n"
+		for crypto in balances:
+			DB.insert('INSERT OR IGNORE INTO Crypto(DiscordID, Name, Quantity) VALUES (?, ?, 0);', [interaction.user.id, crypto[0]])
+			DB.update('UPDATE Crypto SET Quantity = ? WHERE DiscordID = ? AND Name = ?', [crypto[1], interaction.user.id, crypto[0]])
+
+			DB.update('UPDATE CryptoMiner SET CryptoToCollect = 0 WHERE DiscordID = ? AND isMining = 0 AND CryptoToCollect >= 0.1', [interaction.user.id])
+
+			if crypto[0] == "Bitcoin":
+				emoji = emojis.bitcoinEmoji
+			elif crypto[0] == "Litecoin":
+				emoji = emojis.litecoinEmoji
+			elif crypto[0] == "Ethereum":
+				emoji = emojis.ethereumEmoji
+			withdrewMsg += f"{crypto[1]} {emoji}\n"
+
+		embed.description = withdrewMsg
+
+		await interaction.send(embed=embed)
+
 
 	@crypto.subcommand()
 	@cooldowns.shared_cooldown("crypto")
 	async def wallet(self, interaction:Interaction):
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto")
-		balances = self.GetAllBalances(interaction.user.id)
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Wallet")
+		balances = self.GetBalance(interaction.user.id)
 
 		if not balances:
 			embed.description = "You have no crypto"
@@ -167,11 +287,11 @@ class Crypto(commands.Cog):
 			elif coin[0] == "Ethereum":
 				coinPrice = self.ethereumPrice
 				emoji = emojis.ethereumEmoji
-			
+
 			worth = floor(coin[1] * coinPrice)
 			total += worth
 			balanceText += f"{coin[1]:,} {emoji} _ _ \t _ _ ({worth:,} {emojis.coin})\n"
-		
+
 		embed.description = balanceText
 		embed.description += "-----------------------\n"
 		embed.description += "**Total**\n"
@@ -182,7 +302,7 @@ class Crypto(commands.Cog):
 	@crypto.subcommand()
 	@cooldowns.shared_cooldown("crypto")
 	async def buy(self, interaction:Interaction, crypto = nextcord.SlashOption(required=True, choices=cryptos), amnt:float=1.0):
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto")
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Buy")
 
 		if amnt <= 0:
 			await self.ResetCooldownSendEmbed(interaction, "You must enter an amount greater than 0.", embed)
@@ -191,13 +311,13 @@ class Crypto(commands.Cog):
 		if amnt < self.minAmountToBuy:
 			await self.ResetCooldownSendEmbed(interaction, f"Minimum amount of crypto you're allowed to buy is {self.minAmountToBuy}", embed)
 			return
-		
+
 		if "." in str(amnt):
 			decimalPlaces = len(str(amnt).split(".")[1])
 			if decimalPlaces > 1:
 				await self.ResetCooldownSendEmbed(interaction, f"You can only use **one** decimal place (ex: 0.5), you used {decimalPlaces}.", embed)
 				return
-		
+
 		if crypto == "Bitcoin":
 			coinPrice = self.bitcoinPrice
 			emoji = emojis.bitcoinEmoji
@@ -208,10 +328,10 @@ class Crypto(commands.Cog):
 			coinPrice = self.ethereumPrice
 			emoji = emojis.ethereumEmoji
 
-		
+
 		cost = ceil(amnt * coinPrice)
 
-		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)	
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if balance < cost:
 			await self.ResetCooldownSendEmbed(interaction, f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
 			return
@@ -226,11 +346,14 @@ class Crypto(commands.Cog):
 	@crypto.subcommand()
 	@cooldowns.shared_cooldown("crypto")
 	async def sell(self, interaction:Interaction, crypto=nextcord.SlashOption(required=True, choices=cryptos), amnt:float=1):
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto")
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Sell")
 		balance = self.GetBalance(interaction.user.id, crypto)
 
 		if amnt <= 0:
 			await self.ResetCooldownSendEmbed(interaction, "You must enter an amount greater than 0.", embed)
+			return
+		if balance == 0:
+			await self.ResetCooldownSendEmbed(interaction, f"You do not have any {crypto}", embed)
 			return
 
 		if "." in str(amnt):
