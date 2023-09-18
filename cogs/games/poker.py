@@ -215,7 +215,6 @@ class PokerView(nextcord.ui.View):
 			else:
 				hand_score, cards = pairs, pair_sort(cards)
 
-			print(f"cards is {cards}")
 			return cards, hand_score
 
 		tempCards = self.riverCards.copy()
@@ -237,8 +236,6 @@ class PokerView(nextcord.ui.View):
 		dSorted, dealerResult = self.GetBestHand(False)
 
 		index = "23456789TJQKA"
-		print(pSorted)
-		print(dSorted)
 
 		pMsgAddon = ""
 		dMsgAddon = ""

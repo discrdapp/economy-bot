@@ -165,7 +165,6 @@ class Monopoly(commands.Cog):
 			data = DB.fetchAll("SELECT COUNT(1), DiscordID FROM MonopolyPeople GROUP BY DiscordID;")
 
 			if not data:
-				print("returning..")
 				return
 
 			#80% they'll earn money
@@ -204,7 +203,6 @@ class Monopoly(commands.Cog):
 
 
 			totalPlayers = DB.fetchOne("SELECT COUNT(1) FROM MonopolyPeople;")[0]
-			print(f"total players {totalPlayers}")
 
 			chnl = self.bot.get_channel(channelIDForMonopoly)
 			embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Monopoly | Game Start")
