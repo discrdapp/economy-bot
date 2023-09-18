@@ -133,7 +133,7 @@ class ErrorHandling(commands.Cog):
 
 
 		try:
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return 
 		except Exception as e:
 			pass
