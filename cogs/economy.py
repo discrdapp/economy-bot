@@ -137,7 +137,7 @@ class Economy(commands.Cog):
 			await self.addWinnings(interaction.user.id, amnt)
 			balance = await self.getBalance(interaction.user)
 			
-			embed.add_field(name = f"You found {amnt}{emojis.coin}", value = f"You have {balance}{emojis.coin}", inline=False)
+			embed.add_field(name = f"You found {amnt:,}{emojis.coin}", value = f"You have {balance:,}{emojis.coin}", inline=False)
 		else:
 			embed.add_field(name = f"Error", value = f"{interaction.user.mention}, you can only use this if you have less than 300{emojis.coin}.", inline=False)
 
