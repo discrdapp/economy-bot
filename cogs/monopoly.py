@@ -9,6 +9,7 @@ import asyncio, cooldowns, datetime
 import emojis
 from db import DB
 from config import channelIDForMonopoly
+from cogs.util import SendConfirmButton
 
 gameStartingTimes = list()
 gameEndingTimes = list()
@@ -313,7 +314,7 @@ class Monopoly(commands.Cog):
 
 		tableCount = self.bot.get_cog("Inventory").getCountForItem(interaction.user, 'Table')
 
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Monopoly | Your House")
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Monopoly | View")
 
 		if data[0] == 0 or not self.isGameInProgress:
 			peopleLeftToSeat = data[0]
@@ -343,14 +344,16 @@ class Monopoly(commands.Cog):
 	@hire.subcommand()
 	@cooldowns.shared_cooldown("monopoly")
 	async def person(self, interaction:Interaction, amnt:int):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Monopoly | Hire | Person")
+		
 		if self.isGameInProgress:
-			await interaction.send(f"You cannot hire people while a game is in progress. Please check back <t:{int(self.EndGame.next_iteration.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>")
+			embed.description = (f"You cannot hire people while a game is in progress. Please check back <t:{int(self.EndGame.next_iteration.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>")
+			await interaction.send(embed=embed)
 			return
-
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Monopoly | Help")
-
-		DB.insert('INSERT OR IGNORE INTO Monopoly(DiscordID) VALUES (?);', [interaction.user.id])
-
+		if balance < cost:
+			embed.description = f"That will cost you {round(cost):,}{emojis.coin}, but you only have {balance:,}{emojis.coin}"
+			await interaction.send(embed=embed)
+			return
 		data = DB.fetchOne("SELECT COUNT(*) FROM MonopolyPeople WHERE DiscordID = ?", [interaction.user.id])
 		tableCount = self.bot.get_cog("Inventory").getCountForItem(interaction.user, 'Table')
 		peopleCount = data[0]
@@ -361,8 +364,15 @@ class Monopoly(commands.Cog):
 			embed.description = "You do not have enough seats available on your tables."
 			await interaction.send(embed=embed)
 			return
-
-		# DB.update("UPDATE Monopoly SET PeopleCount = PeopleCount + ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
+			
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
+		cost = amnt*1000
+		if not await SendConfirmButton(interaction, f"This will cost you {cost:,}{emojis.coin}. Proceed?"):
+			await self.ResetCooldownSendEmbed(interaction, f"You have cancelled this transaction.", embed)
+			return
+		
+		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought {amnt} People")
+		DB.insert('INSERT OR IGNORE INTO Monopoly(DiscordID) VALUES (?);', [interaction.user.id])
 
 		expires = datetime.datetime.now() + datetime.timedelta(days=2)
 		count = peopleCount + 1
@@ -382,6 +392,7 @@ class Monopoly(commands.Cog):
 			count += 1
 
 		embed.description = f"You hired {amnt} people for the next 48 hours. They will leave <t:{int(expires.timestamp())}:R>"
+		embed.set_footer(text=f"LogID: {logID}")
 		await interaction.send(embed=embed)
 
 
