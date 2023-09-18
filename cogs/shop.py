@@ -92,7 +92,7 @@ class Shop(commands.Cog):
 			clear_buttons_after=True,
 			style=nextcord.ButtonStyle.primary,
 		)
-		await pages.start(interaction=interaction)
+		await pages.start(interaction=interaction, ephemeral=True)
 	
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='items')
@@ -102,7 +102,7 @@ class Shop(commands.Cog):
 			clear_buttons_after=True,
 			style=nextcord.ButtonStyle.primary,
 		)
-		await pages.start(interaction=interaction)
+		await pages.start(interaction=interaction, ephemeral=True)
 
 	@shop.subcommand()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='buy')
@@ -141,7 +141,7 @@ class Shop(commands.Cog):
 
 		# troll-proof		
 		if balance < cost:
-			embed.description = f"That will cost you {cost}{emojis.coin}, but you only have {balance}{emojis.coin}"
+			embed.description = f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}"
 			await interaction.send(embed=embed)
 			return
 
@@ -265,7 +265,7 @@ class Shop(commands.Cog):
 				itemName, itemRarity, itemEmoji = self.bot.get_cog("Inventory").getRandomItem(3)
 				self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, 1, itemName)
 				aan = "an" if itemRarity[0].lower() in "aeiou" else "a"
-				embed.description += f"You found {aan} {itemRarity} {itemName} {itemEmoji}\n"
+				embed.description += f"You found {aan} ({itemRarity}) {itemName} {itemEmoji}\n"
 			elif choice <= 50:
 				amntToAdd = randint(0, 3)
 				embed.description += f"You found {amntToAdd} crates!\n"
