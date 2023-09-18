@@ -153,14 +153,23 @@ class Crypto(commands.Cog):
 		cost = 50000
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Buy")
 
+		currMinerCount = DB.fetchOne("SELECT ID FROM CryptoMiner WHERE DiscordID = ? ORDER BY ID DESC", [interaction.user.id])
+
+		if currMinerCount:
+			if currMinerCount[0] >= 3:
+				await self.ResetCooldownSendEmbed(interaction, f"Currently, you can only have 3 miners max!", embed)
+				return
+			newID = currMinerCount[0] + 1
+		else:
+			newID = 1
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if balance < cost:
 			await self.ResetCooldownSendEmbed(interaction, f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
 			return
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought Crypto Miner")
-		DB.insert("INSERT INTO CryptoMiner('ID', 'DiscordID') VALUES((SELECT COALESCE((SELECT ID+1 FROM CryptoMiner WHERE DiscordID = ? ORDER BY ID DESC LIMIT 1),(SELECT 1))), (SELECT ?));", [interaction.user.id, interaction.user.id])
+		DB.insert("INSERT INTO CryptoMiner('ID', 'DiscordID') VALUES(?, ?)", [newID, interaction.user.id])
 
-		embed.description = "Purchased Crypto miner.\nIt will mine Bitcoin by default. Use `/crypto miner setcrypto` to change it\nDon't forget to /start"
+		embed.description = f"Purchased Crypto miner.\nIt will mine Bitcoin by default. Use `/crypto miner setcrypto` to change it\nDon't forget to `/crypto miner start {newID}`"
 		embed.set_footer(text=f"Log ID: {logID}")
 
 		await interaction.send(embed=embed)
@@ -232,8 +241,8 @@ class Crypto(commands.Cog):
 			DB.update("UPDATE CryptoMiner SET Storage = Storage + 25000 WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
 		
 		elif selection == "Speed":
-			if cryptoMiner[2] >= 11:
-				await self.ResetCooldownSendEmbed(interaction, "You cannot upgrade speed past 11", embed)
+			if cryptoMiner[2] >= 10:
+				await self.ResetCooldownSendEmbed(interaction, "You cannot upgrade speed past 10", embed)
 				return
 			cost = cryptoMiner[2]*15000
 			if balance < cost:
@@ -259,7 +268,6 @@ class Crypto(commands.Cog):
 			return
 		
 		amntOfMiners = len(cryptoMiners)
-		print(amntOfMiners)
 
 		minerOn = Image.open('images/crypto/bitcoinserveron.png')
 		minerOff = Image.open('images/crypto/bitcoinserveroff.png')
@@ -283,10 +291,6 @@ class Crypto(commands.Cog):
 			image_binary.seek(0)
 			await interaction.send(embed=embed, file=nextcord.File(fp=image_binary, filename='image.png'))
 
-	@miner.subcommand()
-	@cooldowns.shared_cooldown("crypto")
-	async def edit(self, interaction:Interaction):
-		pass
 
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("crypto")
@@ -294,6 +298,9 @@ class Crypto(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Edit | CryptoCurrency")
 		cryptoMiner = DB.fetchOne("SELECT CryptoName, isMining, CryptoToCollect FROM CryptoMiner WHERE DiscordID = ? AND ID = ?;", [interaction.user.id, id])
 
+		if not cryptoMiner:
+			await self.ResetCooldownSendEmbed(interaction, "Cannot find a miner with that ID", embed)
+			return
 		if cryptoMiner[1] == 1:
 			await self.ResetCooldownSendEmbed(interaction, f"You cannot change the crypto miner while it is on. \nPlease first do /miner stop {id} and make sure you withdraw your funds", embed)
 			return
@@ -320,7 +327,7 @@ class Crypto(commands.Cog):
 		withdrewMsg = "Successfully withdrew:\n"
 		for crypto in balances:
 			DB.insert('INSERT OR IGNORE INTO Crypto(DiscordID, Name, Quantity) VALUES (?, ?, 0);', [interaction.user.id, crypto[0]])
-			DB.update('UPDATE Crypto SET Quantity = ? WHERE DiscordID = ? AND Name = ?', [crypto[1], interaction.user.id, crypto[0]])
+			DB.update('UPDATE Crypto SET Quantity = Quantity + ? WHERE DiscordID = ? AND Name = ?', [crypto[1], interaction.user.id, crypto[0]])
 
 			DB.update('UPDATE CryptoMiner SET CryptoToCollect = 0 WHERE DiscordID = ? AND isMining = 0 AND CryptoToCollect >= 0.1', [interaction.user.id])
 
