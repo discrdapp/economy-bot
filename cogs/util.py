@@ -17,6 +17,41 @@ class Button(nextcord.ui.Button):
 		self.view.job = self.label
 
 
+
+class ConfirmButtonView(nextcord.ui.View):
+	def __init__(self):
+		super().__init__()
+		self.doProceed = bool
+
+class ConfirmButton(nextcord.ui.Button):
+	def __init__(self, label, style):
+		super().__init__(label=label, style=style)
+	
+	async def callback(self, interaction:Interaction):
+		assert self.view is not None
+		view: ConfirmButtonView = self.view
+		
+		if self.label == "Confirm":
+			view.doProceed = True
+		if self.label == "Reject":
+			view.doProceed = False
+		view.stop()
+
+async def SendConfirmButton(interaction:Interaction, msg):
+	embed = nextcord.Embed(color=1768431)
+	embed.description = msg
+
+	view = ConfirmButtonView()
+	view.add_item(ConfirmButton("Confirm", nextcord.ButtonStyle.green))
+	view.add_item(ConfirmButton("Reject", nextcord.ButtonStyle.red))
+
+	msgSent = await interaction.send(embed=embed, view=view, ephemeral=True)
+	await view.wait()
+
+	await msgSent.delete()
+
+	return view.doProceed
+
 class Util(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
