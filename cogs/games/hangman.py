@@ -68,8 +68,7 @@ class View(nextcord.ui.View):
 								 "the spooky season is among us",
 								 "i do not have a gambling problem",
 								 "counting cards should be allowed",
-								 "blackjack is my favorite game"
-								 ""])
+								 "blackjack is my favorite game"])
 
 		# self.sentence = "a bc"
 		
