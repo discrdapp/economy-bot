@@ -81,22 +81,24 @@ class Others(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title="Thanks for taking an interest in me!")
 		embed.set_footer(text="And that's all for now folks!")
 
-		embed.add_field(name = "BOT HAS SWITCHED TO SLASH COMMANDS", value="Commands start with slash (/). **Crypto, Horse, Items, Mining are a WIP**", inline=False)
+		embed.add_field(name = "BOT HAS SWITCHED TO SLASH COMMANDS", value="Commands start with slash (/). **Below New Commands are WIP**", inline=False)
 		
 		embed.add_field(name = ":game_die: Game Commands", 
 						 value="`roulette`, `crash`, `blackjack`, `horse`, " 
-							 + "`slots`, `coinflip`, `rockpaperscissors`, `dond`, `mines`, `scratch`, `rob`", inline = False)
+							 + "`slots`, `coinflip`, `rockpaperscissors`, `dond`, `mines`, `scratch`, `rob`, `highlow`", inline = False)
+		embed.add_field(name = f"{emojis.bitcoinEmoji} Crypto Commands", 
+				  		 value="`crypto buy/sell`, `crypto miner buy/start/stop/status/setcrypto`")
 
 		embed.add_field(name = ":gear: Other Commands",
-					   value = "`balance`, `crypto`, `top`, `position`, `shop`, `use`, `stats`, `bank`, "
-							 + "`profile`, `level`, `rewards`, `inventory`", inline=False)
+					   value = "`balance`, `top`, `position`, `shop`, `use`, `stats`, `bank`, "
+							 + "`profile`, `level`, `rewards`, `inventory`, `cooldown`, `log`", inline=False)
 
 		embed.add_field(name = ":money_with_wings: Earn Money",
-					   value = "`vote`, `work`, `daily`, `weekly`, `monthly`, `search`, `claim`", inline=False)
+					   value = "`vote`, `work`, `daily`, `weekly`, `monthly`, `search`, `claim`, `beg`, `crime`, `fish`, `dig`", inline=False)
 
 		embed.add_field(name=":grey_question: Quests", value=f"`quests`")
 
-		embed.add_field(name="New commands! :bangbang:", value = "`feedback`, `highlow`, `cooldown`, `log`, `beg`, `crime`, `fish`, `dig`", inline=False)
+		embed.add_field(name="New commands! :bangbang:", value = "`crypto miner`, `monopoly`, `poker`, `hangman`, `feedback`", inline=False)
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{emojis.coin}")
