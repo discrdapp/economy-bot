@@ -377,7 +377,7 @@ class Monopoly(commands.Cog):
 				  "Nyx", "Thalassa", "Elpis", "Tethys", "Theia", "Phoebe", "Themis", "Mnemosyne", "Calliope", "Doris", "Asteria", 
 				  "Eileithyia", "Delia", "Selene", "Clio", "Echo", "Ceto", "Electra", "Achelois", "Aura", "Eos", "Metis", "Harmonia", "Brizo", "Atropos", "Thalia", "Circe"])
 			# expires = datetime.datetime.now()
-			DB.insert("INSERT INTO MonopolyPeople VALUES(?, ?, ?, ?, -99999);", [count, interaction.user.id, name, DB.ConvertDatetimeToSQLTime(expires)])
+			DB.insert("INSERT INTO MonopolyPeople VALUES(?, ?, ?, ?, 0);", [count, interaction.user.id, name, DB.ConvertDatetimeToSQLTime(expires)])
 
 			count += 1
 
