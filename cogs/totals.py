@@ -7,7 +7,7 @@ import sqlite3, datetime, json, cooldowns, uuid
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 from math import floor
 
-import config
+import config, io
 from db import DB
 
 actualGame = ["Slt", "BJ", "Crsh", "RLTTE", "CF", "RPS"]
@@ -261,13 +261,16 @@ class Totals(commands.Cog):
 		draw.text(xy=(420,130), text=f"Level {level:,}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,130), text=f"Balance: {balance:,}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,180), text=f"Badges", fill=tuple(textColor), font=font_type)
-		img.save("images/profile.png")
-		file = nextcord.File("images/profile.png", filename="image.png")
-		embed.set_image(url="attachment://image.png")
 
 		embed.set_footer(text=f"Customize your profile with /profile edit")
 
-		await interaction.send(file=file, embed=embed)
+		with io.BytesIO() as image_binary:
+			img.save(image_binary, 'PNG')
+			image_binary.seek(0)
+			# await self.msg.edit(embed=self.embed, file=nextcord.File(fp=image_binary, filename='image.png'))
+			file = nextcord.File(image_binary, filename="image.png")
+			embed.set_image(url="attachment://image.png")
+			await interaction.send(embed=embed, file=file)
 	
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
@@ -357,12 +360,17 @@ class Totals(commands.Cog):
 		draw.text(xy=(420,130), text=f"Level {level:,}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,130), text=f"Balance: {balance:,}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,180), text=f"Badges", fill=tuple(textColor), font=font_type)
-		img.save("images/profile.png")
-		file = nextcord.File("images/profile.png", filename="image.png")
-		embed.set_image(url="attachment://image.png")
+		# img.save("images/profile.png")
+		# file = nextcord.File("images/profile.png", filename="image.png")
+		# embed.set_image(url="attachment://image.png")
 
-
-		await interaction.send(file=file, embed=embed)
+		with io.BytesIO() as image_binary:
+			img.save(image_binary, 'PNG')
+			image_binary.seek(0)
+			# await self.msg.edit(embed=self.embed, file=nextcord.File(fp=image_binary, filename='image.png'))
+			file = nextcord.File(image_binary, filename="image.png")
+			embed.set_image(url="attachment://image.png")
+			await interaction.send(embed=embed, file=file)
 
 
 	@nextcord.slash_command()

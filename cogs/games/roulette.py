@@ -4,7 +4,7 @@ from nextcord import Interaction
 
 from random import randrange, choices, choice
 from PIL import Image
-import cooldowns, asyncio
+import cooldowns, asyncio, io
 
 import emojis
 from db import DB
@@ -260,7 +260,7 @@ class View(nextcord.ui.View):
 			parityResult = "1⃣"
 			roulette.paste(whiteChip, self.getParityPos("odd"), whiteChip)
 
-		roulette.save("images/roulette/temproulette.png")
+		# roulette.save("images/roulette/temproulette.png")
 
 		emojiNum = self.getNumEmoji(n)
 		winnings = ""
@@ -319,7 +319,11 @@ class View(nextcord.ui.View):
 			self.embed = await DB.addProfitAndBalFields(self, interaction, moneyToAdd - amntSpent, self.embed)
 		else:
 			self.embed = await DB.addProfitAndBalFields(self, interaction, -amntSpent + moneyToAdd, self.embed)
-		await self.msg.edit(embed=self.embed, file=nextcord.File('images/roulette/temproulette.png'))
+		with io.BytesIO() as image_binary:
+			roulette.save(image_binary, 'PNG')
+			image_binary.seek(0)
+			await self.msg.edit(embed=self.embed, file=nextcord.File(fp=image_binary, filename='image.png'))
+
 		self.bot.get_cog("Totals").addTotals(interaction, amntSpent, moneyToAdd, "Roulette")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Rltte", moneyToAdd - amntSpent)
 		if len(self.previousNums) == 8:  # display only 8 previous numbers
