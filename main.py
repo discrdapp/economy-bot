@@ -14,7 +14,7 @@ extensions = ["db",
 			  "cogs.games.color_guesser",	# removable
 			  "cogs.games.crash", 			# removable
 			  "cogs.games.dond",			# removable
-			  "cogs.games.hangman",
+			  "cogs.games.hangman",			# removable
 			  "cogs.games.horse",			# removable
 			  "cogs.games.lottery",			# removable
 			  "cogs.games.miner",			# removable
@@ -32,7 +32,7 @@ extensions = ["db",
 			  "cogs.error_handling",
 			  "cogs.fish",					# removable
 			  "cogs.inventory",
-			  "cogs.monopoly",
+			  "cogs.monopoly",				# removable
 			  "cogs.multipliers",
 			  "cogs.others", 				# removable
 			  "cogs.quests", 
