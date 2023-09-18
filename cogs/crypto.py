@@ -12,6 +12,8 @@ import cooldowns, requests, datetime
 import config, emojis
 from db import DB
 
+from cogs.util import SendConfirmButton
+
 import json
 
 cryptos = ["Bitcoin", "Ethereum", "Litecoin"]
@@ -150,7 +152,6 @@ class Crypto(commands.Cog):
 	@miner.subcommand(name='buy')
 	@cooldowns.shared_cooldown("crypto")
 	async def _buy(self, interaction:Interaction):
-		cost = 50000
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Buy")
 
 		currMinerCount = DB.fetchOne("SELECT ID FROM CryptoMiner WHERE DiscordID = ? ORDER BY ID DESC", [interaction.user.id])
@@ -162,9 +163,13 @@ class Crypto(commands.Cog):
 			newID = currMinerCount[0] + 1
 		else:
 			newID = 1
+
+		if newID == 1: cost = 50000
+		elif newID == 2: cost = 75000
+		else: cost = 100000
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if balance < cost:
-			await self.ResetCooldownSendEmbed(interaction, f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
+			await self.ResetCooldownSendEmbed(interaction, f"That will cost you {round(cost):,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
 			return
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought Crypto Miner")
 		DB.insert("INSERT INTO CryptoMiner('ID', 'DiscordID') VALUES(?, ?)", [newID, interaction.user.id])
@@ -205,7 +210,7 @@ class Crypto(commands.Cog):
 		if cryptoMiner[0] == 0:
 			await self.ResetCooldownSendEmbed(interaction, "Miner is already OFF", embed)
 			return
-	
+
 		DB.update("UPDATE CryptoMiner SET IsMining = 0 WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
 		embed.description = f"Successfully stopped with ID#{id}"
 
@@ -214,7 +219,7 @@ class Crypto(commands.Cog):
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("crypto")
 	async def upgrade(self, interaction:Interaction, 
-				   id = nextcord.SlashOption(choices=[str(x) for x in range(3)]),
+				   id = nextcord.SlashOption(choices=[str(x) for x in range(1, 4)]),
 				   selection = nextcord.SlashOption(
 						choices=("Storage", "Speed"))):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Status")
@@ -233,25 +238,33 @@ class Crypto(commands.Cog):
 				await self.ResetCooldownSendEmbed(interaction, "You cannot upgrade storage past 200,000", embed)
 				return
 			# first upgrade is 100k. future upgrade increases by 25k each time
-			cost = ((cryptoMiner[1] / 25000-1) * 25000) + 100000
+			cost = round(((cryptoMiner[1] / 25000-1) * 25000) + 100000)
 			if balance < cost:
-				await self.ResetCooldownSendEmbed(interaction, f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
+				await self.ResetCooldownSendEmbed(interaction, f"That will cost you {round(cost):,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
 				return
+
+			if not await SendConfirmButton(interaction, f"This will cost you {cost:,}{emojis.coin}. Proceed?"):
+				await self.ResetCooldownSendEmbed(interaction, f"You have cancelled this transaction.", embed)
+				return
+
 			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought Crypto Miner Storage Upgrade")
 			DB.update("UPDATE CryptoMiner SET Storage = Storage + 25000 WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
-		
+
 		elif selection == "Speed":
 			if cryptoMiner[2] >= 10:
 				await self.ResetCooldownSendEmbed(interaction, "You cannot upgrade speed past 10", embed)
 				return
-			cost = cryptoMiner[2]*15000
+			cost = round(cryptoMiner[2]*15000)
 			if balance < cost:
-				await self.ResetCooldownSendEmbed(interaction, f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
+				await self.ResetCooldownSendEmbed(interaction, f"That will cost you {round(cost):,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
 				return
 			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought Crypto Miner Speed Upgrade")
 			DB.update("UPDATE CryptoMiner SET SpeedLevel = SpeedLevel + 1 WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
 
 		embed.set_footer(text=f"Log ID: {logID}")
+
+		embed.description = f"Upgraded {selection} for crypto miner ID#{id}"
+		await interaction.send(embed=embed)
 
 		# cooler cools down bitcoin miner to prevent overheating
 		# power supply makes miner last longer
@@ -261,7 +274,7 @@ class Crypto(commands.Cog):
 	@cooldowns.shared_cooldown("crypto")
 	async def status(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Status")
-		cryptoMiners = DB.fetchAll("SELECT ID, CryptoName, CryptoToCollect, isMining FROM CryptoMiner WHERE DiscordID = ? ORDER BY ID;", [interaction.user.id])
+		cryptoMiners = DB.fetchAll("SELECT ID, CryptoName, CryptoToCollect, isMining, Storage FROM CryptoMiner WHERE DiscordID = ? ORDER BY ID;", [interaction.user.id])
 
 		if not cryptoMiners:
 			await self.ResetCooldownSendEmbed(interaction, "You have no crypto miners", embed)
@@ -282,7 +295,7 @@ class Crypto(commands.Cog):
 			else:
 				dst.paste(minerOff, (count*minerOn.width, 0))
 
-			embed.add_field(name=f"Miner #{cryptoMiner[0]} ({mining})", value=f"Mining {cryptoMiner[1]}\n{cryptoMiner[2]} available")
+			embed.add_field(name=f"Miner #{cryptoMiner[0]} ({mining})", value=f"Mining {cryptoMiner[1]}\n{cryptoMiner[2]}/{cryptoMiner[4]}")
 
 			count += 1
 
@@ -411,7 +424,7 @@ class Crypto(commands.Cog):
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if balance < cost:
-			await self.ResetCooldownSendEmbed(interaction, f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
+			await self.ResetCooldownSendEmbed(interaction, f"That will cost you {round(cost):,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
 			return
 		
 		self.AddCrypto(interaction.user.id, crypto, amnt)
