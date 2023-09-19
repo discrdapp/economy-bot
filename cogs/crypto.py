@@ -57,11 +57,14 @@ class Crypto(commands.Cog):
 		# minedLTCAmnt = hourlyAmnt/self.litecoinPrice
 		# minedETCAmnt = hourlyAmnt/self.ethereumPrice
 
+		try:
 
-		DB.update("""UPDATE CryptoMiner SET CryptoToCollect = CASE
-			WHEN CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) > Storage THEN Storage
-			ELSE CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) END 
-			WHERE isMining = 1 AND CryptoToCollect < Storage;""", [hourlyAmnt]*4)
+			DB.update("""UPDATE CryptoMiner SET CryptoToCollect = CASE
+				WHEN CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) > Storage THEN Storage
+				ELSE CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) END 
+				WHERE isMining = 1 AND CryptoToCollect < Storage;""", [hourlyAmnt]*4)
+		except Exception as e:
+			print(f"error in ProcessCryptoMining:\n{e}")
 
 
 	@tasks.loop(minutes=10)
