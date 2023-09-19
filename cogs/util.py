@@ -21,7 +21,7 @@ class Button(nextcord.ui.Button):
 class ConfirmButtonView(nextcord.ui.View):
 	def __init__(self):
 		super().__init__()
-		self.doProceed = bool
+		self.doProceed = False
 
 class ConfirmButton(nextcord.ui.Button):
 	def __init__(self, label, style):
@@ -33,8 +33,6 @@ class ConfirmButton(nextcord.ui.Button):
 		
 		if self.label == "Confirm":
 			view.doProceed = True
-		if self.label == "Reject":
-			view.doProceed = False
 		view.stop()
 
 async def SendConfirmButton(interaction:Interaction, msg):
