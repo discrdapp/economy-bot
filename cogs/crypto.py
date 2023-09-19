@@ -39,16 +39,20 @@ class Crypto(commands.Cog):
 	async def on_ready(self):
 		if not self.UpdateCryptoPrices.is_running():
 			self.UpdateCryptoPrices.start()
+		if not self.ProcessCryptoMining.is_running():
+			self.ProcessCryptoMining.start()
 
 	def cog_unload(self):
 		if self.UpdateCryptoPrices.is_running():
 			self.UpdateCryptoPrices.cancel()
+		if self.ProcessCryptoMining.is_running():
+			self.ProcessCryptoMining.cancel()
 
 
 	cooldowns.define_shared_cooldown(1, 7, cooldowns.SlashBucket.author, cooldown_id="crypto")
 
 	@tasks.loop(time=miningProcessTimes)
-	async def ProcessCryptoMining():
+	async def ProcessCryptoMining(self):
 		# between 150 - 205 an hour
 		hourlyAmnt = randrange(150, 200, 10)
 
