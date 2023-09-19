@@ -14,14 +14,13 @@ def GetPrintableMsg(msg:str):
 	return msg.replace("_", "\_")
 
 class Modal(nextcord.ui.Modal):
-	def __init__(self):
+	def __init__(self, view):
 		super().__init__(title="Guess the Phrase", timeout=60)
 		self.add_item(nextcord.ui.TextInput("Enter the phrase below", placeholder="It is not case-sensitive"))
+		self.view = view
 	
 	async def callback(self, interaction:Interaction):
-		assert self.view is not None
-		view: View = self.view
-		if interaction.user.id != view.userId:
+		if interaction.user.id != self.view.userId:
 			await interaction.send(f"This is not your game", ephemeral=True)
 			return
 
@@ -56,9 +55,9 @@ class View(nextcord.ui.View):
 
 		self.remainingLetters = "abcdefghijklmnopqrstuvwxy"
 
-		self.attempts = 5
+		self.attempts = 4
 
-		self.modal = Modal()
+		self.modal = Modal(self)
 
 		self.sentence = random.choice(["vote for us to get a usable multiplier",
 								 "i am the best bot out there",
