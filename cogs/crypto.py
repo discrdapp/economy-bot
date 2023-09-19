@@ -171,6 +171,9 @@ class Crypto(commands.Cog):
 		if balance < cost:
 			await self.ResetCooldownSendEmbed(interaction, f"That will cost you {round(cost):,}{emojis.coin}, but you only have {balance:,}{emojis.coin}", embed)
 			return
+		if not await SendConfirmButton(interaction, f"This will cost you {cost:,}{emojis.coin}. Proceed?"):
+			await self.ResetCooldownSendEmbed(interaction, f"You have cancelled this transaction.", embed)
+			return
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought Crypto Miner")
 		DB.insert("INSERT INTO CryptoMiner('ID', 'DiscordID') VALUES(?, ?)", [newID, interaction.user.id])
 
