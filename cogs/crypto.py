@@ -372,7 +372,6 @@ class Crypto(commands.Cog):
 				emoji = emojis.ethereumEmoji
 			
 			cryptoAmnt = round(crypto[1] / price, 2)
-			print(cryptoAmnt)
 			DB.update('UPDATE Crypto SET Quantity = Quantity + ? WHERE DiscordID = ? AND Name = ?', [cryptoAmnt, interaction.user.id, crypto[0]])
 
 			DB.update('UPDATE CryptoMiner SET CryptoToCollect = 0 WHERE DiscordID = ? AND isMining = 0 AND CryptoToCollect >= 0.1', [interaction.user.id])
@@ -414,7 +413,7 @@ class Crypto(commands.Cog):
 		embed.description += "-----------------------\n"
 		embed.description += "**Total**\n"
 		embed.description += f"{total:,} {emojis.coin}"
-		
+
 		await interaction.send(embed=embed)
 
 	@crypto.subcommand()
@@ -499,7 +498,7 @@ class Crypto(commands.Cog):
 		if amnt == balance:
 			DB.delete("DELETE FROM Crypto WHERE DiscordID = ? AND Name = ?", [interaction.user.id, crypto])
 		else:
-			DB.update("UPDATE Crypto SET Quantity = round(Quantity - ?, 1) WHERE DiscordID = ? AND Name = ?", [amnt, interaction.user.id, crypto])
+			DB.update("UPDATE Crypto SET Quantity = round(Quantity - ?, 2) WHERE DiscordID = ? AND Name = ?", [amnt, interaction.user.id, crypto])
 
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, creditAmnt, giveMultiplier=False, activityName=f"Sold {amnt} {crypto}", amntBet=0)
 
