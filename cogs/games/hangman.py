@@ -123,8 +123,7 @@ class View(nextcord.ui.View):
 		await interaction.response.send_modal(modal=self.modal)
 		await self.modal.wait()
 		guess:str = self.modal.children[0].value
-		print(guess)
-		if guess.lower() == self.sentence.lower():
+		if guess and guess.lower() == self.sentence.lower():
 			await self.GameOver(interaction, True)
 			return
 		else:
