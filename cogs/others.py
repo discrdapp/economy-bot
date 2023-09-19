@@ -104,7 +104,7 @@ class Others(commands.Cog):
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{emojis.coin}")
 						# value = "\n[Support](https://www.paypal.me/AutopilotJustin) gambling bot's development or [join support server](https://discord.gg/ggUksVN).")
 		embed.add_field(name = "_ _",
-						value = f"[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{emojis.coin}\nAdd this bot to your server - [Click Here](https://discord.com/api/oauth2/authorize?client_id=585235000459264005&permissions=387136&scope=bot)\n[Website](https://justingrah.am/thecasino/) (WIP)\n[Docs](https://docs.justingrah.am/thecasino/) (WIP)", inline=False)
+						value = f"[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{emojis.coin}\nAdd this bot to your server - [Click Here](https://discord.com/api/oauth2/authorize?client_id=585235000459264005&permissions=387136&scope=bot)\n[Website](https://justingrah.am/) (WIP)\n[Docs](https://docs.justingrah.am/thecasino/) (WIP)", inline=False)
 		return embed
 
 	@nextcord.slash_command(description="The Casino Help Command")
