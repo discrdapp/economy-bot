@@ -232,7 +232,7 @@ class Crypto(commands.Cog):
 				   id = nextcord.SlashOption(choices=[str(x) for x in range(1, 4)]),
 				   selection = nextcord.SlashOption(
 						choices=("Storage", "Speed"))):
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Status")
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Upgrade")
 		cryptoMiner = DB.fetchOne("SELECT isMining, Storage, SpeedLevel FROM CryptoMiner WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
 
 		if not cryptoMiner:
@@ -314,6 +314,10 @@ class Crypto(commands.Cog):
 
 			count += 1
 
+		time = datetime.datetime.now().replace(microsecond=0, second=0, minute=0, tzinfo=datetime.timezone.utc) + datetime.timedelta(hours=6)
+
+		embed.description = f"Next mine <t:{int(time.timestamp())}:R>"
+
 		with io.BytesIO() as image_binary:
 			dst.save(image_binary, 'PNG')
 			image_binary.seek(0)
@@ -355,17 +359,25 @@ class Crypto(commands.Cog):
 		withdrewMsg = "Successfully withdrew:\n"
 		for crypto in balances:
 			DB.insert('INSERT OR IGNORE INTO Crypto(DiscordID, Name, Quantity) VALUES (?, ?, 0);', [interaction.user.id, crypto[0]])
-			DB.update('UPDATE Crypto SET Quantity = Quantity + ? WHERE DiscordID = ? AND Name = ?', [crypto[1], interaction.user.id, crypto[0]])
+
+			price = 50000
+			if crypto[0] == "Bitcoin":
+				price = self.bitcoinPrice
+				emoji = emojis.bitcoinEmoji
+			elif crypto[0] == "Litecoin":
+				price = self.litecoinPrice
+				emoji = emojis.litecoinEmoji
+			elif crypto[0] == "Ethereum":
+				price = self.ethereumPrice
+				emoji = emojis.ethereumEmoji
+			
+			cryptoAmnt = round(crypto[1] / price, 2)
+			print(cryptoAmnt)
+			DB.update('UPDATE Crypto SET Quantity = Quantity + ? WHERE DiscordID = ? AND Name = ?', [cryptoAmnt, interaction.user.id, crypto[0]])
 
 			DB.update('UPDATE CryptoMiner SET CryptoToCollect = 0 WHERE DiscordID = ? AND isMining = 0 AND CryptoToCollect >= 0.1', [interaction.user.id])
 
-			if crypto[0] == "Bitcoin":
-				emoji = emojis.bitcoinEmoji
-			elif crypto[0] == "Litecoin":
-				emoji = emojis.litecoinEmoji
-			elif crypto[0] == "Ethereum":
-				emoji = emojis.ethereumEmoji
-			withdrewMsg += f"{crypto[1]} {emoji}\n"
+			withdrewMsg += f"{cryptoAmnt} {emoji}\n"
 
 		embed.description = withdrewMsg
 
