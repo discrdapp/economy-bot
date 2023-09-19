@@ -314,7 +314,7 @@ class Crypto(commands.Cog):
 
 			count += 1
 
-		time = datetime.datetime.now().replace(microsecond=0, second=0, minute=0, tzinfo=datetime.timezone.utc) + datetime.timedelta(hours=6)
+		time = datetime.datetime.now().replace(microsecond=0, second=0, minute=0, tzinfo=datetime.timezone.utc) + datetime.timedelta(hours=1)
 
 		embed.description = f"Next mine <t:{int(time.timestamp())}:R>"
 
