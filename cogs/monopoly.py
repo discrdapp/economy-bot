@@ -304,7 +304,6 @@ class Monopoly(commands.Cog):
 		embed.description = msg
 		await interaction.send(embed=embed)
 
-	
 
 	@monopoly.subcommand()
 	@cooldowns.shared_cooldown("monopoly")
@@ -350,6 +349,8 @@ class Monopoly(commands.Cog):
 			embed.description = (f"You cannot hire people while a game is in progress. Please check back <t:{int(self.EndGame.next_iteration.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>")
 			await interaction.send(embed=embed)
 			return
+		cost = amnt*1000
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if balance < cost:
 			embed.description = f"That will cost you {round(cost):,}{emojis.coin}, but you only have {balance:,}{emojis.coin}"
 			await interaction.send(embed=embed)
@@ -364,11 +365,10 @@ class Monopoly(commands.Cog):
 			embed.description = "You do not have enough seats available on your tables."
 			await interaction.send(embed=embed)
 			return
-			
-		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		cost = amnt*1000
+
 		if not await SendConfirmButton(interaction, f"This will cost you {cost:,}{emojis.coin}. Proceed?"):
-			await self.ResetCooldownSendEmbed(interaction, f"You have cancelled this transaction.", embed)
+			embed.description = "You have cancelled this transaction."
+			await interaction.send(embed=embed)
 			return
 		
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought {amnt} People")
@@ -394,8 +394,6 @@ class Monopoly(commands.Cog):
 		embed.description = f"You hired {amnt} people for the next 48 hours. They will leave <t:{int(expires.timestamp())}:R>"
 		embed.set_footer(text=f"LogID: {logID}")
 		await interaction.send(embed=embed)
-
-
 
 
 def setup(bot):
