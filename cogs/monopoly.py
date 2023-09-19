@@ -185,9 +185,9 @@ class Monopoly(commands.Cog):
 					if makeMoney == 1:
 						earnings = 0
 					elif makeMoney == 2:
-						earnings = randrange(-2500, -500)
+						earnings = randrange(-1000, -500)
 					else:
-						earnings = randrange(500, 3000)
+						earnings = randrange(500, 1100)
 					userTotalEarnings += earnings
 					values.append(earnings)
 				globalTotalEarnings += userTotalEarnings
@@ -349,7 +349,7 @@ class Monopoly(commands.Cog):
 			embed.description = (f"You cannot hire people while a game is in progress. Please check back <t:{int(self.EndGame.next_iteration.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>")
 			await interaction.send(embed=embed)
 			return
-		cost = amnt*7500
+		cost = amnt*10000
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if balance < cost:
 			embed.description = f"That will cost you {round(cost):,}{emojis.coin}, but you only have {balance:,}{emojis.coin}"
