@@ -65,7 +65,7 @@ async def on_interaction(interaction: Interaction):
 		return
 	if not await bot.get_cog("Economy").accCheck(interaction.user):
 		await bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-		if interaction.data['name'] == 'blackjack':
+		if interaction and interaction.data and 'name' in interaction.data and interaction.data['name'] == 'blackjack':
 			await interaction.send("You can now play blackjack, now that you're registered. Please run command again.", ephemeral=True)
 			return
 
