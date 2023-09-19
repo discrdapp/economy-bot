@@ -349,7 +349,7 @@ class Monopoly(commands.Cog):
 			embed.description = (f"You cannot hire people while a game is in progress. Please check back <t:{int(self.EndGame.next_iteration.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>")
 			await interaction.send(embed=embed)
 			return
-		cost = amnt*1000
+		cost = amnt*7500
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if balance < cost:
 			embed.description = f"That will cost you {round(cost):,}{emojis.coin}, but you only have {balance:,}{emojis.coin}"
