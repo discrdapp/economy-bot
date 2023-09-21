@@ -356,7 +356,7 @@ class Totals(commands.Cog):
 
 		font_type = ImageFont.truetype('arial.ttf',25)
 		draw = ImageDraw.Draw(img)
-		draw.text(xy=(100,70), text=f"{interaction.user.name}", fill=tuple(textColor), font=ImageFont.truetype('HappyMonksMedievalLookingScript.ttf',55))
+		draw.text(xy=(100,70), text=f"{interaction.user.name}", fill=tuple(textColor), font=ImageFont.truetype('fonts/HappyMonksMedievalLookingScript.ttf',55))
 		draw.text(xy=(420,130), text=f"Level {level:,}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,130), text=f"Balance: {balance:,}", fill=tuple(textColor), font=font_type)
 		draw.text(xy=(100,180), text=f"Badges", fill=tuple(textColor), font=font_type)
