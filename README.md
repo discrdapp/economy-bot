@@ -28,20 +28,20 @@ Coinflip:
 Crash:  
 ![](https://i.imgur.com/egLuopL.png)
 
-Cryptocurrency:
+Cryptocurrency:  
 ![](https://i.imgur.com/i8MK8gk.png)
 ![](https://i.imgur.com/A5wjkIy.png)
 
-Roobet Mines:
+Roobet Mines:  
 ![](https://i.imgur.com/XR5rU0I.png)
 
-Deal or No Deal:
+Deal or No Deal:  
 ![](https://i.imgur.com/ssAitqk.png)
   
 Stats:  
 ![](https://i.imgur.com/IB7kCRo.png)
 
-Customizable Profile:
+Customizable Profile:  
 ![](https://i.imgur.com/nIgjViy.png)
 
 Quests:  
@@ -50,8 +50,8 @@ Quests:
 Badges:  
 ![](https://i.imgur.com/P3YlZeM.png)
 
-Cooldowns:
+Cooldowns:  
 ![](https://i.imgur.com/xrlJtvQ.png)
 
-Help Command:
+Help Command:  
 ![](https://i.imgur.com/BEX45be.png)
