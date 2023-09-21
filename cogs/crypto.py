@@ -4,7 +4,7 @@ from nextcord import Interaction
 
 from math import floor, ceil
 from random import randrange
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import io
 
 import cooldowns, requests, datetime
@@ -49,7 +49,7 @@ class Crypto(commands.Cog):
 			self.ProcessCryptoMining.cancel()
 
 
-	cooldowns.define_shared_cooldown(1, 7, cooldowns.SlashBucket.author, cooldown_id="crypto")
+	cooldowns.define_shared_cooldown(1, 3, cooldowns.SlashBucket.author, cooldown_id="crypto")
 
 	@tasks.loop(time=miningProcessTimes)
 	async def ProcessCryptoMining(self):
@@ -62,7 +62,6 @@ class Crypto(commands.Cog):
 		# minedETCAmnt = hourlyAmnt/self.ethereumPrice
 
 		try:
-
 			DB.update("""UPDATE CryptoMiner SET CryptoToCollect = CASE
 				WHEN CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) > Storage THEN Storage
 				ELSE CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) END 
@@ -294,11 +293,13 @@ class Crypto(commands.Cog):
 		if not cryptoMiners:
 			await self.ResetCooldownSendEmbed(interaction, "You have no crypto miners", embed)
 			return
-		
+
 		amntOfMiners = len(cryptoMiners)
 
 		minerOn = Image.open('images/crypto/bitcoinserveron.png')
+		minerOn = minerOn.resize((125, 228))
 		minerOff = Image.open('images/crypto/bitcoinserveroff.png')
+		minerOff = minerOff.resize((125, 228))
 		dst = Image.new('RGB', (minerOn.width*amntOfMiners, minerOn.height))
 
 		count = 0
@@ -310,11 +311,25 @@ class Crypto(commands.Cog):
 			else:
 				dst.paste(minerOff, (count*minerOn.width, 0))
 
-			embed.add_field(name=f"Miner #{cryptoMiner[0]} ({mining})", value=f"Mining {cryptoMiner[1]}\n{cryptoMiner[2]}/{cryptoMiner[4]}")
+			draw = ImageDraw.Draw(dst)
+			font_type = ImageFont.truetype('fonts/8bit.ttf',23)
+
+			if count == 0:
+				draw.text(xy=(20,20), text=f"{cryptoMiner[2]}", font=font_type, fill="black")
+				draw.text(xy=(20,60), text=f"{cryptoMiner[4]}", font=font_type, fill="black")
+			if count == 1:
+				draw.text(xy=(145,20), text=f"{cryptoMiner[2]}", font=font_type, fill="black")
+				draw.text(xy=(145,60), text=f"{cryptoMiner[4]}", font=font_type, fill="black")
+			if count == 2:
+				draw.text(xy=(270,20), text=f"{cryptoMiner[2]}", font=font_type, fill="black")
+				draw.text(xy=(270,60), text=f"{cryptoMiner[4]}", font=font_type, fill="black")
+
+			embed.add_field(name=f"Miner #{cryptoMiner[0]} ({mining})", value=f"Mining {cryptoMiner[1]}\n{cryptoMiner[2]:,}/{cryptoMiner[4]:,}")
 
 			count += 1
 
 		time = datetime.datetime.now().replace(microsecond=0, second=0, minute=0, tzinfo=datetime.timezone.utc) + datetime.timedelta(hours=1)
+		# time = datetime.datetime.now().replace(microsecond=0, second=0, minute=0, tzinfo=datetime.timezone.utc) + datetime.timedelta(hours=6)
 
 		embed.description = f"Next mine <t:{int(time.timestamp())}:R>"
 
