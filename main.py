@@ -20,6 +20,7 @@ extensions = ["db",
 			  "cogs.games.miner",			# removable
 			  "cogs.games.mines",			# removable
 			  "cogs.games.poker",			# removable
+			  "cogs.games.pokermultiplayer",#removable
 			  "cogs.games.roulette", 		# removable
 			  "cogs.games.rps",				# removable
 			  "cogs.games.scratch", 		# removable
