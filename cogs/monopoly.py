@@ -187,7 +187,7 @@ class Monopoly(commands.Cog):
 					elif makeMoney == 2:
 						earnings = randrange(-750, -500, 10)
 					else:
-						earnings = randrange(750, 1500, 10)
+						earnings = randrange(500, 1000, 10)
 					userTotalEarnings += earnings
 					values.append(earnings)
 				globalTotalEarnings += userTotalEarnings
