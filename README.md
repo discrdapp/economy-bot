@@ -4,54 +4,54 @@ This is a bot featuring gambling games such as Blackjack, Roulette, Slots, Deal 
 
 It contains an economy system with a shop as well as an XP/Level system giving you perks such as a daily level reward.
 
-![Website](https://justingrah.am/)
-![Docs](https://docs.justingrah.am/thecasino/)
-![top.gg Page](https://top.gg/bot/585235000459264005)
-
+![Website](https://justingrah.am/) | 
+![Docs](https://docs.justingrah.am/thecasino/) | 
+![top.gg Page](https://top.gg/bot/585235000459264005)  
+  
 Bank:  
-![](https://i.imgur.com/Zf7pI8g.png)
-![](https://i.imgur.com/QZydtf9.png)
-
-
+<a href="url"><img src="https://i.imgur.com/Zf7pI8g.png" align="left" height="150" width="400" ></a>  
+ 
+<a href="url"><img src="https://i.imgur.com/QZydtf9.png" align="left" height="150" width="400" ></a>  
+ 
 Blackjack:  
-![](https://i.imgur.com/I3ltOg3.png)
+<a href="url"><img src="https://i.imgur.com/I3ltOg3.png" align="left" height="200" width="272" ></a>  
   
 Roulette:  
-![](https://i.imgur.com/rP3DpI5.png)
+<a href="url"><img src="https://i.imgur.com/rP3DpI5.png" align="left" height="200" width="272" ></a>  
   
 Slots:  
-![](https://i.imgur.com/3jD5WVo.png)
+<a href="url"><img src="https://i.imgur.com/3jD5WVo.png" align="left" height="200" width="272" ></a>  
 
 Coinflip:  
-![](https://i.imgur.com/tj1krzg.png)
+<a href="url"><img src="https://i.imgur.com/tj1krzg.png" align="left" height="200" width="272" ></a>  
 
 Crash:  
-![](https://i.imgur.com/egLuopL.png)
+<a href="url"><img src="https://i.imgur.com/egLuopL.png" align="left" height="200" width="272" ></a>  
 
 Cryptocurrency:  
-![](https://i.imgur.com/i8MK8gk.png)
-![](https://i.imgur.com/A5wjkIy.png)
+<a href="url"><img src="https://i.imgur.com/i8MK8gk.png" align="left" height="200" width="272" ></a>  
+<a href="url"><img src="https://i.imgur.com/A5wjkIy.png" align="left" height="200" width="272" ></a>  
 
 Roobet Mines:  
-![](https://i.imgur.com/XR5rU0I.png)
+<a href="url"><img src="https://i.imgur.com/XR5rU0I.png" align="left" height="200" width="272" ></a>  
 
 Deal or No Deal:  
-![](https://i.imgur.com/ssAitqk.png)
+<a href="url"><img src="https://i.imgur.com/ssAitqk.png" align="left" height="200" width="272" ></a>  
   
 Stats:  
-![](https://i.imgur.com/IB7kCRo.png)
+<a href="url"><img src="https://i.imgur.com/IB7kCRo.png" align="left" height="200" width="272" ></a>  
 
 Customizable Profile:  
-![](https://i.imgur.com/nIgjViy.png)
+<a href="url"><img src="https://i.imgur.com/nIgjViy.png" align="left" height="200" width="272" ></a>  
 
 Quests:  
-![](https://i.imgur.com/93B352Z.png)
+<a href="url"><img src="https://i.imgur.com/93B352Z.png" align="left" height="200" width="272" ></a>  
 
 Badges:  
-![](https://i.imgur.com/P3YlZeM.png)
+<a href="url"><img src="https://i.imgur.com/P3YlZeM.png" align="left" height="200" width="272" ></a>  
 
 Cooldowns:  
-![](https://i.imgur.com/xrlJtvQ.png)
+<a href="url"><img src="https://i.imgur.com/xrlJtvQ.png" align="left" height="200" width="272" ></a>  
 
 Help Command:  
-![](https://i.imgur.com/BEX45be.png)
+<a href="url"><img src="https://i.imgur.com/BEX45be.png" align="left" height="200" width="272" ></a>  
