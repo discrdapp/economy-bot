@@ -1,3 +1,13 @@
+# Casino Bot
+
+<a href="https://top.gg/bot/585235000459264005"><img src="https://top.gg/api/widget/585235000459264005.svg"></a>  
+
+This is a bot featuring gambling games such as Poker, Blackjack, Roulette, Slots, Deal or No Deal, and Roobet Mines.  
+It contains an economy system with a shop as well as an XP/Level system giving you perks such as a daily level reward.  
+
+![Website](https://justingrah.am/) |
+![Docs](https://docs.justingrah.am/thecasino/)
+
 ###### Bank:  
 <a href="url"><img src="https://i.imgur.com/Zf7pI8g.png" height="40%" width="40%"></a> 
 <a href="url"><img src="https://i.imgur.com/QZydtf9.png" height="39%" width="39%"></a>  
