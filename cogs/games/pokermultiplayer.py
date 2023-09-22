@@ -199,7 +199,6 @@ class GameView(nextcord.ui.View):
 	
 	async def PlayerClickedBet(self, better):
 		if self.isBetting:
-			print(better.user.name)
 			if self.lastCheckPersonTillFlip.id != better.id:
 				return False
 
@@ -317,7 +316,7 @@ class GameView(nextcord.ui.View):
 					oppoCards = ":question: :question:"
 				else:
 					oppoCards = "Folded"
-				embed.add_field(name=f" (Player {opponent.id}) {opponent.user.name}'s Hand", value = f"{oppoCards}", inline=False)
+				embed.add_field(name=f" (Player {opponent.id}) {opponent.user.display_name}'s Hand", value = f"{oppoCards}", inline=False)
 
 			embed.description = msg
 
@@ -342,7 +341,7 @@ class GameView(nextcord.ui.View):
 			for opponent in self.players:
 				if opponent.id == player.id:
 					continue
-				embed.add_field(name=f" (Player {opponent.id}) {opponent.user.name}'s Hand", value = ":question: :question:", inline=False)
+				embed.add_field(name=f" (Player {opponent.id}) {opponent.user.display_name}'s Hand", value = ":question: :question:", inline=False)
 
 			embed.description = msg
 			player.message = await player.interaction.send(view=player.view, embed=embed, ephemeral=True)
@@ -427,8 +426,6 @@ class GameView(nextcord.ui.View):
 			scores[id]["cards"] = playerSorted
 			scores[id]["score"] = playerResult
 
-			print(f"player {id} {self.GetPlayerWithID(id).user.name} {playerSorted}")
-
 		maxScore = max([score['score'] for score in scores.values()])
 
 		tiedUsers = [self.GetPlayerWithID(id) for id in scores.keys() if scores[id]["score"] == maxScore]
@@ -491,7 +488,7 @@ class GameView(nextcord.ui.View):
 				playerCards = self.GetViewableHand(player.hand)
 			else:
 				playerCards = "Folded"
-			embed.add_field(name=f" (ID {player.id}) {player.user.name}'s Hand", value = f"{playerCards}", inline=False)
+			embed.add_field(name=f" (ID {player.id}) {player.user.display_name}'s Hand", value = f"{playerCards}", inline=False)
 
 		await self.channel.send(embed=embed)
 
