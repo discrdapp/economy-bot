@@ -79,7 +79,6 @@ class Player():
 		
 		async def on_timeout(self):
 			if self.player.isPlayersTurn:
-				print("12323435235")
 				self.player.isPlayersTurn = False
 				await self.player.message.channel.send(f"{self.player.user.mention} took too long to respond. Automatic fold. Game will continue.", delete_after=3)
 				if await self.player.gameView.PlayerFoldCheckGameover(self.player):
@@ -143,12 +142,10 @@ class JoinGameView(nextcord.ui.View):
 		self.msg = None
 	
 	async def on_timeout(self):
-		print("timeout")
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Poker Multiplayer")
 		embed.description = f"{self.owner.mention} took too long to start game. Game cancelled."
 		embed.set_footer(text="Your balance was not changed")
-		self.clear_items()
-		await self.msg.edit(embed=embed, view=self)
+		await self.msg.edit(embed=embed, view=None)
 	
 	async def UpdateJoinMsg(self):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Poker Multiplayer")
@@ -504,9 +501,9 @@ class PokerMultiplayer(commands.Cog):
 		shuffle(self.cards)
 
 
-	@nextcord.slash_command(description="Play BlackJack!")
+	@nextcord.slash_command(description="Play Multiplayer Poker!")
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='blackjack')
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='mpoker')
 	async def multiplayerpoker(self, interaction:Interaction, startingbet:int):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Poker Multiplayer")
 
