@@ -268,7 +268,7 @@ class View(nextcord.ui.View):
 		moneyToAdd = 0
 		if self.number.option == n:
 			winnings += "\nYou guessed the number! You won 35x your bet!"
-			moneyToAdd += self.highOrLow.bet * 35
+			moneyToAdd += self.number.bet * 35
 
 		if self.displayHighLowBet == highLowResult:
 			winnings += "\nYou guessed the high/low! You won 2x your bet!"
