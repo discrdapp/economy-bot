@@ -121,6 +121,7 @@ class Button(nextcord.ui.Button['Blackjack']):
 		except:
 			pass
 
+
 class Blackjack(nextcord.ui.View):
 	def __init__(self, bot, id, cards, amntbet, currCount):
 		super().__init__(timeout=120)
@@ -626,6 +627,8 @@ class bj(commands.Cog):
 		
 		view = Blackjack(self.bot, interaction.user.id, self.cards, amntbet, self.count)
 		await view.Start(interaction)
+
+		print(len(self.cards))
 
 
 def setup(bot):
