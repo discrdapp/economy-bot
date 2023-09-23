@@ -3,7 +3,7 @@ from nextcord.ext import commands
 from nextcord import Interaction
 
 # import cooldowns
-from random import randint, shuffle
+from random import shuffle
 import asyncio, cooldowns
 
 from collections import Counter
