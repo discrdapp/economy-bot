@@ -10,12 +10,14 @@ bot.remove_command('help')
 
 extensions = ["db", 
 			  "cogs.games.bj",				# removable
+			  "cogs.games.bjmultiplayer",	# removable
 			  "cogs.games.coinflip",		# removable
 			  "cogs.games.color_guesser",	# removable
 			  "cogs.games.crash", 			# removable
 			  "cogs.games.dond",			# removable
 			  "cogs.games.hangman",			# removable
 			  "cogs.games.horse",			# removable
+			  "cogs.games.horsemultiplayer",# removable
 			  "cogs.games.lottery",			# removable
 			  "cogs.games.miner",			# removable
 			  "cogs.games.mines",			# removable
@@ -61,9 +63,9 @@ async def on_ready():
 
 @bot.event
 async def on_interaction(interaction: Interaction):
-	if interaction.user.id != config.botOwnerDiscordID:
-		await interaction.send("Updating bot!!! Check back in 10 minutes! :partying_face: ")
-		return
+	# if interaction.user.id != config.botOwnerDiscordID:
+	# 	await interaction.send("Updating bot!!! Check back in 10 minutes! :partying_face: ")
+	# 	return
 	if not await bot.get_cog("Economy").accCheck(interaction.user):
 		await bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		if interaction and interaction.data and 'name' in interaction.data and interaction.data['name'] == 'blackjack':
