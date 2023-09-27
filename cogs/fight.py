@@ -65,8 +65,8 @@ class Fight(commands.Cog):
 				await interaction.send("Continuing.")
 
 		try:
-			p1Lvl = await self.bot.get_cog("XP").getLevel(author.id)
-			p2Lvl = await self.bot.get_cog("XP").getLevel(member.id)
+			p1Lvl = self.bot.get_cog("XP").getLevel(author.id)
+			p2Lvl = self.bot.get_cog("XP").getLevel(member.id)
 		except Exception as e:
 			await interaction.send(f"User does not have an account. Error: {e}")
 			return
