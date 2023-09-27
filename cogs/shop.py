@@ -122,17 +122,12 @@ class Shop(commands.Cog):
 		# troll-proof
 		if amnt <= 0:
 			embed.description = "Amount must be greater than 0"
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 		# not valid item
 		if theid not in self.itemsDict.keys():
 			embed.description = "Invalid item ID."
-			await interaction.send(embed=embed)
-			return
-		# not donator but trying to buy donator item
-		if theid == 999 and not self.bot.get_cog("Economy").isDonator(interaction.user.id):
-			embed.description = f"That can only be used by Donators!"
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 
 		discordId = interaction.user.id
@@ -142,42 +137,24 @@ class Shop(commands.Cog):
 		# troll-proof		
 		if balance < cost:
 			embed.description = f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}"
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
-
-		# maxed daily reward
-		if theid == 3:
-			dailyReward = await self.bot.get_cog("Daily").getDailyReward(interaction)
-			if dailyReward + (amnt*1000) > 100000:
-				embed.description = f"Sorry, but the max Daily Reward allowed is 100,000{emojis.coin}."
-				await interaction.send(embed=embed)
-				return
-		
 		
 		if theid == 60:
 			tableCount = self.bot.get_cog("Inventory").getCountForItem(interaction.user, 'Table')
 			if amnt + tableCount > 10:
 				embed.description = f"You can only own 10 tables.\nYou are trying to buy {amnt}, but you already own {tableCount}"
-				await interaction.send(embed=embed)
+				await interaction.send(embed=embed, ephemeral=True)
 				return
 
 
 		logID = await self.bot.get_cog("Economy").addWinnings(discordId, -cost, giveMultiplier=False, activityName=f"Bought {amnt} {itemSelected}")		
 		
-		if theid == 3:
-			DB.update("UPDATE Economy SET DailyReward = DailyReward + ? WHERE DiscordID = ?;", [amnt*1000, discordId])
-			embed.description = f"Successfully added {amnt * 1000}{emojis.coin} to daily reward"
+		rowName = self.itemsDict[theid]["Name"]
+		
+		self.bot.get_cog("Inventory").addItemToInventory(discordId, amnt, rowName)
 
-		elif theid == 999:
-			DB.update("UPDATE Economy SET DonatorReward = DonatorReward + ? WHERE DiscordID = ?;", [amnt*1500, discordId])
-			embed.description = f"Successfully added {amnt * 1500}{emojis.coin} to donator reward"
-
-		else:
-			rowName = self.itemsDict[theid]["Name"]
-			
-			self.bot.get_cog("Inventory").addItemToInventory(discordId, amnt, rowName)
-
-			embed.description = f"Successfully bought {amnt} {self.itemsDict[theid]['Name']}"
+		embed.description = f"Successfully bought {amnt} {self.itemsDict[theid]['Name']}"
 
 		if self.itemsDict[theid]["Type"] == "Usable":
 			embed.set_footer(text=f"Use this item with /use {itemSelected}\nLog ID: {logID}")
@@ -200,11 +177,11 @@ class Shop(commands.Cog):
 		# troll-proof
 		if amnt <= 0:
 			embed.description = "Amount must be greater than 0"
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, itemSelected, amnt):
 			embed.description = "You do not have that item in your inventory!"
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 		
 		item = self.GetItem(sellableItems, itemSelected)
@@ -227,24 +204,24 @@ class Shop(commands.Cog):
 
 		if amnt > 25:
 			embed.description = "Max crates you can open is 25."
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 
 		if amnt <= 0:
 			embed.description = f"Invalid Amount. {interaction.user.mention}, you cannot open a negative amount of crates."
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 
 		crates, keys = self.bot.get_cog("Inventory").getInventory(interaction.user)
 		if crates < amnt:
 			embed.description = f"Invalid Amount. {interaction.user.mention}, you only have {crates} crates. You cannot open {amnt} crate(s)."
 			embed.set_footer(text="Buy more crates from the shop!")
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 		elif keys < amnt:
 			embed.description = f"Invalid Amount. {interaction.user.mention}, you only have {keys} keys. You cannot use {amnt} key(s)."
 			embed.set_footer(text="Buy more keys from the shop!")
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 
 		self.bot.get_cog("Inventory").subtractInv(interaction.user.id, amnt)
