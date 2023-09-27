@@ -12,7 +12,7 @@ tf = "<:top_filled:894039100754133022>"
 b = "<:bottom:894039100666052630>"
 br = "<:bottom_right:894039100523421738>"
 
-coin = "<:coins:585233801320333313>"
+coin = "<:credits:1102297413357686965>"
 bitcoinEmoji = "<:bitcoin:1143401555656196237>"
 litecoinEmoji = "<:Litecoin:1143402028832407633>"
 ethereumEmoji = "<:Ethereum:1143402400581959691>"
