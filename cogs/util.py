@@ -50,6 +50,22 @@ async def SendConfirmButton(interaction:Interaction, msg):
 
 	return view.doProceed
 
+def GetMaxBet(game):
+	if game == "Blackjack": return 1000000
+	if game == "Coinflip": 	return 1000000
+	if game == "Crash": 	return 1000000
+	if game == "DOND": 		return 1000000
+	if game == "Horse": 	return 1000000
+	if game == "Mines": 	return 1000000
+	if game == "Poker": 	return 1000000
+	if game == "Roulette": 	return 1000000
+	if game == "RPS": 		return 1000000
+	if game == "Scratch": 	return 1000000
+	if game == "Slots": 	return 1000000
+
+	return 1000000
+		
+
 class Util(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
