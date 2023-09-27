@@ -275,7 +275,7 @@ class Inventory(commands.Cog):
 		else:
 			rarityChosen = self.getRarity(rarityToSearch)
 
-		allItems = DB.fetchAll("SELECT * FROM Items WHERE (Type = 'Usable' or TYPE = 'Collectible') and Rarity = ? and (ID < 200 or ID >= 300) ORDER BY Price;", [rarityChosen])
+		allItems = DB.fetchAll("SELECT * FROM Items WHERE (Type = 'Usable' or TYPE = 'Collectible') and Rarity = ? and Findable = 1 and (ID < 200 or ID >= 300) ORDER BY Price;", [rarityChosen])
 		
 		itemName, itemRarity, itemEmoji = self.getItemFromListBasedOnPrice(allItems)
 
