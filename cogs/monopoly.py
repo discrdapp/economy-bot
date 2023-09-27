@@ -196,7 +196,7 @@ class Monopoly(commands.Cog):
 
 				updateSQL = "UPDATE MonopolyPeople SET Earnings = CASE ID"
 				for x in range(peopleCount):
-					updateSQL += f" WHEN {x+1} THEN {values[x]}"
+					updateSQL += f" WHEN ID = {x+1} THEN {values[x]}"
 				updateSQL += f" ELSE 0 END WHERE DiscordID = {discordID};"
 
 
