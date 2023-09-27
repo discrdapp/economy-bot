@@ -2,14 +2,13 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import config
-
 from cooldowns import CallableOnCooldown, reset_bucket
 
 import datetime
 import traceback
 from difflib import get_close_matches
 
+import config, emojis
 
 
 class ErrorHandling(commands.Cog):
@@ -77,7 +76,7 @@ class ErrorHandling(commands.Cog):
 				return
 
 			if err == "tooPoor":
-				embed.description = "You do not have enough credits to do that (or you are trying to use an amount less than 1)"
+				embed.description = f"You do not have enough {emojis.coin} to do that (or you are trying to use an amount less than 1)"
 				await interaction.send(embed=embed, ephemeral=True)
 				try:
 					reset_bucket(interaction.application_command.callback, interaction)
@@ -86,7 +85,16 @@ class ErrorHandling(commands.Cog):
 				return
 
 			if "minBet" in err:
-				embed.description = f"Minimum bet is {err[7:]} credits" 
+				embed.description = f"Minimum bet is {err[7:]} {emojis.coin}" 
+				await interaction.send(embed=embed, ephemeral=True)
+				try:
+					reset_bucket(interaction.application_command.callback, interaction)
+				except:
+					pass
+				return
+			
+			if "maxBet" in err:
+				embed.description = f"Maximum bet is {int(err[7:]):,} {emojis.coin}" 
 				await interaction.send(embed=embed, ephemeral=True)
 				try:
 					reset_bucket(interaction.application_command.callback, interaction)
