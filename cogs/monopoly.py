@@ -8,7 +8,7 @@ import asyncio, cooldowns, datetime
 
 import emojis
 from db import DB
-from config import channelIDForMonopoly
+import config
 from cogs.util import SendConfirmButton
 
 gameStartingTimes = list()
@@ -125,7 +125,7 @@ class Monopoly(commands.Cog):
 
 	# runs every 2 hours, on the hour
 	@tasks.loop(time=gameStartingTimes)
-	# @tasks.loop(minutes=30)
+	# @tasks.loop(seconds=15)
 	async def StartGame(self):
 		try:
 			self.isGameInProgress = True
@@ -159,7 +159,7 @@ class Monopoly(commands.Cog):
 	
 	# runs every 2 hours, 00:40 after the hour
 	@tasks.loop(time=gameEndingTimes)
-	# @tasks.loop(minutes=30)
+	# @tasks.loop(seconds=20)
 	async def EndGame(self):
 		self.isGameInProgress = False
 		try:
@@ -194,18 +194,19 @@ class Monopoly(commands.Cog):
 
 				DB.update("UPDATE Monopoly SET CreditsToCollect = CreditsToCollect + ? WHERE DiscordID = ?;", [userTotalEarnings, discordID])
 
-				updateSQL = "UPDATE MonopolyPeople SET Earnings = CASE ID"
+				updateSQL = "UPDATE MonopolyPeople SET Earnings = CASE"
 				for x in range(0, len(values)):
 					updateSQL += f" WHEN ID = {x+1} THEN {values[x]}"
 				updateSQL += f" ELSE 0 END WHERE DiscordID = {discordID};"
 
 				DB.update(updateSQL)
+
 				values.clear()
 
 
 			totalPlayers = DB.fetchOne("SELECT COUNT(1) FROM MonopolyPeople;")[0]
 
-			chnl = self.bot.get_channel(channelIDForMonopoly)
+			chnl = self.bot.get_channel(config.channelIDForMonopoly)
 			embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Monopoly | Game Start")
 			embed.description = f"Game ended. There was {totalPlayers} players, and a total of {globalTotalEarnings:,}{emojis.coin} was earned!"
 			await chnl.send(embed=embed)
@@ -347,13 +348,13 @@ class Monopoly(commands.Cog):
 		
 		if self.isGameInProgress:
 			embed.description = (f"You cannot hire people while a game is in progress. Please check back <t:{int(self.EndGame.next_iteration.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>")
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 		cost = amnt*10000
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if balance < cost:
 			embed.description = f"That will cost you {round(cost):,}{emojis.coin}, but you only have {balance:,}{emojis.coin}"
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 		data = DB.fetchOne("SELECT COUNT(*) FROM MonopolyPeople WHERE DiscordID = ?", [interaction.user.id])
 		tableCount = self.bot.get_cog("Inventory").getCountForItem(interaction.user, 'Table')
@@ -363,12 +364,12 @@ class Monopoly(commands.Cog):
 
 		if seatsAvailable < amnt:
 			embed.description = "You do not have enough seats available on your tables."
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 
 		if not await SendConfirmButton(interaction, f"This will cost you {cost:,}{emojis.coin}. Proceed?"):
 			embed.description = "You have cancelled this transaction."
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 		
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought {amnt} People")
