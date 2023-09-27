@@ -43,7 +43,7 @@ class Player():
 				return
 
 			if self.label == "Bet":
-				await view.player.gameView.bot.get_cog("Economy").addWinnings(view.player.user.id, -view.player.gameView.startingbet, giveMultiplier=False)
+				await view.player.gameView.bot.get_cog("Economy").addWinnings(view.player.user.id, -view.player.gameView.startingbet)
 				view.player.totalSpent += view.player.gameView.startingbet
 				view.player.gameView.totalFundsToAdd += view.player.gameView.startingbet
 				if await view.player.gameView.PlayerClickedBet(view.player):
@@ -54,7 +54,6 @@ class Player():
 			elif self.label == "Fold":
 				if await view.player.gameView.PlayerFoldCheckGameover(view.player):
 					return
-			print(f"view is {view}")
 			view.player.gameView.NextTurn(view.player.id)
 
 			view.player.isPlayersTurn = False
@@ -65,7 +64,6 @@ class Player():
 	class PlayerView(nextcord.ui.View):
 		def __init__(self, player=None):
 			super().__init__(timeout=None)
-			print("instantiated 123!")
 
 			self.player:Player = player
 
@@ -327,6 +325,9 @@ class GameView(nextcord.ui.View):
 		for player in self.players:
 			player.gameView = self
 			player.Setup(player)
+
+			await self.bot.get_cog("Economy").addWinnings(player.user.id, -self.startingbet)
+
 		self.DrawCards()
 
 		for player in self.players:
@@ -347,8 +348,7 @@ class GameView(nextcord.ui.View):
 	# pass in either dealer or player hand
 	def GetBestHand(self, playerHand):
 		def num_of_kind(cards):
-			count = Counter(c[-1] for c in cards)
-			return count
+			return Counter(c[-1] for c in cards)
 
 		def count_pairs(cards):
 			return sum(i > 1 for i in num_of_kind(cards).values())
@@ -357,17 +357,18 @@ class GameView(nextcord.ui.View):
 			return max(num_of_kind(cards).values())
 
 		def is_straight(cards):
+			cards = straight_sort(cards)
 			values = [c[-1] for c in cards]
 			index = "A23456789TJQKA"["K" in values:].index
 			indices = sorted(index(v) for v in values)
-			return all(x == y for x, y in enumerate(indices, indices[-1]))
+			return all(x == y for x, y in enumerate(indices, indices[0]))
 
 		def is_flush(cards):
 			suit_pop = Counter(c[0] for c in cards)
 			return any(s > 4 for s in suit_pop.values())
 
 		def straight_sort(cards):
-			values = [c[0] for c in cards]
+			values = [c[-1] for c in cards]
 			index = "A23456789TJQKA"["K" in values:].index
 			return sorted(cards, key=lambda x:index(x[-1]), reverse=True)
 
@@ -378,6 +379,9 @@ class GameView(nextcord.ui.View):
 		def pair_sort(cards):
 			num = num_of_kind(cards)
 			return sorted(cards, key=lambda x: num[x[-1]], reverse=True)
+		
+		def card_vals(cards):
+			return [c[-1] for c in cards]
 
 		def score_hand(cards):
 			pairs = count_pairs(cards)
@@ -402,21 +406,19 @@ class GameView(nextcord.ui.View):
 			else:
 				hand_score, cards = pairs, pair_sort(cards)
 
-			return cards, hand_score
+			return hand_score, card_vals(cards), cards
 
 		tempCards = self.riverCards.copy()
 		tempCards += playerHand.copy()
-		print(f"tempcards are {tempCards}")
 
-		cards = max(list(combinations(tempCards, 7)), key=score_hand)
-		cards, score = score_hand(cards)
+		cards = max(list(combinations(tempCards, 5)), key=score_hand)
+		score, _, cards = score_hand(cards)
 
 		return cards, score
 
 	async def AfterFlop(self):
 		scores = dict()
 
-		print(f"ids left afterflop: {self.idsLeft}")
 		for id in self.idsLeft:
 			playerSorted, playerResult = self.GetBestHand(self.GetPlayerWithID(id).hand.copy())
 			scores[id] = dict()
@@ -447,7 +449,6 @@ class GameView(nextcord.ui.View):
 		else:
 			for player in tiedWinnersPlayers:
 				player.fundsWon = self.totalFundsToAdd / len(tiedWinnersPlayers)
-		print(f"tied score is {maxScore}")
 		await self.GameOver(tiedWinnersPlayers, self.scores[maxScore])
 
 
