@@ -628,8 +628,6 @@ class bj(commands.Cog):
 		view = Blackjack(self.bot, interaction.user.id, self.cards, amntbet, self.count)
 		await view.Start(interaction)
 
-		print(len(self.cards))
-
 
 def setup(bot):
 	bot.add_cog(bj(bot))
