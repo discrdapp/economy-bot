@@ -27,7 +27,6 @@ class XP(commands.Cog):
 
 		multiplier, expiration = self.bot.get_cog("Multipliers").getMultiplierAndExpiration(interaction.user.id)
 
-		coin = "<:coins:585233801320333313>"
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		minBet = balance * 0.05
 		minBet = int(math.ceil(minBet / 10.0) * 10.0)
@@ -35,7 +34,7 @@ class XP(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name}' Casino | Level")
 		embed.add_field(name = "Level", value = f"You are level **{level:,}**", inline=True)
 		embed.add_field(name = "XP / Next Level", value = f"**{xp:,}** / **{requiredXP:,}**", inline=True)
-		embed.add_field(name = "Minimum Bet", value = f"**{minBet:,}**{coin}", inline=True)
+		embed.add_field(name = "Minimum Bet", value = f"**{minBet:,}**{emojis.coin}", inline=True)
 		embed.add_field(name = "Total XP", value = f"**{totalXP:,}**", inline=True)
 		embed.add_field(name = "XP Until Level Up", value = f"**{(requiredXP - xp):,}**", inline=True)
 		embed.add_field(name = "Multiplier", value = f"**{multiplier}x**", inline=False)
