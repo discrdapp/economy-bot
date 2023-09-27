@@ -286,7 +286,7 @@ class Shop(commands.Cog):
 				embed.description += f"You found {bal}{emojis.coin}!\n"
 				moneyToAdd += bal
 			else:
-				embed.description = "The crate was empty... Better luck next time!\n"
+				embed.description += "The crate was empty... Better luck next time!\n"
 
 			if x >= 25 and x % 25 == 0: # send message every 25 crates opened
 				await interaction.send(embed=embed)
