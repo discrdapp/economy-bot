@@ -7,6 +7,8 @@ import math, datetime, cooldowns
 import config, emojis
 from db import DB
 
+from cogs.util import SendConfirmButton
+
 class Admin(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
@@ -39,7 +41,7 @@ class Admin(commands.Cog):
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='send')
 	async def send(self, interaction:Interaction, user: nextcord.Member, amnt):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Send")
-		if interaction.guild_id not in [821015960931794964, 585226670361804827, 825179206958055425, 467084194200289280, 670038316271403021]:
+		if interaction.guild_id not in [601446508121817088, 821015960931794964, 585226670361804827, 825179206958055425, 467084194200289280, 670038316271403021]:
 			embed.description = "This command can only be used in [Donator](https://docs.justingrah.am/thecasino/donator) servers and the [Support Server](https://discord.gg/ggUksVN)."
 			await interaction.send(embed=embed, ephemeral=True)
 			return
@@ -48,16 +50,28 @@ class Admin(commands.Cog):
 			embed.description = f"{user} has not registered. Cannot send money to them."
 			await interaction.send(embed=embed, ephemeral=True)
 			return
+		
 
 		amnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, amnt)
-		amntToReceive = math.floor(amnt * .95)
-
+		
+		if interaction.guild_id in [585226670361804827, 601446508121817088]:
+			amntToReceive = math.floor(amnt * .50)
+			tax = "50% tax"
+		else:
+			amntToReceive = math.floor(amnt * .95)
+			tax = "5% tax"
+		if not await SendConfirmButton(interaction, f"They will only receive {amntToReceive:,}{emojis.coin} (50%). Proceed?"):
+			embed.description = "You have cancelled this transaction."
+			await interaction.send(embed=embed)
+			return
+		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amnt):
 			raise Exception("tooPoor")
 
 		await self.bot.get_cog("Economy").addWinnings(user.id, amntToReceive)
 
-		await interaction.send(f"{interaction.user.mention} successfully sent {amntToReceive:,}{emojis.coin} ({amnt} - 5% tax) to {user.mention}!")
+		embed.description = f"{interaction.user.mention} successfully sent {amnt:,}{emojis.coin}to {user.mention}!\nAfter {tax}, they received {amntToReceive:,}"
+		await interaction.send(embed=embed)
 
 
 
@@ -72,8 +86,13 @@ class Admin(commands.Cog):
 		DB.delete("DELETE FROM Totals WHERE DiscordID = ?;", [user.id])
 		DB.delete("DELETE FROM ActiveBuffs WHERE DiscordID = ?;", [user.id])
 		DB.delete("DELETE FROM Crypto WHERE DiscordID = ?;", [user.id])
+		DB.delete("DELETE FROM CryptoMiner WHERE DiscordID = ?;", [user.id])
 		DB.delete("DELETE FROM Economy WHERE DiscordID = ?;", [user.id])
 		DB.delete("DELETE FROM MinerInventory WHERE DiscordID = ?;", [user.id])
+		DB.delete("DELETE FROM Monopoly WHERE DiscordiD = ?;", [user.id])
+		DB.delete("DELETE FROM MonopolyPeople WHERE DiscordiD = ?;", [user.id])
+		DB.delete("DELETE FROM Multipliers WHERE DiscordiD = ?;", [user.id])
+		DB.delete("DELETE FROM Quests WHERE DiscordiD = ?;", [user.id])
 
 		await interaction.send("Deleted user.")
 
