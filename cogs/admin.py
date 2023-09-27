@@ -41,7 +41,7 @@ class Admin(commands.Cog):
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='send')
 	async def send(self, interaction:Interaction, user: nextcord.Member, amnt):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Send")
-		if interaction.guild_id not in [601446508121817088, 821015960931794964, 585226670361804827, 825179206958055425, 467084194200289280, 670038316271403021]:
+		if interaction.guild_id not in [821015960931794964, config.adminServerID, 825179206958055425, 467084194200289280, 670038316271403021]:
 			embed.description = "This command can only be used in [Donator](https://docs.justingrah.am/thecasino/donator) servers and the [Support Server](https://discord.gg/ggUksVN)."
 			await interaction.send(embed=embed, ephemeral=True)
 			return
@@ -54,15 +54,21 @@ class Admin(commands.Cog):
 
 		amnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, amnt)
 		
-		if interaction.guild_id in [585226670361804827, 601446508121817088]:
-			amntToReceive = math.floor(amnt * .50)
-			tax = "50% tax"
+		if interaction.guild_id == config.adminServerID:
+			amntToReceive = math.floor(amnt * .60)
+			tax = "40% tax"
+			embed.set_footer(text="Donator servers have 20% tax and donators have 10%!")
 		else:
-			amntToReceive = math.floor(amnt * .95)
-			tax = "5% tax"
-		if not await SendConfirmButton(interaction, f"They will only receive {amntToReceive:,}{emojis.coin} (50%). Proceed?"):
+			if self.bot.get_cog("Economy").isDonator(interaction.user.id) or self.bot.get_cog("Economy").isDonator(user.id):
+				amntToReceive = math.floor(amnt * .90)
+				tax = "10% tax"
+			else:
+				amntToReceive = math.floor(amnt * .80)
+				tax = "20% tax"
+				embed.set_footer(text="Donators have only 10% tax, send and receive!")
+		if not await SendConfirmButton(interaction, f"They will only receive {amntToReceive:,}{emojis.coin} ({tax}). Proceed?"):
 			embed.description = "You have cancelled this transaction."
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amnt):
@@ -70,7 +76,7 @@ class Admin(commands.Cog):
 
 		await self.bot.get_cog("Economy").addWinnings(user.id, amntToReceive)
 
-		embed.description = f"{interaction.user.mention} successfully sent {amnt:,}{emojis.coin}to {user.mention}!\nAfter {tax}, they received {amntToReceive:,}"
+		embed.description = f"{interaction.user.mention} successfully sent {amnt:,}{emojis.coin}to {user.mention}!\nAfter {tax}, they received {amntToReceive:,}{emojis.coin}"
 		await interaction.send(embed=embed)
 
 
