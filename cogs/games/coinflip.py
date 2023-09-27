@@ -6,6 +6,7 @@ import cooldowns, asyncio, random
 
 import emojis
 from db import DB
+from cogs.util import GetMaxBet
 
 
 class MultiplayerButton(nextcord.ui.Button):
@@ -135,15 +136,15 @@ class Coinflip(commands.Cog):
 
 
 
-
-
-
 		###################
 		## SINGLE PLAYER ##
 		###################
 
 		if amntbet < 100:
 			raise Exception("minBet 100")
+
+		if amntbet > GetMaxBet("Coinflip"):
+			raise Exception(f"maxBet {GetMaxBet('Coinflip')}")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

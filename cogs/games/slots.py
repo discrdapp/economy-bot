@@ -5,6 +5,7 @@ from nextcord import Interaction
 import cooldowns, asyncio, random
 
 from db import DB
+from cogs.util import GetMaxBet
 
 class Slots(commands.Cog):
 	def __init__(self, bot):
@@ -18,6 +19,9 @@ class Slots(commands.Cog):
 
 		if amntbet < 100:
 			raise Exception("minBet 100")
+		
+		if amntbet > GetMaxBet("Slots"):
+			raise Exception(f"maxBet {GetMaxBet('Slots')}")
 
 		priorBal = await self.bot.get_cog("Economy").getBalance(interaction.user)
 

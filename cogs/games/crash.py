@@ -8,6 +8,7 @@ import cooldowns, asyncio, random
 
 import emojis
 from db import DB
+from cogs.util import GetMaxBet
 
 class Button(nextcord.ui.Button):
 	def __init__(self, label, style):
@@ -132,6 +133,9 @@ class Crash(commands.Cog):
 	async def crash(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 100")): # actual command
 		if amntbet < 100:
 			raise Exception("minBet 100")
+		
+		if amntbet > GetMaxBet("Crash"):
+			raise Exception(f"maxBet {GetMaxBet('Crash')}")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

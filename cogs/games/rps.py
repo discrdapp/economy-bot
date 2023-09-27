@@ -4,8 +4,8 @@ from nextcord import Interaction
 
 import cooldowns, random
 
-import emojis
 from db import DB
+from cogs.util import GetMaxBet
 
 class rps(commands.Cog):
 	def __init__(self, bot):
@@ -28,6 +28,9 @@ class rps(commands.Cog):
 
 		if amntbet < 100:
 			raise Exception("minBet 100")
+
+		if amntbet > GetMaxBet("RPS"):
+			raise Exception(f"maxBet {GetMaxBet('RPS')}")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

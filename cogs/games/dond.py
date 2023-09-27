@@ -6,6 +6,7 @@ import cooldowns, asyncio, random
 
 import emojis
 from db import DB
+from cogs.util import GetMaxBet
 
 
 class DealNoDealButton(nextcord.ui.Button):
@@ -286,6 +287,9 @@ class Dond(commands.Cog):
 				casecount:int = nextcord.SlashOption(choices=[5, 10])):
 		if amntbet < 1000:
 			raise Exception("minBet 1000")
+		
+		if amntbet > GetMaxBet("DOND"):
+			raise Exception(f"maxBet {GetMaxBet('DOND')}")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

@@ -5,8 +5,9 @@ from nextcord import Interaction
 import cooldowns
 from random import randint
 
-import config, emojis
+import config
 from db import DB
+from cogs.util import GetMaxBet
 
 
 class ScratchTile(nextcord.ui.Button):
@@ -148,6 +149,9 @@ class Scratch(commands.Cog):
 	async def scratch(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 100")):
 		if amntbet < 100:
 			raise Exception("minBet 100")
+		
+		if amntbet > GetMaxBet("Scratch"):
+			raise Exception(f"maxBet {GetMaxBet('Scratch')}")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

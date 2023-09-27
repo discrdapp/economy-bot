@@ -2,12 +2,10 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction, InteractionMessage
 
-import cooldowns, asyncio, random
+import cooldowns, random, time
 
-import emojis
 from db import DB
-
-import time
+from cogs.util import GetMaxBet
 
 
 class Button(nextcord.ui.Button):
@@ -181,6 +179,9 @@ class Horse(commands.Cog):
 
 		if amntbet < 100:
 			raise Exception("minBet 100")
+		
+		if amntbet > GetMaxBet("Horse"):
+			raise Exception(f"maxBet {GetMaxBet('Horse')}")
 		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")
