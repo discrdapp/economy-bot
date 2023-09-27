@@ -180,7 +180,7 @@ class Monopoly(commands.Cog):
 				discordID = user[1]
 
 				userTotalEarnings = 0
-				for _ in range(peopleCount):
+				for _ in range(0, peopleCount):
 					makeMoney = randint(1, 10)
 					if makeMoney == 1:
 						earnings = 0
@@ -195,12 +195,12 @@ class Monopoly(commands.Cog):
 				DB.update("UPDATE Monopoly SET CreditsToCollect = CreditsToCollect + ? WHERE DiscordID = ?;", [userTotalEarnings, discordID])
 
 				updateSQL = "UPDATE MonopolyPeople SET Earnings = CASE ID"
-				for x in range(peopleCount):
+				for x in range(0, len(values)):
 					updateSQL += f" WHEN ID = {x+1} THEN {values[x]}"
 				updateSQL += f" ELSE 0 END WHERE DiscordID = {discordID};"
 
-
 				DB.update(updateSQL)
+				values.clear()
 
 
 			totalPlayers = DB.fetchOne("SELECT COUNT(1) FROM MonopolyPeople;")[0]
