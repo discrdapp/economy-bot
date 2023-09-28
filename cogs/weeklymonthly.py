@@ -38,6 +38,9 @@ class WeeklyMonthly(commands.Cog):
 
 
 		weeklyReward = 12500
+		if self.bot.get_cog("Economy").isDonator(interaction.user.id):
+			weeklyReward *= 2
+
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(weeklyReward * (multiplier - 1))
 		logID = await self.bot.get_cog("Economy").addWinnings(userId, weeklyReward, giveMultiplier=True, activityName="Weekly Reward", amntBet=0)
@@ -77,6 +80,8 @@ class WeeklyMonthly(commands.Cog):
 
 
 		monthlyReward = 36000
+		if self.bot.get_cog("Economy").isDonator(interaction.user.id):
+			monthlyReward *= 2
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(monthlyReward * (multiplier - 1))
 		logID = await self.bot.get_cog("Economy").addWinnings(userId, monthlyReward, giveMultiplier=True, activityName="Monthly Reward", amntBet=0)
