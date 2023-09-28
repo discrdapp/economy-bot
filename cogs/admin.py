@@ -275,7 +275,7 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 		await self.bot.get_cog("Economy").addWinnings(member.id, creditsGiven)
 
 
-		DB.insert("INSERT INTO Donator(DiscordID, Level, DonatorReward) VALUES(?, ?, ?)", [member.id, level, donatorReward])
+		DB.insert("INSERT INTO Donators(DiscordID, Level, DonatorReward) VALUES(?, ?, ?)", [member.id, level, donatorReward])
 
 		await interaction.send(f"Donator role added.\n{creditsGiven} credits added.\n{donatorReward} credits added to your Donator Reward")
 
