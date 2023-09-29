@@ -475,13 +475,14 @@ class Blackjack(nextcord.ui.View):
 		return None
 
 	def dealer_first_turn(self):
-		# dDrawnCard = self.take_card()
+		dDrawnCard = self.take_card()
 		for x in range(2):
+			dDrawnCard = self.take_card()
 			# dDrawnCard = "♦ A"
-			if x == 0:
-				dDrawnCard = "♦ A"
-			else:
-				dDrawnCard = "♦ 10"
+			# if x == 0:
+			# 	dDrawnCard = "♦ A"
+			# else:
+			# 	dDrawnCard = "♦ 10"
 			self.dealerHand.append(dDrawnCard)
 
 			dDrawnCard = dDrawnCard.split()
