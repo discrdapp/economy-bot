@@ -227,33 +227,48 @@ class Economy(commands.Cog):
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 120, bucket=cooldowns.SlashBucket.author, cooldown_id='top')
-	async def top(self, interaction:Interaction, option = nextcord.SlashOption(
-																required=False,
-																name="option", 
-																choices=("Balance", "Level", "Profit"))):
+	async def top(self, interaction:Interaction, 
+			   option = nextcord.SlashOption(
+					required=False,
+					name="option", 
+					choices=("Balance", "Level", "Profit")), 
+				local = nextcord.SlashOption(
+					required=False,
+					name="local", 
+					choices=("local", "global"))):
 		
+		if not self.bot.get_cog("XP").IsHighEnoughLevel(interaction.user.id, 2):
+			raise Exception("lowLevel 2")
 
 		if option and option != "Balance":
 			if option == "Level":
-				sql = f"""SELECT DiscordID, Level
-					  	  FROM Economy ORDER BY Level DESC LIMIT 10"""
+				sql = f"SELECT DiscordID, Level FROM Economy"
+				orderBy = "Level"
 			elif option == "Profit":
-				sql = f"""SELECT DiscordID, Profit
-					  	  FROM Totals ORDER BY Profit DESC LIMIT 10"""
+				sql = f"SELECT DiscordID, Profit FROM Totals"
+				orderBy = "Profit"
 		else:
-			sql = f"""SELECT DiscordID, Credits
-					  FROM Economy ORDER BY Credits DESC LIMIT 10"""
+			option == "Balance"
+			sql = f"SELECT DiscordID, Credits FROM Economy"
+			orderBy = "Credits"
 		
 		topUsers = ""
 		count = 1
-		data = DB.fetchAll(sql, None)
+		if local == "global":
+			sql += f" ORDER BY {orderBy} DESC LIMIT 10;"
+			data = DB.fetchAll(sql)
+
+		else:
+			local = "local"
+			data = DB.fetchAll(f"{sql} WHERE DiscordID = (SELECT DiscordID FROM Guilds WHERE GuildID = '{interaction.guild.id}') ORDER BY {orderBy} DESC LIMIT 10;")
+
+
 		for x in data: 
 			user = await self.bot.fetch_user(x[0]) # grab the user from the current record
 			topUsers += f"{count}. < {user.name} > - " + "{:,}".format(x[1]) + "\n"
 
 			count += 1 # number the users from 1 - 10
-
-		await interaction.send(f"```MD\nTop 10\n======\n{topUsers}```") # send the list with the top 10
+		await interaction.send(f"```MD\n{local.title()} Leaderboards Top 10 for {option}\n======\n{topUsers}```Use `/opt in` to add yourself to the local leaderboard") # send the list with the top 10
 
 
 	@nextcord.slash_command()
@@ -264,6 +279,9 @@ class Economy(commands.Cog):
 																choices=("Balance", "Level", "Profit"))):
 		if not usr:
 			usr = interaction.user
+
+		if not self.bot.get_cog("XP").IsHighEnoughLevel(interaction.user.id, 2):
+			raise Exception("lowLevel 2")
 
 		if await self.getBalance(usr) < 5000:
 			await interaction.send("You need at least 5,000 credits to use this command.")
