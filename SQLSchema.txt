@@ -1,33 +1,124 @@
-CREATE TABLE `Economy` (
-        `DiscordID` varchar(64) DEFAULT NULL,
-        `Credits` bigint(20) NOT NULL DEFAULT '1000',
-        `Bank` bigint(20) NOT NULL DEFAULT '0',
-        `XP` bigint(20) NOT NULL DEFAULT '0',
-        `TotalXP` bigint(20) NOT NULL DEFAULT '0',
-        `Level` int(11) NOT NULL DEFAULT '0',
-        `DailyReward` int(11) NOT NULL DEFAULT '2500',
-        PRIMARY KEY (DiscordID)
+CREATE TABLE "ActiveBuffs" (
+	"ID"	INTEGER NOT NULL,
+	"DiscordID"	TEXT NOT NULL,
+	"Item"	TEXT NOT NULL,
+	PRIMARY KEY("ID" AUTOINCREMENT)
 );
-CREATE TABLE `Inventory` (
-        `DiscordID` varchar(64) NOT NULL DEFAULT NULL,
-        `Item`  INTEGER NOT NULL,
-        `Quantity`  INTEGER NOT NULL,
-        PRIMARY KEY(DiscordID,Item)
-)
-CREATE TABLE `Totals` (
-        `DiscordID` varchar(64) DEFAULT NULL,
-        `Paid` bigint(20) NOT NULL DEFAULT '0',
-        `Won` bigint(20) NOT NULL DEFAULT '0',
-        `Profit` bigint(20) NOT NULL DEFAULT '0',
-        `Games` bigint(20) DEFAULT '0',
-        `Slots` bigint(20) NOT NULL DEFAULT '0',
-        `Blackjack` bigint(20) NOT NULL DEFAULT '0',
-        `Crash` bigint(20) NOT NULL DEFAULT '0',
-        `Roulette` bigint(20) NOT NULL DEFAULT '0',
-        `Coinflip` bigint(20) NOT NULL DEFAULT '0',
-        `RPS` bigint(20) NOT NULL DEFAULT '0'
-        PRIMARY KEY (DiscordID)
+
+CREATE TABLE "Crypto" (
+	"DiscordID"	TEXT NOT NULL,
+	"Name"	TEXT NOT NULL,
+	"Quantity"	NUMERIC NOT NULL,
+	PRIMARY KEY("Name","DiscordID")
 );
+
+CREATE TABLE "CryptoMiner" (
+	"ID"	INTEGER NOT NULL,
+	"DiscordID"	TEXT NOT NULL,
+	"IsMining"	INTEGER NOT NULL DEFAULT 0,
+	"CryptoName"	TEXT NOT NULL DEFAULT 'Bitcoin',
+	"CryptoToCollect"	INTEGER NOT NULL DEFAULT 0,
+	"Storage"	INTEGER NOT NULL DEFAULT 25000,
+	"SpeedLevel"	INTEGER NOT NULL DEFAULT 1,
+	PRIMARY KEY("ID","DiscordID")
+);
+
+CREATE TABLE "Donators" (
+	"DiscordID"	TEXT NOT NULL,
+	"Level"	INTEGER NOT NULL,
+	"DonatorReward"	INTEGER NOT NULL,
+	PRIMARY KEY("DiscordID")
+);
+
+CREATE TABLE "Economy" (
+	"DiscordID"	varchar(64) DEFAULT NULL,
+	"Credits"	bigint(20) NOT NULL DEFAULT '1000',
+	"Bank"	bigint(20) NOT NULL DEFAULT '0',
+	"XP"	bigint(20) NOT NULL DEFAULT '0',
+	"TotalXP"	bigint(20) NOT NULL DEFAULT '0',
+	"Level"	int(11) NOT NULL DEFAULT '0',
+	"DailyReward"	int(11) NOT NULL DEFAULT '2500'
+);
+
+CREATE TABLE "Guilds" (
+	"GuildID"	TEXT NOT NULL,
+	"DiscordID"	TEXT NOT NULL,
+	PRIMARY KEY("GuildID","DiscordID")
+);
+
+CREATE TABLE "Inventory" (
+	"DiscordID"	varchar(64) NOT NULL DEFAULT NULL,
+	"Item"	INTEGER NOT NULL,
+	"Quantity"	INTEGER NOT NULL,
+	PRIMARY KEY("DiscordID","Item")
+);
+
+CREATE TABLE "Items" (
+	"ID"	INTEGER NOT NULL,
+	"Name"	TEXT NOT NULL,
+	"Description"	TEXT,
+	"Type"	TEXT,
+	"Price"	INTEGER NOT NULL DEFAULT 0,
+	"Buyable"	INTEGER NOT NULL DEFAULT 0,
+	"SellPrice"	INTEGER DEFAULT 0,
+	"Rarity"	INTEGER NOT NULL DEFAULT 0,
+	"Emoji"	TEXT NOT NULL DEFAULT ':warning:',
+	PRIMARY KEY("ID")
+);
+
+CREATE TABLE "Logs" (
+	"ID"	TEXT NOT NULL,
+	"DateTime"	TEXT NOT NULL,
+	"DiscordID"	TEXT NOT NULL,
+	"CreditsSpent"	INTEGER,
+	"CreditsGained"	INTEGER,
+	"NewBalance"	INTEGER NOT NULL,
+	"Activity"	TEXT NOT NULL,
+	PRIMARY KEY("ID")
+);
+
+CREATE TABLE "MinerBlocks" (
+	"ID"	INTEGER,
+	"Name"	TEXT,
+	"Value"	INTEGER,
+	"Emoji"	TEXT,
+	"RequiresPickaxeLevel"	INTEGER,
+	PRIMARY KEY("ID")
+);
+
+CREATE TABLE "MinerInventory" (
+	"DiscordID"	varchar(64) DEFAULT NULL,
+	"BackpackLevel" int(3) NOT NULL DEFAULT '1',
+	"PickaxeLevel" int(3) NOT NULL DEFAULT '1',
+	"Dirt"	int(11) NOT NULL DEFAULT '0',
+	"Cobblestone"	int(11) NOT NULL DEFAULT '0',
+	"Coal"	int(11) NOT NULL DEFAULT '0',
+	"Iron"	int(11) NOT NULL DEFAULT '0',
+	"Gold"	int(11) NOT NULL DEFAULT '0',
+	"Emerald"	int(11) NOT NULL DEFAULT '0',
+	"Diamond"	int(11) NOT NULL DEFAULT '0'
+);
+
+CREATE TABLE "Monopoly" (
+	"DiscordID"	TEXT NOT NULL,
+	"CreditsToCollect"	INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY("DiscordID")
+);
+
+CREATE TABLE "MonopolyPeople" (
+	"ID"	INTEGER,
+	"DiscordID"	TEXT NOT NULL,
+	"Name"	TEXT NOT NULL,
+	"Expires"	TEXT NOT NULL
+, "Earnings"	INTEGER NOT NULL DEFAULT 0);
+
+CREATE TABLE "Multipliers" (
+	"DiscordID"	INTEGER NOT NULL,
+	"Multiplier"	REAL NOT NULL,
+	"Expires"	TEXT NOT NULL,
+	PRIMARY KEY("DiscordID","Multiplier","Expires")
+);
+
 CREATE TABLE `Quests` (
         `DiscordID`  varchar(64) DEFAULT NULL,
         `ActiveQuest`      varchar(30) DEFAULT NULL,
@@ -36,32 +127,20 @@ CREATE TABLE `Quests` (
         `Profit`     integer(6) DEFAULT 0,
         PRIMARY KEY (DiscordID, ActiveQuest)
 );
-CREATE TABLE "Items" (
-        `ID`  INTEGER NOT NULL,
-        `Name`  TEXT NOT NULL,
-        `Description` TEXT,
-        `Type`  TEXT,
-        `Price` INTEGER NOT NULL DEFAULT 0,
-        `Buyable` NUMERIC NOT NULL DEFAULT 0,
-        PRIMARY KEY(ID)
-);
-CREATE TABLE "MinerBlocks" (
-        `ID`    INTEGER,
-        `Name`  TEXT,
-        `Value` INTEGER,
-        `Emoji` TEXT,
-        `RequiresPickaxeLevel`  INTEGER,
-        PRIMARY KEY(ID)
-);
-CREATE TABLE `Multipliers` (
-        `DiscordID` INTEGER NOT NULL,
-        `Multiplier`  REAL NOT NULL,
-        `Expires` TEXT NOT NULL,
-        PRIMARY KEY(DiscordID,Multiplier)
-);
-CREATE TABLE `Donators` (
-        `DiscordID` TEXT NOT NULL,
-        `Level` INTEGER NOT NULL,
-        `DonatorReward`INTEGER NOT NULL,
-        PRIMARY KEY(DiscordID)
-);
+
+CREATE TABLE "Totals" (
+	"DiscordID"	varchar(64) DEFAULT NULL,
+	"Paid"	bigint(20) NOT NULL DEFAULT '0',
+	"Won"	bigint(20) NOT NULL DEFAULT '0',
+	"Profit"	bigint(20) NOT NULL DEFAULT '0',
+	"Games"	bigint(20) DEFAULT '0',
+	"Slots"	bigint(20) NOT NULL DEFAULT '0',
+	"Blackjack"	bigint(20) NOT NULL DEFAULT '0',
+	"Crash"	bigint(20) NOT NULL DEFAULT '0',
+	"Roulette"	bigint(20) NOT NULL DEFAULT '0',
+	"Coinflip"	bigint(20) NOT NULL DEFAULT '0',
+	"RPS"	bigint(20) NOT NULL DEFAULT '0',
+	"Mines"	bigint(20) NOT NULL DEFAULT '0',
+	"HighLow"	bigint(20) NOT NULL DEFAULT '0',
+	"Horse"	bigint(20) NOT NULL DEFAULT '0'
+, "DOND"	bigint(20) NOT NULL DEFAULT '0', "Scratch"	bigint(20) NOT NULL DEFAULT '0');
