@@ -260,7 +260,7 @@ class Economy(commands.Cog):
 
 		else:
 			local = "local"
-			data = DB.fetchAll(f"{sql} WHERE DiscordID = (SELECT DiscordID FROM Guilds WHERE GuildID = '{interaction.guild.id}') ORDER BY {orderBy} DESC LIMIT 10;")
+			data = DB.fetchAll(f"{sql} WHERE DiscordID IN (SELECT DiscordID FROM Guilds WHERE GuildID = '{interaction.guild.id}') ORDER BY {orderBy} DESC LIMIT 10;")
 
 
 		for x in data: 
