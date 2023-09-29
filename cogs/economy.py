@@ -274,7 +274,7 @@ class Economy(commands.Cog):
 			msg = f"```MD\n{local.title()} Leaderboards Top 10 for {option}\n======\n{topUsers}```Use `/opt in` to add yourself to the local leaderboard"
 		else:
 			msg = f"```MD\n{local.title()} Leaderboards Top 10 for {option}\n======\n{topUsers}```"
-		await interaction.send(msg=msg) # send the list with the top 10
+		await interaction.send(msg) # send the list with the top 10
 
 
 	@nextcord.slash_command()
