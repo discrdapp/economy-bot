@@ -268,7 +268,13 @@ class Economy(commands.Cog):
 			topUsers += f"{count}. < {user.name} > - " + "{:,}".format(x[1]) + "\n"
 
 			count += 1 # number the users from 1 - 10
-		await interaction.send(f"```MD\n{local.title()} Leaderboards Top 10 for {option}\n======\n{topUsers}```Use `/opt in` to add yourself to the local leaderboard") # send the list with the top 10
+		
+		msg = ""
+		if local == "local":
+			msg = f"```MD\n{local.title()} Leaderboards Top 10 for {option}\n======\n{topUsers}```Use `/opt in` to add yourself to the local leaderboard"
+		else:
+			msg = f"```MD\n{local.title()} Leaderboards Top 10 for {option}\n======\n{topUsers}```"
+		await interaction.send(msg=msg) # send the list with the top 10
 
 
 	@nextcord.slash_command()
