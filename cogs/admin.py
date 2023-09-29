@@ -95,10 +95,11 @@ class Admin(commands.Cog):
 		DB.delete("DELETE FROM CryptoMiner WHERE DiscordID = ?;", [user.id])
 		DB.delete("DELETE FROM Economy WHERE DiscordID = ?;", [user.id])
 		DB.delete("DELETE FROM MinerInventory WHERE DiscordID = ?;", [user.id])
-		DB.delete("DELETE FROM Monopoly WHERE DiscordiD = ?;", [user.id])
-		DB.delete("DELETE FROM MonopolyPeople WHERE DiscordiD = ?;", [user.id])
-		DB.delete("DELETE FROM Multipliers WHERE DiscordiD = ?;", [user.id])
-		DB.delete("DELETE FROM Quests WHERE DiscordiD = ?;", [user.id])
+		DB.delete("DELETE FROM Monopoly WHERE DiscordID = ?;", [user.id])
+		DB.delete("DELETE FROM MonopolyPeople WHERE DiscordID = ?;", [user.id])
+		DB.delete("DELETE FROM Multipliers WHERE DiscordID = ?;", [user.id])
+		DB.delete("DELETE FROM Quests WHERE DiscordID = ?;", [user.id])
+		DB.delete("DELETE FROM Guilds WHERE DiscordID = ?;", [user.id])
 
 		await interaction.send("Deleted user.")
 
