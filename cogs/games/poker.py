@@ -11,6 +11,7 @@ from itertools import combinations
 
 import emojis
 from db import DB
+from cogs.util import GetMaxBet
 
 
 class Button(nextcord.ui.Button['PokerView']):
@@ -75,14 +76,12 @@ class PokerView(nextcord.ui.View):
 		self.add_item(self.foldCheckButton)
 
 		# self.foldCheckButton = Button(self.bot, "Check", nextcord.ButtonStyle.red)
-	
-	# async def on_timeout(self):
-	# 	self.clear_items()
-	# 	await self.interaction.edit_original_message(embed=None, view=self, 
-	# 				       content=f"{self.interaction.user.mention}\nYou took too long to respond, staying with your current hand")
-	# 	await self.stand()
 
 	async def FlipCards(self, interaction:Interaction):
+		# self.riverCards = ["♦ 9", "♦ Q", "♥ 8", "♠ 3", "♥ 2"]
+		# await self.AfterFlop(interaction)
+		# self.cardsDealt = 5
+		# return True
 		if self.cardsDealt == 0:
 			for x in range(3):
 				self.riverCards[x] = self.TakeCard()
@@ -160,8 +159,7 @@ class PokerView(nextcord.ui.View):
 	# pass in either dealer or player hand
 	def GetBestHand(self, isPlayer:bool):
 		def num_of_kind(cards):
-			count = Counter(c[-1] for c in cards)
-			return count
+			return Counter(c[-1] for c in cards)
 
 		def count_pairs(cards):
 			return sum(i > 1 for i in num_of_kind(cards).values())
@@ -170,17 +168,18 @@ class PokerView(nextcord.ui.View):
 			return max(num_of_kind(cards).values())
 
 		def is_straight(cards):
+			cards = straight_sort(cards)
 			values = [c[-1] for c in cards]
 			index = "A23456789TJQKA"["K" in values:].index
 			indices = sorted(index(v) for v in values)
-			return all(x == y for x, y in enumerate(indices, indices[-1]))
+			return all(x == y for x, y in enumerate(indices, indices[0]))
 
 		def is_flush(cards):
 			suit_pop = Counter(c[0] for c in cards)
 			return any(s > 4 for s in suit_pop.values())
 
 		def straight_sort(cards):
-			values = [c[0] for c in cards]
+			values = [c[-1] for c in cards]
 			index = "A23456789TJQKA"["K" in values:].index
 			return sorted(cards, key=lambda x:index(x[-1]), reverse=True)
 
@@ -191,6 +190,9 @@ class PokerView(nextcord.ui.View):
 		def pair_sort(cards):
 			num = num_of_kind(cards)
 			return sorted(cards, key=lambda x: num[x[-1]], reverse=True)
+		
+		def card_vals(cards):
+			return [c[-1] for c in cards]
 
 		def score_hand(cards):
 			pairs = count_pairs(cards)
@@ -215,7 +217,8 @@ class PokerView(nextcord.ui.View):
 			else:
 				hand_score, cards = pairs, pair_sort(cards)
 
-			return cards, hand_score
+			# return cards, hand_score
+			return hand_score, card_vals(cards), cards
 
 		tempCards = self.riverCards.copy()
 		if isPlayer:
@@ -223,8 +226,8 @@ class PokerView(nextcord.ui.View):
 		else:
 			tempCards += self.dCards.copy()
 
-		cards = max(list(combinations(tempCards, 7)), key=score_hand)
-		cards, score = score_hand(cards)
+		cards = max(list(combinations(tempCards, 5)), key=score_hand)
+		score, _, cards = score_hand(cards)
 
 		return cards, score
 
@@ -254,9 +257,10 @@ class PokerView(nextcord.ui.View):
 			index = "23456789TJQKA"
 			pScore = index.find(pSorted[0][-1])
 			dScore = index.find(dSorted[0][-1])
+
 			if pScore == dScore:
 				msg = f"**It is a tie.**\nBoth have {self.scores[playerResult]}{pMsgAddon}"
-				await self.GameOver(interaction, msg, tie=True)
+				await self.GameOver(interaction, msg, winner=False)
 			elif pScore > dScore:
 				msg = f"**Player wins!**\nBoth have {self.scores[playerResult]}, but player has {pSorted[0][-1]} high\nDealer only has {dSorted[0][-1]} high"
 				await self.GameOver(interaction, msg, winner=True)
@@ -264,13 +268,11 @@ class PokerView(nextcord.ui.View):
 				msg = f"**Player lost.**\nBoth have {self.scores[playerResult]}, but dealer has {dSorted[0][-1]} high\nPlayer only has {pSorted[0][-1]} high"
 				await self.GameOver(interaction, msg, winner=False)
 
-	async def GameOver(self, interaction:Interaction, msg, winner:bool=False, folded:bool=False, tie:bool=False):
+	async def GameOver(self, interaction:Interaction, msg, winner:bool=False, folded:bool=False):
 		if folded:
 			moneyToAdd = 0
 		else: 
-			if tie:
-				moneyToAdd = self.amntbet
-			elif winner:
+			if winner:
 				moneyToAdd = self.amntbet * 2
 			else:
 				moneyToAdd = 0
@@ -300,11 +302,15 @@ class PokerView(nextcord.ui.View):
 			await interaction.send(embed=self.embed)
 
 	def PlayerDrawCards(self):
+		# self.pCards = ["♥ J", "♠ T"]
+		# return
 		for _ in range(2):
 			card = self.TakeCard()
 			self.pCards.append(card)
 	
 	def OpponentDrawCards(self):
+		# self.dCards = ["♠ J", "♥ Q"]
+		# return
 		for _ in range(2):
 			card = self.TakeCard()
 			self.dCards.append(card)
@@ -327,6 +333,9 @@ class Poker(commands.Cog):
 
 		if startingbet < 100:
 			raise Exception("minBet 100")
+		
+		if startingbet > GetMaxBet("Poker"):
+			raise Exception(f"maxBet {GetMaxBet('Poker')}")
 		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, startingbet):
 			raise Exception("tooPoor")
