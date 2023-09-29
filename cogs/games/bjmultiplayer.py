@@ -3,11 +3,8 @@ from nextcord.ext import commands
 from nextcord import Interaction
 
 # import cooldowns
-from random import randint, shuffle
+from random import shuffle
 import asyncio, cooldowns
-
-import emojis
-from db import DB
 
 
 class Player():
@@ -101,7 +98,7 @@ class CreditsToBet(nextcord.ui.TextInput):
 
 class Insurance(nextcord.ui.Modal):
 	def __init__(self, view, bot):
-		super().__init__(title="Insurance")
+		super().__init__(title="Insurance", timeout=None)
 		self.add_item(CreditsToBet())
 		self.view = view
 		self.bot:commands.bot.Bot = bot
@@ -113,10 +110,10 @@ class Insurance(nextcord.ui.Modal):
 		if interaction.user.id not in [player.user.id for player in view.players]:
 			await interaction.send("This is not your game!", ephemeral=True)
 			return
-		currPlayer:Player = view.GetPlayerWithPlayerID(interaction.user.id)
+		currPlayer:Player = view.GetPlayerWithUserID(interaction.user.id)
 
 		if not currPlayer.isPlayersTurn:
-			await interaction.send("It is not your turn!")
+			await interaction.send("It is not your turn!", ephemeral=True)
 			return
 		if not self.children[0].value.isdigit():
 			await interaction.send("Please enter a valid number!", ephemeral=True)
@@ -153,10 +150,12 @@ class Button(nextcord.ui.Button['Blackjack']):
 			await interaction.send("It is not your turn!")
 			return
 
-		if self.label == "Insurance":
-			self.modal = Insurance(view, view.bot)
-			await interaction.response.send_modal(self.modal)
-			await self.modal.wait()
+		if self.label == "Yes" or self.label == "No":
+			if self.label == "Yes":
+				self.modal = Insurance(view, view.bot)
+				await interaction.response.send_modal(self.modal)
+				await self.modal.wait()
+			await view.NextTurn(currPlayer.id)
 		if self.label == "Double Down":
 			if len(currPlayer.pCardNums) > 2:
 				await interaction.send("You can only Double Down on your first turn", ephemeral=True)
@@ -184,7 +183,7 @@ class Button(nextcord.ui.Button['Blackjack']):
 
 class Blackjack(nextcord.ui.View):
 	def __init__(self, bot, channel, players, owner, cards, amntbet):
-		super().__init__(timeout=3)
+		super().__init__(timeout=None)
 		self.bot:commands.bot.Bot = bot
 		self.channel = channel
 
@@ -212,8 +211,17 @@ class Blackjack(nextcord.ui.View):
 
 		self.doubleDown = Button(bot, label="Double Down", style=nextcord.ButtonStyle.blurple, row=1)
 		self.add_item(self.doubleDown)
-		self.insurance = Button(bot, label="Insurance", style=nextcord.ButtonStyle.blurple, row=1, disabled=True)
-		self.add_item(self.insurance)
+		self.insuranceYes = Button(bot, label="Yes", style=nextcord.ButtonStyle.blurple, row=1)
+		self.insuranceNo = Button(bot, label="No", style=nextcord.ButtonStyle.blurple, row=1)
+		self.insuranceIDsLeft = None
+
+		self.hitButton = Button(self.bot, label="Hit", style=nextcord.ButtonStyle.green)
+		self.standButton = Button(self.bot, label="Stand", style=nextcord.ButtonStyle.red)
+
+		self.add_item(self.hitButton)
+		self.add_item(self.standButton)
+
+
 
 	async def CheckForInsurance(self):
 			await self.msg.edit(content=f"Checking for blackjack")
@@ -225,6 +233,7 @@ class Blackjack(nextcord.ui.View):
 			await self.msg.edit(content=f"Checking for blackjack...")
 			await asyncio.sleep(0.6)
 			if self.dealerNum[1] == 10: # checks if dealer's second card is a 10
+				self.gameOver = True
 				await self.msg.edit(content=f"Checking for blackjack... Protected by insurance!")
 				return True
 			else:
@@ -232,8 +241,6 @@ class Blackjack(nextcord.ui.View):
 				return False
 
 	async def PlayerStandOrBustCheckGameOver(self, playedStayed:Player):
-		print(f"id is {playedStayed.id}")
-		print(f"list if {self.idsLeft}")
 		self.idsLeft.remove(playedStayed.id)
 		if len(self.idsLeft) == 0:
 			await self.dealer_turn()
@@ -241,12 +248,45 @@ class Blackjack(nextcord.ui.View):
 			self.gameOver = True
 			await self.EndGame()
 			return
-		self.NextTurn(playedStayed.id)
+		await self.NextTurn(playedStayed.id)
 
 
-
-	def NextTurn(self, id):
+	async def CheckForBlackjack(self):
+		await self.msg.edit(content=f"Checking for blackjack")
+		await asyncio.sleep(0.6)
+		await self.msg.edit(content=f"Checking for blackjack.")
+		await asyncio.sleep(0.6)
+		await self.msg.edit(content=f"Checking for blackjack..")
+		await asyncio.sleep(0.6)
+		await self.msg.edit(content=f"Checking for blackjack...")
+		await asyncio.sleep(0.6)
+		if self.dealerNum[1] == 10: # checks if dealer's second card is a 10
+			await self.msg.edit(content=f"DEALER HAS BLACKJACK!")
+			for player in self.players:
+				if player.insuranceBet > 0:
+					player.winner = 999
+			await self.displayWinners()
+			self.gameOver = True
+			return True
+		else:
+			await self.msg.edit(content=f"Dealer does not have blackjack... game will continue")
+	
+	async def NextTurn(self, id):
 		self.GetPlayerWithPlayerID(id).isPlayersTurn = False
+
+		if self.insuranceIDsLeft:
+			self.insuranceIDsLeft.remove(id)
+
+			if len(self.insuranceIDsLeft) == 0:
+				if await self.CheckForBlackjack():
+					return
+				self.insuranceIDsLeft = self.idsLeft.copy()
+				self.doubleDown.disabled = False
+				self.hitButton.disabled = False
+				self.standButton.disabled = False
+				self.remove_item(self.insuranceYes)
+				self.remove_item(self.insuranceNo)
+				
 		id += 1
 		while id not in self.idsLeft:
 			id += 1
@@ -268,14 +308,6 @@ class Blackjack(nextcord.ui.View):
 		for player in self.players:
 			if player.id == playerID:
 				return player
-	
-	async def on_timeout(self):
-		print("timeout!!!")
-		await self.channel.send(f"{self.GetPlayerWithPlayerID(self.currTurnID).user.mention} took too long to respond, staying with current hand")
-		await self.stand()
-		if not self.gameOver:
-			self.UpdateEmbed()
-			await self.msg.edit(embed=self.embed)
 
 	def GetCardsString(self, cards):
 		pTotal = ""
@@ -288,7 +320,10 @@ class Blackjack(nextcord.ui.View):
 
 		self.embed.description = f"Player's Turn: {self.GetPlayerWithPlayerID(self.currTurnID).user.mention}"
 
-		self.embed.add_field(name = f"{self.bot.user.name}'s cards", value = f"{self.GetCardsString(self.dealerHand)}\n**Score**: {sum(self.dealerNum)}\n", inline=False)
+		if not self.gameOver:
+			self.embed.add_field(name = f"{self.bot.user.name}'s cards", value = f"{self.dealerHand[0]}", inline=False)
+		else:
+			self.embed.add_field(name = f"{self.bot.user.name}'s cards", value = f"{self.GetCardsString(self.dealerHand)}\n**Score**: {sum(self.dealerNum)}\n", inline=False)
 
 		for player in self.players:
 			msg = ""
@@ -297,7 +332,10 @@ class Blackjack(nextcord.ui.View):
 			elif player.stand:
 				msg = "(STAYED)"
 			self.embed.add_field(name = f"{player.user.display_name}'s cards:", value = f"{self.GetCardsString(player.pCards)}\n**Score**: {sum(player.pCardNums)} {msg}", inline=False)
-		self.embed.add_field(name = "_ _", value = "**Options:** hit or stay", inline=False)
+		if self.insuranceYes.disabled:
+			self.embed.add_field(name = "_ _", value = "**Options:** hit or stay", inline=False)
+		else:
+			self.embed.add_field(name = "_ _", value = "**Do you want to buy Insurance?**", inline=False)
 
 
 	async def Start(self):
@@ -311,9 +349,6 @@ class Blackjack(nextcord.ui.View):
 
 
 		self.dealer_first_turn()
-
-		self.add_item(Button(self.bot, label="Hit", style=nextcord.ButtonStyle.green))
-		self.add_item(Button(self.bot, label="Stand", style=nextcord.ButtonStyle.red))
 
 		await self.players_first_turn()
 
@@ -381,6 +416,7 @@ class Blackjack(nextcord.ui.View):
 			if self.is_blackjack(player.pCardNums): # gets 21
 				await self.stand()
 			else: # busts
+				player.busted = True
 				await self.PlayerStandOrBustCheckGameOver(player)
 			return
 		if isDoubleDown:
@@ -439,28 +475,32 @@ class Blackjack(nextcord.ui.View):
 		return None
 
 	def dealer_first_turn(self):
-		# dDrawnCard = "♦ A"
-		# for x in range(0, 2):
-			# if x == 0:
-			# 	dDrawnCard = "♦ A"
-			# else:
-			# 	dDrawnCard = "♦ 10"
-			# else:
-		dDrawnCard = self.take_card()
-		self.dealerHand.append(dDrawnCard)
+		# dDrawnCard = self.take_card()
+		for x in range(2):
+			# dDrawnCard = "♦ A"
+			if x == 0:
+				dDrawnCard = "♦ A"
+			else:
+				dDrawnCard = "♦ 10"
+			self.dealerHand.append(dDrawnCard)
 
-		dDrawnCard = dDrawnCard.split()
+			dDrawnCard = dDrawnCard.split()
 
-		if dDrawnCard[1] == "Jack" or dDrawnCard[1] == "Queen" or dDrawnCard[1] == "King":
-			dDrawnCard[1] = "10"
-		elif dDrawnCard[1] == "A":
-			dDrawnCard[1] = "11"
-			self.insurance.disabled = False # if dealer's FIRST card is Ace, ask player if they want to buy insurance
+			if dDrawnCard[1] == "Jack" or dDrawnCard[1] == "Queen" or dDrawnCard[1] == "King":
+				dDrawnCard[1] = "10"
+			elif dDrawnCard[1] == "A":
+				dDrawnCard[1] = "11"
 
+			self.dealerNum.append(int(dDrawnCard[1]))
+			self.dealerNum = self.eval_ace(self.dealerNum)
 
-		self.dealerNum.append(int(dDrawnCard[1]))
-
-		self.dealerNum = self.eval_ace(self.dealerNum)
+		if self.dealerHand[0][-1] == "A":
+			self.insuranceIDsLeft = self.idsLeft.copy()
+			self.doubleDown.disabled = True
+			self.hitButton.disabled = True
+			self.standButton.disabled = True
+			self.add_item(self.insuranceYes)
+			self.add_item(self.insuranceNo)
 
 	async def refresh_dealer_hand(self):
 		self.UpdateEmbed()
@@ -536,7 +576,7 @@ class Blackjack(nextcord.ui.View):
 			moneyToAdd = 0
 			if player.winner == 999: # won by insurance
 				wonMsg += f"{player.user.mention} won by insurance\n"
-				moneyToAdd = self.insuranceBet * 3
+				moneyToAdd = player.insuranceBet * 3
 			elif player.winner == 1:
 				wonMsg += f"{player.user.mention} beat dealer\n"
 				moneyToAdd = player.totalMoneyBet * 2 
