@@ -332,7 +332,7 @@ class Blackjack(nextcord.ui.View):
 			elif player.stand:
 				msg = "(STAYED)"
 			self.embed.add_field(name = f"{player.user.display_name}'s cards:", value = f"{self.GetCardsString(player.pCards)}\n**Score**: {sum(player.pCardNums)} {msg}", inline=False)
-		if self.insuranceYes.disabled:
+		if self.insuranceIDsLeft == None or len(self.insuranceIDsLeft) == 0:
 			self.embed.add_field(name = "_ _", value = "**Options:** hit or stay", inline=False)
 		else:
 			self.embed.add_field(name = "_ _", value = "**Do you want to buy Insurance?**", inline=False)
