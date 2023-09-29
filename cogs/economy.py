@@ -248,7 +248,7 @@ class Economy(commands.Cog):
 				sql = f"SELECT DiscordID, Profit FROM Totals"
 				orderBy = "Profit"
 		else:
-			option == "Balance"
+			option = "Balance"
 			sql = f"SELECT DiscordID, Credits FROM Economy"
 			orderBy = "Credits"
 		
