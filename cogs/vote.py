@@ -12,7 +12,7 @@ class Vote(commands.Cog):
 		self.bot:commands.bot.Bot = bot
 
 	@nextcord.slash_command(description="Vote")
-	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
+	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True, add_reactions=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='vote')
 	async def vote(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Vote")
@@ -37,6 +37,10 @@ class Vote(commands.Cog):
 			times = "Times"
 			voteMsg = "Votes"
 			chip = "Chips"
+		
+		del votes[f"{interaction.user.id}"]
+		with open(r"votes.json", 'w') as f:
+			json.dump(votes, f, indent=4)
 
 		moneyToAdd = 8500 * numOfVotes
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName=f"{numOfVotes} {voteMsg}", amntBet=0)
@@ -47,10 +51,6 @@ class Vote(commands.Cog):
 		msg = await interaction.send(embed=embed)
 		msg = await msg.fetch()
 		await msg.add_reaction("❤️")
-
-		del votes[f"{interaction.user.id}"]
-		with open(r"votes.json", 'w') as f:
-			json.dump(votes, f, indent=4)
 
 def setup(bot):
 	bot.add_cog(Vote(bot))
