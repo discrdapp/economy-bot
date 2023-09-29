@@ -407,7 +407,7 @@ class Totals(commands.Cog):
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='embedcolor')
 	async def embedcolor(self, interaction:Interaction, choice):
 		if not self.bot.get_cog("XP").IsHighEnoughLevel(interaction.user.id, 1):
-			raise Exception("lowLevel 1")	
+			raise Exception("lowLevel 1")
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
 		embed.set_thumbnail(url=interaction.user.avatar)
