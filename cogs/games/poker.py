@@ -284,7 +284,7 @@ class PokerView(nextcord.ui.View):
 
 		profitInt = moneyToAdd - self.amntbet
 
-		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="Poker", amntBet=self.amntbet)
+		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=False, activityName="Poker", amntBet=self.amntbet)
 
 		self.embed = await DB.addProfitAndBalFields(self, interaction, profitInt, self.embed)
 
