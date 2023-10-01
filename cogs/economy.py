@@ -39,7 +39,13 @@ class Economy(commands.Cog):
 		# if interaction.application_command.qualified_name == 'start'
 		# 	await interaction.send(embed=embed)
 		# else
-		await interaction.send(embed=embed)
+		try:
+			await interaction.send(embed=embed)
+		except:
+			try:
+				await interaction.followup.send(embed=embed)
+			except:
+				pass
 
 	async def GetBetAmount(self, interaction:Interaction, amntbet):
 		if amntbet.isdigit():
