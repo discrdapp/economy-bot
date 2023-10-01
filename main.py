@@ -66,10 +66,17 @@ async def on_interaction(interaction: Interaction):
 	# if interaction.user.id != config.botOwnerDiscordID:
 	# 	await interaction.send("Updating bot!!! Check back in 10 minutes! :partying_face: ")
 	# 	return
+
+	if isinstance(interaction.channel, nextcord.PartialMessageable):
+		await interaction.send("Commands are not allowed in DMs! They can only be done in servers.", ephemeral=True)
+		return
 	if not await bot.get_cog("Economy").accCheck(interaction.user):
 		await bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
 		if interaction and interaction.data and 'name' in interaction.data and interaction.data['name'] == 'blackjack':
 			await interaction.send("You can now play blackjack, now that you're registered. Please run command again.", ephemeral=True)
+			return
+		if 'custom_id' in interaction.data:
+			await interaction.send("You can now join in, now that you're registed. Please click button again.", ephemeral=True)
 			return
 
 	await bot.process_application_commands(interaction)
