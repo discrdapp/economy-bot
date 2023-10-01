@@ -9,6 +9,8 @@ import asyncio, cooldowns
 from collections import Counter
 from itertools import combinations
 
+from math import floor
+
 import emojis
 from db import DB
 from cogs.util import GetMaxBet
@@ -260,7 +262,7 @@ class PokerView(nextcord.ui.View):
 
 			if pScore == dScore:
 				msg = f"**It is a tie.**\nBoth have {self.scores[playerResult]}{pMsgAddon}"
-				await self.GameOver(interaction, msg, winner=False)
+				await self.GameOver(interaction, msg, tie=True)
 			elif pScore > dScore:
 				msg = f"**Player wins!**\nBoth have {self.scores[playerResult]}, but player has {pSorted[0][-1]} high\nDealer only has {dSorted[0][-1]} high"
 				await self.GameOver(interaction, msg, winner=True)
@@ -268,11 +270,13 @@ class PokerView(nextcord.ui.View):
 				msg = f"**Player lost.**\nBoth have {self.scores[playerResult]}, but dealer has {dSorted[0][-1]} high\nPlayer only has {pSorted[0][-1]} high"
 				await self.GameOver(interaction, msg, winner=False)
 
-	async def GameOver(self, interaction:Interaction, msg, winner:bool=False, folded:bool=False):
+	async def GameOver(self, interaction:Interaction, msg, winner:bool=False, folded:bool=False, tie:bool=False):
 		if folded:
 			moneyToAdd = 0
 		else: 
-			if winner:
+			if tie:
+				moneyToAdd = floor(self.amntbet * 0.5)
+			elif winner:
 				moneyToAdd = self.amntbet * 2
 			else:
 				moneyToAdd = 0
