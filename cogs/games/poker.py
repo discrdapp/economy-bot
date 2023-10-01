@@ -80,7 +80,7 @@ class PokerView(nextcord.ui.View):
 		# self.foldCheckButton = Button(self.bot, "Check", nextcord.ButtonStyle.red)
 
 	async def FlipCards(self, interaction:Interaction):
-		# self.riverCards = ["♦ 9", "♦ Q", "♥ 8", "♠ 3", "♥ 2"]
+		# self.riverCards = ["♦ 5", "♠ 7", "♠ 2", "♣ 4", "♦ 8"]
 		# await self.AfterFlop(interaction)
 		# self.cardsDealt = 5
 		# return True
@@ -231,7 +231,7 @@ class PokerView(nextcord.ui.View):
 		cards = max(list(combinations(tempCards, 5)), key=score_hand)
 		score, _, cards = score_hand(cards)
 
-		return cards, score
+		return straight_sort(tempCards), score
 
 
 	async def AfterFlop(self, interaction:Interaction):
@@ -306,14 +306,14 @@ class PokerView(nextcord.ui.View):
 			await interaction.send(embed=self.embed)
 
 	def PlayerDrawCards(self):
-		# self.pCards = ["♥ J", "♠ T"]
+		# self.pCards = ["♣ T", "♠ J"]
 		# return
 		for _ in range(2):
 			card = self.TakeCard()
 			self.pCards.append(card)
 	
 	def OpponentDrawCards(self):
-		# self.dCards = ["♠ J", "♥ Q"]
+		# self.dCards = ["♣ 9", "♠ T"]
 		# return
 		for _ in range(2):
 			card = self.TakeCard()
