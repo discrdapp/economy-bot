@@ -156,6 +156,8 @@ class Admin(commands.Cog):
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def uses(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True)
+		msg = await interaction.original_message()
 		amnt = DB.fetchAll("select DateTime, Activity from logs;")
 
 		totalUses = len(amnt) + 96934
@@ -217,13 +219,13 @@ class Admin(commands.Cog):
 				break
 
 		
-		msg = f"I have been used:\n\t\t**{monthsUses}** times this month.\n\
+		text = f"I have been used:\n\t\t**{monthsUses}** times this month.\n\
 \t\t**{weeksUses}** times this week.\n\t\t**{todaysUses}** times today.\n\
 \t\t**{sixHourUses}** times in the past 6 hours.\n\t\t**{hourUses}** times in the past hour.\n\
 And in total, over **{totalUses:,}** times.\n\n\
 Today's top uses:\n{todayActivitiesMsg}\n\n\
 Week's top uses:\n{weekActivitiesMsg}\n\n"
-		await interaction.send(msg)
+		await msg.edit(content=text)
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
