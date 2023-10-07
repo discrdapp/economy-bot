@@ -59,6 +59,11 @@ class Player():
 			view.player.isPlayersTurn = False
 			await view.player.gameView.UpdateMessages()
 
+			try:
+				await interaction.response.defer()
+			except:
+				pass
+
 
 
 	class PlayerView(nextcord.ui.View):
@@ -359,7 +364,7 @@ class GameView(nextcord.ui.View):
 		def is_straight(cards):
 			cards = straight_sort(cards)
 			values = [c[-1] for c in cards]
-			index = "A23456789TJQKA"["K" in values:].index
+			index = "23456789TJQKA".index
 			indices = sorted(index(v) for v in values)
 			return all(x == y for x, y in enumerate(indices, indices[0]))
 
@@ -369,7 +374,7 @@ class GameView(nextcord.ui.View):
 
 		def straight_sort(cards):
 			values = [c[-1] for c in cards]
-			index = "A23456789TJQKA"["K" in values:].index
+			index = "23456789TJQKA".index
 			return sorted(cards, key=lambda x:index(x[-1]), reverse=True)
 
 		def flush_sort(cards):
@@ -414,7 +419,15 @@ class GameView(nextcord.ui.View):
 		cards = max(list(combinations(tempCards, 5)), key=score_hand)
 		score, _, cards = score_hand(cards)
 
-		return cards, score
+		if score == 8 or score == 5:
+			tempCards = flush_sort(tempCards)
+		elif score == 4 or score == 0:
+			tempCards = straight_sort(tempCards)
+		else:
+			tempCards = straight_sort(tempCards)
+			tempCards = pair_sort(tempCards)
+
+		return tempCards, score
 
 	async def AfterFlop(self):
 		scores = dict()
