@@ -71,13 +71,11 @@ async def on_interaction(interaction: Interaction):
 		await interaction.send("Commands are not allowed in DMs! They can only be done in servers.", ephemeral=True)
 		return
 	if not await bot.get_cog("Economy").accCheck(interaction.user):
+		embed = nextcord.Embed(color=1768431, title=f"{bot.user.name} | Welcome!")
 		await bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
-		if interaction and interaction.data and 'name' in interaction.data and interaction.data['name'] == 'blackjack':
-			await interaction.send("You can now play blackjack, now that you're registered. Please run command again.", ephemeral=True)
-			return
-		if 'custom_id' in interaction.data:
-			await interaction.send("You can now join in, now that you're registed. Please click button again.", ephemeral=True)
-			return
+		embed.description = f"{interaction.user.mention}, now that you're successfully registered, you can use commands. Please run command again!"
+		await interaction.send(embed=embed)
+		return
 
 	await bot.process_application_commands(interaction)
 
