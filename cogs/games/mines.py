@@ -165,8 +165,10 @@ class Mines(commands.Cog):
 	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='mines')
 	async def start(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
 						  minecount:int = nextcord.SlashOption(required=True,name="minecount", choices=[x+1 for x in range(24)])):
+		await interaction.response.defer()
+		msgSent = await interaction.original_message()
 		if amntbet < 1000:
-			await interaction.send("Minimum bet is 1000", ephemeral=True)
+			await msgSent.edit("Minimum bet is 1000")
 			return
 		
 		if amntbet > GetMaxBet("Mines"):
@@ -182,7 +184,7 @@ class Mines(commands.Cog):
 
 		msg = f"Roobet Mines\nCurrent Profit to Withdraw: 0 (1.00x)\nNext Profit: {(nextProfit-amntbet):,} ({profit[0]:,}x)"
 		embed = nextcord.Embed(color=1768431, title=f"The Casino | Roobet Mines", description=msg)
-		await interaction.send(embed=embed, view=MinesView(self.bot, interaction.user.id, minecount, profit, amntbet, priorbal))
+		await msgSent.edit(embed=embed, view=MinesView(self.bot, interaction.user.id, minecount, profit, amntbet, priorbal))
 
 	@mines.subcommand()
 	async def profits(self, interaction: Interaction, minecount:int = nextcord.SlashOption(required=True,name="minecount", choices=[x+1 for x in range(24)])):

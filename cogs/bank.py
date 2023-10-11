@@ -52,6 +52,9 @@ class Bank(commands.Cog):
 	@bank.subcommand(name='deposit')
 	@cooldowns.shared_cooldown("bank")
 	async def _deposit(self, interaction:Interaction, amnt):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
 		embed.set_thumbnail(url=interaction.user.avatar)
 
@@ -68,18 +71,21 @@ class Bank(commands.Cog):
 
 		embed.description = f"Successfully deposited {amnt:,}{emojis.coin}!"
 		embed.set_footer(text=f"Log ID: {logID}")
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 	@bank.subcommand(name='withdraw')
 	@cooldowns.shared_cooldown("bank")
 	async def _withdraw(self, interaction:Interaction, amnt):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
 		embed.set_thumbnail(url=interaction.user.avatar)
 		try:
 			amnt = int(amnt)
 			if self.getBankBal(interaction.user.id) < amnt:
 				embed.description = "You do not have enough funds in your bank to withdraw that amount."
-				await interaction.send(embed=embed)
+				await deferMsg.edit(embed=embed)
 				return
 		except:
 			if amnt == "all" or amnt == "100%":
@@ -88,11 +94,11 @@ class Bank(commands.Cog):
 				amnt = floor(self.getBankBal(interaction.user.id) / 2)
 			else:
 				embed.description = "Incorrect withdrawal amount."
-				await interaction.send(embed=embed)
+				await deferMsg.edit(embed=embed)
 				return
 		if amnt <= 0:
 			embed.description = "You must withdraw an amount greater than 0."
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 			return
 
 		DB.update("UPDATE Economy SET Bank = Bank - ? WHERE DiscordID = ?;", [amnt, interaction.user.id])
@@ -101,12 +107,15 @@ class Bank(commands.Cog):
 
 		embed.description = f"Successfully withdrew {amnt:,}{emojis.coin}!"
 		embed.set_footer(text=f"Log ID: {logID}")
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 
 	@bank.subcommand(name='balance')
 	@cooldowns.shared_cooldown("bank")
 	async def balance(self, interaction:Interaction, user:nextcord.Member=None):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bank")
 		if user:
 			embed.set_thumbnail(url=user.avatar)
@@ -127,7 +136,7 @@ class Bank(commands.Cog):
 			else:
 				embed.set_footer(text=f"5% interest is earned every 12 hours!")
 
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 	def getBankBal(self, discordID):
 		bal = DB.fetchOne("SELECT Bank FROM Economy WHERE DiscordID = ? LIMIT 1;", [discordID])[0]

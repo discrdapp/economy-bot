@@ -42,6 +42,10 @@ class Button(nextcord.ui.Button):
 			await interaction.send("This is not your game!", ephemeral=True)
 			return
 		if self.label == "Spin":
+			try:
+				await interaction.response.defer()
+			except:
+				pass
 			view.stop()
 			return
 		
@@ -103,6 +107,10 @@ class Modal(nextcord.ui.Modal):
 		self.add_item(self.amntbet)
 
 	async def callback(self, interaction: nextcord.Interaction):
+		try:
+			await interaction.response.defer()
+		except:
+			pass
 		self.stop()
 		# await interaction.send(f"{self.number.value} {self.color.value} {self.parity.value} {self.highlow.value} {self.amntbet.value} ")
 
@@ -174,6 +182,9 @@ class View(nextcord.ui.View):
 
 
 	async def Start(self, interaction:Interaction):
+		await interaction.response.defer()
+		self.msg = await interaction.original_message()
+
 		self.usedThreeOfAKind = False
 		if self.bot.get_cog("Inventory").checkForActiveItem(interaction.user, "Three of a Kind"):
 			self.bot.get_cog("Inventory").removeActiveItemFromDB(interaction.user, "Three of a Kind")
@@ -204,7 +215,7 @@ class View(nextcord.ui.View):
 						value=f"Number bet: \nHigh/low bet: \nColor bet: \nParity bet: ",
 						inline=True)
 		self.embed.add_field(name="Previous Numbers", value=f"{nums}_ _", inline=True)
-		self.msg = await interaction.send(file=nextcord.File('images/roulette/roulette.png'), embed=self.embed, view=self)
+		await self.msg.edit(file=nextcord.File('images/roulette/roulette.png'), embed=self.embed, view=self)
 
 
 		await self.wait()

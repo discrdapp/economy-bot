@@ -3,7 +3,7 @@ from nextcord.ext import commands, menus
 from nextcord import Interaction
 
 from random import randint
-import cooldowns, difflib
+import cooldowns
 
 import emojis
 from db import DB, allItems, buyableItems, buyableItemNamesList, sellableItems, sellableItemNamesList
@@ -112,6 +112,9 @@ class Shop(commands.Cog):
 										name="item", 
 										choices=buyableItemNamesList), 
 						amnt:int=1):
+		await interaction.response.defer(with_message=True, ephemeral=True)
+		deferMsg = await interaction.original_message()
+		
 		for item in buyableItems:
 			if item[1] == itemSelected:
 				theid = item[0]
@@ -122,12 +125,16 @@ class Shop(commands.Cog):
 		# troll-proof
 		if amnt <= 0:
 			embed.description = "Amount must be greater than 0"
-			await interaction.send(embed=embed, ephemeral=True)
+			await deferMsg.edit(embed=embed)
+			return
+		if amnt > 25:
+			embed.description = "Can only buy MAX 25 items at a time"
+			await deferMsg.edit(embed=embed)
 			return
 		# not valid item
 		if theid not in self.itemsDict.keys():
 			embed.description = "Invalid item ID."
-			await interaction.send(embed=embed, ephemeral=True)
+			await deferMsg.edit(embed=embed)
 			return
 
 		discordId = interaction.user.id
@@ -137,14 +144,14 @@ class Shop(commands.Cog):
 		# troll-proof		
 		if balance < cost:
 			embed.description = f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}"
-			await interaction.send(embed=embed, ephemeral=True)
+			await deferMsg.edit(embed=embed)
 			return
 		
 		if theid == 60:
 			tableCount = self.bot.get_cog("Inventory").getCountForItem(interaction.user, 'Table')
 			if amnt + tableCount > 10:
 				embed.description = f"You can only own 10 tables.\nYou are trying to buy {amnt}, but you already own {tableCount}"
-				await interaction.send(embed=embed, ephemeral=True)
+				await deferMsg.edit(embed=embed)
 				return
 
 
@@ -161,7 +168,7 @@ class Shop(commands.Cog):
 		else:
 			embed.set_footer(text=f"Log ID: {logID}")
 
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 	@shop.subcommand()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='sell')
@@ -180,7 +187,7 @@ class Shop(commands.Cog):
 			await interaction.send(embed=embed, ephemeral=True)
 			return
 		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, itemSelected, amnt):
-			embed.description = "You do not have that item in your inventory!"
+			embed.description = f"You do not have that {amnt} {itemSelected} in your inventory!"
 			await interaction.send(embed=embed, ephemeral=True)
 			return
 		

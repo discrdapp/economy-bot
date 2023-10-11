@@ -155,6 +155,9 @@ class Util(commands.Cog):
 	@nextcord.slash_command(description="Quick game. Guess if chosen number is lower than 50 or equal/higher")
 	@cooldowns.cooldown(1, 2, bucket=cooldowns.SlashBucket.author, cooldown_id='gamble')
 	async def highlow(self, interaction:Interaction, amntbet:int, choice=nextcord.SlashOption(required=True, choices=["high", "low"])):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | HighLow")
 		if amntbet < 100:
 			raise Exception("minBet 100")
@@ -180,7 +183,7 @@ class Util(commands.Cog):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed, gameID)
 
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "HighLow")
 
@@ -189,11 +192,13 @@ class Util(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 3000, bucket=cooldowns.SlashBucket.author, cooldown_id='dig')
 	async def dig(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Dig")
 		
 		if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, "Shovel"):
 			embed.description = "You need a Shovel to dig.\nYou can buy one from the /shop"
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 			cooldowns.reset_bucket(self.dig.callback, interaction)
 			return
 		
@@ -216,7 +221,7 @@ class Util(commands.Cog):
 						"With great anticipation, you began to dig, but the reality of empty dirt reminded you that not all searches end in discovery."
 			])
 			embed.description = response
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 		# 66% chance to get something
 		else:
 			pay = random.randrange(5000, 15000)
@@ -224,7 +229,7 @@ class Util(commands.Cog):
 
 			embed.description = f"You were given {pay:,}{emojis.coin}"
 			embed.set_footer(text=f"Log ID: {logID}")
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 
 			if random.randint(0, 1) == 0: # 33% chance to get a random item
 				await self.bot.get_cog("Inventory").GiveRandomItem(interaction)
@@ -232,11 +237,13 @@ class Util(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 1800, bucket=cooldowns.SlashBucket.author, cooldown_id='beg')
 	async def beg(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Beg")
 
-		# 50% chance to not get anything
-		if random.randint(0, 1) == 0:
+		# 33% chance to not get anything
+		if random.randint(0, 2) == 0:
 			embed.description = random.choice(["You extended your hand, hoping for kindness, but the world seemed as tight-fisted as you felt.",
 									"Despite your heartfelt plea, the city's bustle drowned out your voice, and your cup remained empty.",
 									"Your request for help echoed in the urban chaos, but the only response was silence.",
@@ -262,15 +269,15 @@ class Util(commands.Cog):
 									"Your humble request for assistance echoed through the city, but the response was disappointing.",
 									"As you bared your need for help, the world's indifference left you feeling abandoned and unheard."
 			])
-			await interaction.send(embed=embed)
-		# 50% chance to get something
+			await deferMsg.edit(embed=embed)
+		# 67% chance to get something
 		else:
 			pay = random.randrange(5000, 10000)
 			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay, giveMultiplier=False, activityName=f"Beg", amntBet=0)
 
-			embed.description = f"You were given {pay:,}{emojis.coin}"
+			embed.description = f"You were donated {pay:,}{emojis.coin}"
 			embed.set_footer(text=f"Log ID: {logID}")
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 
 			if random.randint(0, 2) == 0: # 16.5% chance to get a random item
 				await self.bot.get_cog("Inventory").GiveRandomItem(interaction)
@@ -278,24 +285,26 @@ class Util(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 3000, bucket=cooldowns.SlashBucket.author, cooldown_id='crime')
 	async def crime(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crime")
 
-		# 50% chance to not get anything
-		if random.randint(0, 1) == 0:
+		# 33% chance to not get anything
+		if random.randint(0, 2) == 0:
 			embed.description = random.choice(["You attempted a robbery and got caught!",
 				      "Attempting to scam someone, you got scammed yourself and broke even... don't scam again!", 
 				      "Successfully stole a bitcoin drive! No bitcoin was on it though...",
 				      "You jumped a homeless man, but got nothing because he's homeless... duh!"
 			])
-			await interaction.send(embed=embed)
-		# 50% chance to get something
+			await deferMsg.edit(embed=embed)
+		# 67% chance to get something
 		else:
 			pay = random.randrange(5000, 15000)
 			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, pay, giveMultiplier=False, activityName=f"Beg", amntBet=0)
 
 			embed.description = f"You were given {pay:,}{emojis.coin}"
 			embed.set_footer(text=f"Log ID: {logID}")
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 
 			if random.randint(0, 1) == 0: # 25% chance to get a random item
 				await self.bot.get_cog("Inventory").GiveRandomItem(interaction)
@@ -303,6 +312,8 @@ class Util(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 3600, bucket=cooldowns.SlashBucket.author, cooldown_id="work")
 	async def work(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True, ephemeral=True)
+		deferMsg = await interaction.original_message()
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Work")
 		embed.description = "What would you like to work as?"
 
@@ -318,7 +329,7 @@ class Util(commands.Cog):
 		view.add_item(job2)
 		view.add_item(job3)
 
-		msg = await interaction.send(embed=embed, view=view, ephemeral=True)
+		await deferMsg.edit(embed=embed, view=view)
 		# msg = newMsg.fetch()
 
 		if await view.wait():
@@ -341,7 +352,7 @@ class Util(commands.Cog):
 									"Your endeavors were valuable, yet unexpected market shifts resulted in reduced earnings for everyone.",
 									"Your hard work increased your skill set, but an unexpected change in job roles led to reduced compensation."
 			])
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 		# 75% chance to get something
 		else:
 			pay = random.randrange(6000, 20001)
@@ -350,7 +361,7 @@ class Util(commands.Cog):
 			aan = "an" if view.job[0].lower() in "aeiou" else "a"
 			embed.description = f"You worked as {aan} {view.job} and earned {pay:,}{emojis.coin}"
 			embed.set_footer(text=f"Log ID: {logID}")
-			await msg.edit(embed=embed, view=None)
+			await deferMsg.edit(embed=embed, view=None)
 
 			if random.randint(0, 2) == 0: # 24.75% chance to get a random item
 				await self.bot.get_cog("Inventory").GiveRandomItem(interaction)
@@ -359,17 +370,20 @@ class Util(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 45, bucket=cooldowns.SlashBucket.author, cooldown_id='rob')
 	async def rob(self, interaction:Interaction, *, member: nextcord.Member):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
 		if not self.bot.get_cog("XP").IsHighEnoughLevel(interaction.user.id, 1):
 			raise Exception("lowLevel 1")
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Rob")
 		if interaction.user == member:
 			embed.description = "Trying to rob yourself? That doesn't make sense. :joy:"
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 			return
-			
+
 		if not await self.bot.get_cog("Economy").accCheck(member):
 			embed.description = f"{member} has not registed yet. Cannot rob them."
-			await interaction.send(embed=embed, ephemeral=True)
+			await deferMsg.edit(embed=embed)
 
 			cooldowns.reset_bucket(self.rob.callback, interaction)
 			return
@@ -377,7 +391,7 @@ class Util(commands.Cog):
 		bal1 = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if bal1 < 2500:
 			embed.description = f"{interaction.user}, you need at least 2500{emojis.coin} to rob."
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 
 			cooldowns.reset_bucket(self.rob.callback, interaction)
 			return
@@ -385,7 +399,7 @@ class Util(commands.Cog):
 		bal2 = await self.bot.get_cog("Economy").getBalance(member)
 		if bal2 < 2500:
 			embed.description = f"{member.mention} needs at least 2500{emojis.coin} to be robbed."
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 
 			cooldowns.reset_bucket(self.rob.callback, interaction)
 			return
@@ -395,7 +409,7 @@ class Util(commands.Cog):
 
 		if choice > 7: # 20% chance
 			embed.description = f"{member.mention} caught you red-handed! But they decided to forgive you... No money has been robbed!"
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 			return
 	
 		# amnt = -1
@@ -430,7 +444,7 @@ class Util(commands.Cog):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 
 		embed.description = f"{message}\nYour new balance is {balance:,}{emojis.coin}"
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 
 

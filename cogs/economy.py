@@ -70,6 +70,8 @@ class Economy(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='rewards')
 	async def rewards(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
 
 		dailyReward = await self.bot.get_cog("Daily").getDailyReward(interaction)
 		multiplier, expiration = self.bot.get_cog("Multipliers").getMultiplierAndExpiration(interaction.user.id)
@@ -92,12 +94,15 @@ class Economy(commands.Cog):
 			embed.add_field(name = "_ _\nDonator Reward", value = f"You are not a donator", inline=False)
 
 		embed.set_footer(text="Don't forget to /work /vote /beg and /crime for extra credits")
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='balance')
 	async def balance(self, interaction:Interaction, user:nextcord.Member=None):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
 		embed = nextcord.Embed(color=1768431)
 		if not user:
 			user = interaction.user
@@ -105,8 +110,8 @@ class Economy(commands.Cog):
 		else:
 			pronouns = "They"
 			if not await self.accCheck(user):
-				embed.description = "User has not registered yet. They need to play a game or use `/start` to register."
-				await interaction.send(embed=embed, ephemeral=True)
+				embed.description = "User has not registered yet. They need to use any command or type `/start` to register."
+				await deferMsg.edit(embed=embed)
 				return
 
 		balance = await self.getBalance(user)
@@ -132,11 +137,14 @@ class Economy(commands.Cog):
 		# embed.add_field(name = "_ _\nKeys", value = f"{pronouns} have **{keys}** keys", inline=True)
 		embed.set_footer(text="Want easy money? Don't forget to check out your /rewards")
 		
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 		
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='search')
 	async def search(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
 		embed = nextcord.Embed(color=1768431)
 		if await self.getBalance(interaction.user) < 300:
 			amnt = random.randint(50, 250)
@@ -147,7 +155,7 @@ class Economy(commands.Cog):
 		else:
 			embed.add_field(name = f"Error", value = f"{interaction.user.mention}, you can only use this if you have less than 300{emojis.coin}.", inline=False)
 
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 		
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='freemoney')
@@ -159,11 +167,13 @@ class Economy(commands.Cog):
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='donator')
 	async def donator(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Donator")
 		if not self.isDonator(interaction.user.id):
-			embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
-			embed.add_field(name = f"Donator Reward", value = "To be able to claim the Donator Reward, you first need to donate!\n" +
-																f"Join the server shown in the /help menu to learn how!", inline=False)
-			await interaction.send(embed=embed)
+			embed.description = "To be able to claim the Donator Reward, you first need to donate!\nJoin the server shown in the /help menu to learn how!"
+			await deferMsg.edit(embed=embed)
 			return
 
 		donatorReward = self.getDonatorReward(interaction.user.id)
@@ -172,11 +182,10 @@ class Economy(commands.Cog):
 		logID = await self.addWinnings(interaction.user.ii, donatorReward, giveMultiplier=True, activityName="Donator Reward", amntBet=0)
 
 		balance = await self.getBalance(interaction.user)
-		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name = f"You got {donatorReward:,} {emojis.coin}", 
 						value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
 		embed.set_footer(text=f"Log ID: {logID}")
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 
 	def isDonator(self, discordid):
@@ -232,7 +241,7 @@ class Economy(commands.Cog):
 	
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 120, bucket=cooldowns.SlashBucket.author, cooldown_id='top')
+	@cooldowns.cooldown(1, 30, bucket=cooldowns.SlashBucket.author, cooldown_id='top')
 	async def top(self, interaction:Interaction, 
 			   option = nextcord.SlashOption(
 					required=False,
@@ -242,6 +251,8 @@ class Economy(commands.Cog):
 					required=False,
 					name="local", 
 					choices=("local", "global"))):
+		await interaction.response.defer()
+		deferMsg = await interaction.original_message()
 		
 		if not self.bot.get_cog("XP").IsHighEnoughLevel(interaction.user.id, 2):
 			raise Exception("lowLevel 2")
@@ -280,7 +291,7 @@ class Economy(commands.Cog):
 			msg = f"```MD\n{local.title()} Leaderboards Top 10 for {option}\n======\n{topUsers}```Use `/opt in` to add yourself to the local leaderboard"
 		else:
 			msg = f"```MD\n{local.title()} Leaderboards Top 10 for {option}\n======\n{topUsers}```"
-		await interaction.send(msg) # send the list with the top 10
+		await deferMsg.edit(msg) # the list with the top 10
 
 
 	@nextcord.slash_command()
@@ -289,6 +300,8 @@ class Economy(commands.Cog):
 																required=False,
 																name="option", 
 																choices=("Balance", "Level", "Profit"))):
+		await interaction.response.defer()
+		deferMsg = await interaction.original_message()
 		if not usr:
 			usr = interaction.user
 
@@ -296,7 +309,7 @@ class Economy(commands.Cog):
 			raise Exception("lowLevel 2")
 
 		if await self.getBalance(usr) < 5000:
-			await interaction.send("You need at least 5,000 credits to use this command.")
+			await deferMsg.edit("You need at least 5,000 credits to use this command.")
 			return
 
 
@@ -319,7 +332,7 @@ class Economy(commands.Cog):
 		
 		position = DB.fetchOne(sql, [usr.id])[0]
 
-		await interaction.send(f"You are in position #{position}") # send the list with the top 10
+		await deferMsg.edit(f"You are in position #{position}") # list with the top 10
 
 
 	async def accCheck(self, user):

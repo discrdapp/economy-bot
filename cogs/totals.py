@@ -130,19 +130,22 @@ class Totals(commands.Cog):
 		}
 
 	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author, cooldown_id='rob')
 	async def log(self, interaction:Interaction, gameid):
+		await interaction.response.defer(with_message=True, ephemeral=True)
+		deferMsg = await interaction.original_message()
 		game = DB.fetchOne("SELECT * FROM Logs WHERE ID = ? LIMIT 1;", [gameid])
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Logs")
 
 		if not game:
 			embed.description =f"No log found for ID \n{gameid}"
-			await interaction.send(embed=embed, ephemeral=True)
+			await deferMsg.edit(embed=embed)
 			return
 
 		if str(interaction.user.id) != game[2]:
 			embed.description = "This is not your log to view!"
-			await interaction.send(embed=embed, ephemeral=True)
+			await deferMsg.edit(embed=embed)
 			return
 
 		embed.add_field(name="Activity", value=game[6], inline=False)
@@ -152,7 +155,7 @@ class Totals(commands.Cog):
 
 		embed.set_footer(text=f"ID: {game[0]}\nDate: {game[1]}")
 
-		await interaction.send(embed=embed, ephemeral=True)
+		await deferMsg.edit(embed=embed)
 
 
 	def GetProfile(self, profileFile, userId, embedColor=None, textColor=None, background=None):
@@ -185,6 +188,9 @@ class Totals(commands.Cog):
 	@profile.subcommand()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='view')
 	async def view(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
 		totals = DB.fetchOne("SELECT Profit, Games FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 		profit = totals[0]
 		games = totals[1]
@@ -270,7 +276,7 @@ class Totals(commands.Cog):
 			# await self.msg.edit(embed=self.embed, file=nextcord.File(fp=image_binary, filename='image.png'))
 			file = nextcord.File(image_binary, filename="image.png")
 			embed.set_image(url="attachment://image.png")
-			await interaction.send(embed=embed, file=file)
+			await deferMsg.edit(embed=embed, file=file)
 	
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
@@ -406,6 +412,9 @@ class Totals(commands.Cog):
 	@edit.subcommand(description="Get color list from /colors")
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='embedcolor')
 	async def embedcolor(self, interaction:Interaction, choice):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
 		if not self.bot.get_cog("XP").IsHighEnoughLevel(interaction.user.id, 1):
 			raise Exception("lowLevel 1")
 
@@ -416,7 +425,7 @@ class Totals(commands.Cog):
 			newColor = self.colors[choice]
 		except:
 			embed.add_field(name="Error", value="Color not found. Type /colors to see all available colors")
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 			return
 
 		with open(r"profiles.json", 'r') as f:
@@ -426,11 +435,14 @@ class Totals(commands.Cog):
 
 		embed.add_field(name="Success!", value=f"Your profile's embed color has been changed to {choice}")
 		embed.color = newColor
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 	@edit.subcommand(description="Get color list from /colors")
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='textcolor')
 	async def textcolor(self, interaction:Interaction, choice):
+		await interaction.response.defer()
+		deferMsg = await interaction.original_message()
+		
 		if not self.bot.get_cog("XP").IsHighEnoughLevel(interaction.user.id, 2):
 			raise Exception("lowLevel 2")
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
@@ -439,7 +451,7 @@ class Totals(commands.Cog):
 			newColor = str(hex(self.colors[choice])) # convert to the literal hexadecimal string
 		except:
 			embed.add_field(name="Error", value="Color not found. Type /colors to see all available colors")
-			await interaction.send(embed=embed)
+			await deferMsg.edit(embed=embed)
 			return
 		newColor = "#" + "0"*(8-len(newColor))+ newColor[2:] # append trailing 0's and switch out 0x for #
 
@@ -454,7 +466,7 @@ class Totals(commands.Cog):
 
 		embed.add_field(name="Success!", value=f"Your profile's text color has been changed to {choice}")
 		embed.color = self.colors[choice]
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 	@edit.subcommand()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='backgroundimage')
@@ -462,6 +474,9 @@ class Totals(commands.Cog):
 																required=True,
 																name="bgimg", 
 																choices=("scroll", "inkpaper", "spiralnotebook"))):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Edit Profile")
 		embed.set_thumbnail(url=interaction.user.avatar)
 		with open(r"profiles.json", 'r') as f:
@@ -479,12 +494,15 @@ class Totals(commands.Cog):
 		file = nextcord.File(f"./images/writingbackgrounds/{background}", filename="image.png")
 		embed.set_image(url="attachment://image.png")
 		embed.add_field(name="Edited!", value=f"Successfully changed to {choice}.")
-		await interaction.send(file=file, embed=embed)
+		await deferMsg.edit(file=file, embed=embed)
 
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='badges')
 	async def badges(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
 		getRow = DB.fetchOne("SELECT E.Credits, E.Level, T.Profit, T.Games FROM Economy E INNER JOIN Totals T ON E.DiscordID = T.DiscordID WHERE E.DiscordID = ?;", [interaction.user.id])
 		
 		games = getRow[3]
@@ -528,12 +546,15 @@ class Totals(commands.Cog):
 
 		embed.set_footer(text="Badges can be viewed in your `/profile view`")
 		
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='stats')
-	async def stats(self, interaction:Interaction):		
+	async def stats(self, interaction:Interaction):	
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+	
 		getRow = DB.fetchOne("SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS, Mines, HighLow, Horse, DOND, Scratch FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 
 		creditsSpent = getRow[0]
@@ -569,7 +590,7 @@ class Totals(commands.Cog):
 		embed.add_field(name = "DOND", value = f"{dond:,}", inline=True)
 		embed.add_field(name = "Scratch", value = f"{scratch:,}", inline=True)
 
-		await interaction.send(embed=embed)
+		await deferMsg.edit(embed=embed)
 
 
 

@@ -139,6 +139,8 @@ class Coinflip(commands.Cog):
 		###################
 		## SINGLE PLAYER ##
 		###################
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
 
 		if amntbet < 100:
 			raise Exception("minBet 100")
@@ -175,7 +177,7 @@ class Coinflip(commands.Cog):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed, gameID)
 
-		await interaction.send(file=file, embed=embed)
+		await deferMsg.edit(file=file, embed=embed)
 
 		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "Coinflip")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "CF", profitInt)
