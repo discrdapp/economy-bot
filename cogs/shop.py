@@ -289,8 +289,6 @@ class Shop(commands.Cog):
 			self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, crates, 'Crate')
 		if keys > 0:
 			self.bot.get_cog("Inventory").addItemToInventory(interaction.user.id, keys, 'Key')
-		
-		await self.bot.get_cog("Economy").balance(interaction)
 
 
 
