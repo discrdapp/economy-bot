@@ -27,9 +27,6 @@ class ErrorHandling(commands.Cog):
 			return
 
 		elif isinstance(error, commands.CommandOnCooldown) or isinstance(error, CallableOnCooldown):
-			a = datetime.timedelta(seconds=error.retry_after)
-
-			cooldown = str(a).split(".")[0]
 			embed.description = f"{commandName} is on cooldown. Please retry again <t:{int(error.resets_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>"
 			embed.set_footer(text="See all your cooldowns with /cooldown")
 
@@ -109,10 +106,10 @@ class ErrorHandling(commands.Cog):
 				return
 
 			exc = ''.join(traceback.format_exception(type(error), error, error.__traceback__, chain=False))
-			exc = exc.split("kwargs)", 1)[1]
-
-			if "MySQL server" in exc:
-				embed.description = "We're having difficulties connecting to the database... Apologies for the inconvenience... Please try again later!"
+			try:
+				exc = exc.split("kwargs)", 1)[1]
+			except:
+				pass
 
 			ch = self.bot.get_channel(config.channelIDForErrors)
 			if len(exc) > 1999:
@@ -137,7 +134,12 @@ class ErrorHandling(commands.Cog):
 
 			embed.set_thumbnail(url=interaction.user.avatar)
 			embed.set_footer(text=interaction.user)
-			embed.description = "An error has occured. The developers have been notified. Please try again later."
+
+			
+			if "MySQL server" in exc:
+				embed.description = "We're having difficulties connecting to the database... Apologies for the inconvenience... Please try again later!"
+			else:
+				embed.description = "An error has occured. The developers have been notified. Please try again later."
 
 
 		try:
