@@ -352,7 +352,7 @@ class Util(commands.Cog):
 									"Your endeavors were valuable, yet unexpected market shifts resulted in reduced earnings for everyone.",
 									"Your hard work increased your skill set, but an unexpected change in job roles led to reduced compensation."
 			])
-			await deferMsg.edit(embed=embed)
+			await deferMsg.edit(embed=embed, view=None)
 		# 75% chance to get something
 		else:
 			pay = random.randrange(6000, 20001)
