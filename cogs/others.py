@@ -4,6 +4,8 @@ from nextcord import Interaction
 
 import cooldowns
 
+from random import randint
+from PIL import Image
 import config, emojis
 
 class Others(commands.Cog):
@@ -136,6 +138,7 @@ class Others(commands.Cog):
 									)
 							)
 						):
+		await interaction.response.defer()
 
 	# async def help(self, interaction:Interaction, option:Optional[str] = nextcord.SlashOption(required=False,
 												# name="choice", 
@@ -144,7 +147,8 @@ class Others(commands.Cog):
 													# "stats", "profile", "level", "freemoney"))):
 
 		if not option:
-			await interaction.send(embed=self.GetHelpMsg())
+			embed = self.GetHelpMsg()
+			await emojis.SendInteractionWithWave(interaction, embed)
 			return
 
 		embed = nextcord.Embed(color=1768431)
@@ -207,7 +211,8 @@ class Others(commands.Cog):
 			helpMsg = "Look at all the ways to get free money!"
 			usageMsg = "**/freemoney**"
 		else:
-			await interaction.send(embed=self.GetHelpMsg())
+			embed = self.GetHelpMsg()
+			await emojis.SendInteractionWithWave(interaction, embed)
 			return
 
 		embed.add_field(name = "Help", value=f"{helpMsg}", inline=False)
@@ -215,9 +220,8 @@ class Others(commands.Cog):
 
 		if option == "crash":
 			embed.add_field(name = "Chances", value=f"1.0x is 30%\n1.2x is 20%\n1.4x - 1.6x is 30%\n1.6x - 2.4x is 10%\n2.4x - 10.0x is 10%", inline=False)
-
-
 		embed.set_footer(text=f"User: {interaction.user}")
+
 		await interaction.send(embed=embed)
 
 
