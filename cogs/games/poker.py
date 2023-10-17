@@ -2,16 +2,15 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-# import cooldowns
 from random import shuffle
-import asyncio, cooldowns
-
 from collections import Counter
 from itertools import combinations
-
 from math import floor
+from PIL import Image, ImageFont, ImageDraw
 
-import emojis
+from cogs.settings import GetUserSetting
+
+import cooldowns, emojis, io
 from db import DB
 from cogs.util import GetMaxBet
 
@@ -57,7 +56,6 @@ class PokerView(nextcord.ui.View):
 
 		self.initialBet = amntbet
 		self.amntbet = self.initialBet
-
 		self.ownerId = id
 
 		self.pCards = list()
@@ -78,7 +76,71 @@ class PokerView(nextcord.ui.View):
 		self.foldCheckButton = Button(self.bot, "Fold", nextcord.ButtonStyle.red)
 		self.add_item(self.foldCheckButton)
 
+		self.file = emojis.GetRandomFace()
+
 		# self.foldCheckButton = Button(self.bot, "Check", nextcord.ButtonStyle.red)
+	def PlaceCardsImage(self, interaction):
+		def GetFileNameForCard(card):
+			card = card.split()
+			fileName = card[1]
+
+			if card[0] == "♣": fileName += "C"
+			elif card[0] == "♦": fileName += "D"
+			elif card[0] == "♥": fileName += "H"
+			elif card[0] == "♠": fileName += "S"
+
+			return fileName
+
+		imgBackground = Image.open('images/cards/nolinebackground.png').convert("RGBA")
+		dealer = Image.open('images/wumpus/pokerwumpus.png')
+		dealer = dealer.resize((200, 200))
+
+		img = Image.new("RGBA", (imgBackground.width, imgBackground.height+400), color=(0, 0, 0, 0))
+		
+		img.paste(dealer, box=(int(img.width/2)-int(dealer.width/2), 0))
+		img.paste(imgBackground, box=(0, int((img.height - imgBackground.height)/2)))
+
+		# img.paste(dealer.rotate(180), box=(int(img.width/2)-int(dealer.width/2), img.height-dealer.height))
+
+		font_type = ImageFont.truetype('arial.ttf',35)
+
+		startYPos = 200
+
+		def PasteText(cards, whichCards, xPos, yPos):
+			if not cards or cards[0] == ":black_joker:":
+				if not cards: x = 2
+				else: return
+				for _ in range(x):
+					cardImg = Image.open('images/cards/green_back_logo.png')
+					cardImg = cardImg.resize((70, 106))
+					img.paste(cardImg, (xPos, yPos), mask=cardImg)
+
+					xPos += 85
+				return
+
+			cardsUnicode = list()
+			for card in cards:
+				fileName = GetFileNameForCard(card)
+
+				cardImg = Image.open(f'images/cards/{fileName}.png')
+				cardImg = cardImg.resize((70, 106))
+				img.paste(cardImg, (xPos, yPos), mask=cardImg)
+
+				xPos += 85
+
+				cardsUnicode.append(card[0] + " " + fileName[0])
+			
+
+		PasteText(self.dCards, "Dealer", 240, 5+startYPos)
+		PasteText(self.riverCards, "River", 120, 123+startYPos)
+		PasteText(self.pCards, "Player", 240, 240+startYPos)
+
+		name_font = ImageFont.truetype('arial.ttf',50)
+		draw = ImageDraw.Draw(img)
+		draw.text((100, 380+startYPos), f"{interaction.user.display_name}", (88, 101, 242), name_font)
+
+
+		return img
 
 	async def FlipCards(self, interaction:Interaction):
 		# self.riverCards = ["♦ J", "♣ K", "♣ 5", "♣ 3", "♣ Q"]
@@ -105,11 +167,19 @@ class PokerView(nextcord.ui.View):
 	
 	async def UpdateMsg(self, interaction: Interaction):
 		self.embed.description = f"Your bet: {self.amntbet}{emojis.coin}"
-		self.embed.set_field_at(0, name = f"{interaction.user.display_name}'s cards", value = f"{self.GetCardsString(self.pCards)}", inline=False)
+		self.embed.set_field_at(0, name = f"{self.bot.user.name}'s cards", value = f":question: :question:", inline=False)
 		self.embed.set_field_at(1, name = f"_ _\nRiver Cards", value = f"{self.GetCardsString(self.riverCards)}", inline=False)
-		self.embed.set_field_at(2, name = f"_ _\n{self.bot.user.name}'s cards", value = f":question: :question:", inline=False)
+		self.embed.set_field_at(2, name = f"_ _\n{interaction.user.display_name}'s cards", value = f"{self.GetCardsString(self.pCards)}", inline=False)
 		self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
-		await self.msg.edit(view=self, embed=self.embed)
+		
+		with io.BytesIO() as image_binary:
+			if not GetUserSetting(self.ownerId, "ShowPokerImg"):
+				img = self.PlaceCardsImage(interaction)
+				img.save(image_binary, 'PNG')
+				image_binary.seek(0)
+				await self.msg.edit(view=self, embed=self.embed, file=nextcord.File(fp=image_binary, filename='poker.png'))
+			else:
+				await self.msg.edit(view=self, embed=self.embed)
 
 	def TakeCard(self):
 		# if all 52 cards have been used, reset the deck
@@ -138,16 +208,15 @@ class PokerView(nextcord.ui.View):
 		self.msg = await interaction.original_message()
 
 		self.embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Poker")
-		file = nextcord.File("./images/bj.png", filename="image.png")
-		self.embed.set_thumbnail(url="attachment://image.png")
+		self.embed.set_thumbnail(url="attachment://randomImage.png")
 
 		self.PlayerDrawCards()
 
 
 		self.embed.description = f"Your bet: {self.amntbet}{emojis.coin}"
-		self.embed.add_field(name = f"{interaction.user.display_name}'s cards", value = f"{self.GetCardsString(self.pCards)}", inline=False)
+		self.embed.add_field(name = f"{self.bot.user.name}'s cards", value = f":question: :question:", inline=False)
 		self.embed.add_field(name = f"_ _\nRiver Cards", value = f"{self.GetCardsString(self.riverCards)}", inline=False)
-		self.embed.add_field(name = f"_ _\n{self.bot.user.name}'s cards", value = f":question: :question:", inline=False)
+		self.embed.add_field(name = f"_ _\n{interaction.user.display_name}'s cards", value = f"{self.GetCardsString(self.pCards)}", inline=False)
 		self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
 		
 		# user is all in, so cannot place initial bet after anne. 
@@ -157,7 +226,14 @@ class PokerView(nextcord.ui.View):
 			await self.FlipCards(interaction)
 			await self.FlipCards(interaction)
 		else:
-			await self.msg.edit(view=self, embed=self.embed)
+			with io.BytesIO() as image_binary:
+				if not GetUserSetting(self.ownerId, "ShowPokerImg"):
+					img = self.PlaceCardsImage(interaction)
+					img.save(image_binary, 'PNG')
+					image_binary.seek(0)
+					await self.msg.edit(view=self, embed=self.embed, files=[self.file, nextcord.File(fp=image_binary, filename='poker.png')])
+				else:
+					await self.msg.edit(view=self, embed=self.embed, file=self.file)
 
 	# pass in either dealer or player hand
 	def GetBestHand(self, isPlayer:bool):
@@ -302,19 +378,25 @@ class PokerView(nextcord.ui.View):
 			self.embed.description = msg
 		
 		self.embed.set_field_at(1, name = f"_ _\nRiver Cards", value = f"{self.GetCardsString(self.riverCards)}", inline=False)
-		self.embed.set_field_at(2, name = f"_ _\n{self.bot.user.name}'s cards", value = f"{self.GetCardsString(self.dCards)}", inline=False)
+		self.embed.set_field_at(0, name = f"{self.bot.user.name}'s cards", value = f"{self.GetCardsString(self.dCards)}", inline=False)
 
 		profitInt = moneyToAdd - self.amntbet
 
 		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=False, activityName="Poker", amntBet=self.amntbet)
 
-		self.embed = await DB.addProfitAndBalFields(self, interaction, profitInt, self.embed, giveMultiplier=False)
+		self.embed, file = await DB.addProfitAndBalFields(self, interaction, profitInt, self.embed, giveMultiplier=False)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		self.embed = await DB.calculateXP(self, interaction, balance - profitInt, self.amntbet, self.embed, gameID)
 
-
-		await self.msg.edit(view=None, embed=self.embed)
+		with io.BytesIO() as image_binary:
+			if not GetUserSetting(self.ownerId, "ShowPokerImg"):
+				img = self.PlaceCardsImage(interaction)
+				img.save(image_binary, 'PNG')
+				image_binary.seek(0)
+				await self.msg.edit(view=None, embed=self.embed, files=[file, nextcord.File(fp=image_binary, filename='poker.png')])
+			else:
+				await self.msg.edit(view=None, embed=self.embed, file=file)
 
 	def PlayerDrawCards(self):
 		# self.pCards = ["♠ A", "♦ T"]
