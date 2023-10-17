@@ -50,17 +50,17 @@ class ErrorHandling(commands.Cog):
 			
 			if err == "forbiddenError":
 				embed.description = "Your Discord settings does not allow me to DM you. Please change them and try again."
-				await interaction.send(embed=embed, ephemeral=True)
+				await emojis.SendInteractionWithStop(interaction, embed, True)
 				return
 
 			if err == "timeoutError":
 				embed.description = f"Did not respond in time; timeout."
-				await interaction.send(embed=embed)
+				await emojis.SendInteractionWithStop(interaction, embed, True)
 				return
 
 			if err == "valueError":
 				embed.description = "Did not provide correct option. Please try again"
-				await interaction.send(embed=embed)
+				await emojis.SendInteractionWithStop(interaction, embed, True)
 				try:
 					reset_bucket(interaction.application_command.callback, interaction)
 				except:
@@ -69,12 +69,12 @@ class ErrorHandling(commands.Cog):
 
 			if err == "itemNotFoundInInventory":
 				embed.description = "You do not have that item in your inventory"
-				await interaction.send(embed=embed, ephemeral=True)
+				await emojis.SendInteractionWithStop(interaction, embed, True)
 				return
 
 			if err == "tooPoor":
 				embed.description = f"You do not have enough {emojis.coin} to do that (or you are trying to use an amount less than 1)"
-				await interaction.send(embed=embed, ephemeral=True)
+				await emojis.SendInteractionWithStop(interaction, embed, True)
 				try:
 					reset_bucket(interaction.application_command.callback, interaction)
 				except:
@@ -83,7 +83,8 @@ class ErrorHandling(commands.Cog):
 
 			if "minBet" in err:
 				embed.description = f"Minimum bet is {err[7:]} {emojis.coin}" 
-				await interaction.send(embed=embed, ephemeral=True)
+				await emojis.SendInteractionWithStop(interaction, embed, True)
+				# await interaction.send(embed=embed, ephemeral=True)
 				try:
 					reset_bucket(interaction.application_command.callback, interaction)
 				except:
@@ -92,7 +93,7 @@ class ErrorHandling(commands.Cog):
 			
 			if "maxBet" in err:
 				embed.description = f"Maximum bet is {int(err[7:]):,} {emojis.coin}" 
-				await interaction.send(embed=embed, ephemeral=True)
+				await emojis.SendInteractionWithStop(interaction, embed, True)
 				try:
 					reset_bucket(interaction.application_command.callback, interaction)
 				except:
@@ -102,7 +103,7 @@ class ErrorHandling(commands.Cog):
 			if "lowLevel" in err:
 				embed.description = f"You must be level {err[9:]} or higher to use this command!" 
 				embed.set_footer(text="Check your progress in /level")
-				await interaction.send(embed=embed, ephemeral=True)
+				await emojis.SendInteractionWithStop(interaction, embed, True)
 				return
 
 			exc = ''.join(traceback.format_exception(type(error), error, error.__traceback__, chain=False))
@@ -143,8 +144,7 @@ class ErrorHandling(commands.Cog):
 
 
 		try:
-			await interaction.send(embed=embed, ephemeral=True)
-			return 
+			await emojis.SendInteractionWithError(interaction, embed, True) 
 		except Exception as e:
 			pass
 
