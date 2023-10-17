@@ -2,7 +2,8 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import cooldowns, json
+from PIL import Image
+import cooldowns, json, io
 
 import emojis
 
@@ -16,7 +17,6 @@ class Vote(commands.Cog):
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='vote')
 	async def vote(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Vote")
-		embed.set_thumbnail(url=interaction.user.avatar)
 
 		with open(r"votes.json", 'r') as f:
 			votes = json.load(f)
@@ -48,7 +48,10 @@ class Vote(commands.Cog):
 				
 		embed.add_field(name=f"Thanks for Voting {numOfVotes} {times}!", value=f"{moneyToAdd:,}{emojis.coin} has been added to your account and you received {numOfVotes} Voter {chip}!")
 		embed.set_footer(text=f"/use to use your Voter Chip\nLog ID {logID}")
-		msg = await interaction.send(embed=embed)
+
+		img = nextcord.File("./images/wumpus/thanks.png", filename="vote.png")
+		embed.set_thumbnail(url="attachment://vote.png")
+		msg = await interaction.send(embed=embed, file=img)
 		msg = await msg.fetch()
 		await msg.add_reaction("❤️")
 
