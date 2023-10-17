@@ -86,21 +86,22 @@ class Others(commands.Cog):
 		embed.add_field(name = "BOT HAS SWITCHED TO SLASH COMMANDS", value="Commands start with slash (/). **Below New Commands are WIP**", inline=False)
 		
 		embed.add_field(name = ":game_die: Game Commands", 
-						 value="`roulette`, `crash`, `blackjack`, `horse`, " 
-							 + "`slots`, `coinflip`, `rockpaperscissors`, `dond`, `mines`, `scratch`, `rob`, `highlow`", inline = False)
+						 value="`poker`, `blackjack`, `roulette`, `slots`, `crash`, `horse`, " 
+							 + "`coinflip`, `rockpaperscissors`, `dond`, `mines`, `scratch`, `rob`, `highlow`, `hangman`", inline = False)
+		
 		embed.add_field(name = f"{emojis.bitcoinEmoji} Crypto Commands", 
-				  		 value="`crypto buy/sell`, `crypto miner buy/start/stop/status/setcrypto`")
+				  		 value="`crypto miner buy/start/stop/status/setcrypto`, `crypto buy/sell`")
 
 		embed.add_field(name = ":gear: Other Commands",
 					   value = "`balance`, `top`, `position`, `shop`, `use`, `stats`, `bank`, "
-							 + "`profile`, `level`, `rewards`, `inventory`, `cooldown`, `log`", inline=False)
+							 + "`profile`, `level`, `rewards`, `inventory`, `cooldown`, `log`, `feedback`", inline=False)
 
 		embed.add_field(name = ":money_with_wings: Earn Money",
-					   value = "`vote`, `work`, `daily`, `weekly`, `monthly`, `search`, `claim`, `beg`, `crime`, `fish`, `dig`", inline=False)
+					   value = "`vote`, `work`, `daily`, `weekly`, `monthly`, `search`, `claim`, `beg`, `crime`, `fish`, `dig`, `monopoly`", inline=False)
 
 		embed.add_field(name=":grey_question: Quests", value=f"`quests`")
 
-		embed.add_field(name="New commands! :bangbang:", value = "`crypto miner`, `monopoly`, `poker`, `hangman`, `feedback`", inline=False)
+		embed.add_field(name="New commands! :bangbang:", value = "`settings`", inline=False)
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{emojis.coin}")
