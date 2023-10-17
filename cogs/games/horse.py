@@ -153,12 +153,12 @@ class View(nextcord.ui.View):
 		
 		gameID = await self.bot.get_cog("Economy").addWinnings(self.userId, moneyToAdd, giveMultiplier=True, activityName="Horse", amntBet=self.amntbet)
 		
-		self.embed = await DB.addProfitAndBalFields(self, self.interaction, profitInt, self.embed)
+		self.embed, file = await DB.addProfitAndBalFields(self, self.interaction, profitInt, self.embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		self.embed = await DB.calculateXP(self, interaction, balance - profitInt, self.amntbet, self.embed, gameID)
 
-		await self.msg.edit(content=self.GetFullDisplay(self.horses), view=self, embed=self.embed)
+		await self.msg.edit(content=self.GetFullDisplay(self.horses), view=self, embed=self.embed, file=file)
 
 		self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Horse")
 

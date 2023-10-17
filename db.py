@@ -87,7 +87,7 @@ class DB(commands.Cog):
 		return embed
 
 	@staticmethod
-	async def addProfitAndBalFields(self, interaction:Interaction, profit:int, embed, redEmbed=False, giveMultiplier=True):
+	async def addProfitAndBalFields(self, interaction:Interaction, profit:int, embed:nextcord.Embed, redEmbed=False, giveMultiplier=True):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 
@@ -97,15 +97,18 @@ class DB(commands.Cog):
 		else:
 			embed.color = nextcord.Color(0xff2020)
 		if profit > 0:
+			file = emojis.GetWin()
 			if giveMultiplier:
 				embed.add_field(name=name, value=f"+{profit:,} (+{int(profit * (multiplier - 1))}){emojis.coin}", inline=True)
 			else:
 				embed.add_field(name=name, value=f"+{profit:,}{emojis.coin}", inline=True)
 		else:
+			file = emojis.GetLose()
 			embed.add_field(name=name, value=f"{profit:,}{emojis.coin}", inline=True)
-
+		
+		embed.set_thumbnail(url="attachment://results.png")
 		embed.add_field(name="Credits", value=f"{balance:,}{emojis.coin}", inline=True)
-		return embed
+		return embed, file
 
 
 allItems = DB.fetchAll('SELECT * FROM Items')

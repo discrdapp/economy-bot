@@ -111,12 +111,12 @@ class View(nextcord.ui.View):
 
 		if not self.crash:
 			embed.add_field(name = f"Would've crashed at", value=f"{self.crashNum}x", inline=False)
-		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
+		embed, file = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, self.amntbet, embed, gameID)
 
-		await interaction.send(embed=embed)
+		await interaction.send(embed=embed, file=file)
 
 		self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Crash")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Crsh", profitInt)

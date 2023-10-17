@@ -90,7 +90,7 @@ class rps(commands.Cog):
 		
 		embed.add_field(name=f"**--- {result} ---**", value="_ _", inline=False)
 		
-		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
+		embed, _ = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed, gameID)

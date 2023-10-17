@@ -327,9 +327,9 @@ class View(nextcord.ui.View):
 						value=f"{winnings}\n{result}", inline=False)
 		
 		if moneyToAdd > amntSpent:
-			self.embed = await DB.addProfitAndBalFields(self, interaction, moneyToAdd - amntSpent, self.embed)
+			self.embed, _ = await DB.addProfitAndBalFields(self, interaction, moneyToAdd - amntSpent, self.embed)
 		else:
-			self.embed = await DB.addProfitAndBalFields(self, interaction, -amntSpent + moneyToAdd, self.embed)
+			self.embed, _ = await DB.addProfitAndBalFields(self, interaction, -amntSpent + moneyToAdd, self.embed)
 		with io.BytesIO() as image_binary:
 			roulette.save(image_binary, 'PNG')
 			image_binary.seek(0)

@@ -13,7 +13,7 @@ class Daily(commands.Cog):
 		self.levelReward = [550, 1500, 3000, 7500, 13500, 18500, 24000, 29000, 35000, 42000, 50000]
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 86401, bucket=cooldowns.SlashBucket.author, cooldown_id='daily')
+	@cooldowns.cooldown(1, 120, bucket=cooldowns.SlashBucket.author, cooldown_id='daily')
 	async def daily(self, interaction:Interaction):
 		userId = interaction.user.id
 
@@ -44,8 +44,9 @@ class Daily(commands.Cog):
 		logID = await self.bot.get_cog("Economy").addWinnings(userId, dailyReward, giveMultiplier=True, activityName="Daily Reward", amntBet=0)
 		embed.description = f"You got {dailyReward:,} {emojis.coin}"
 		embed.set_footer(text=f"Log ID: {logID}")
-		embed = await DB.addProfitAndBalFields(self, interaction, dailyReward, embed)
-		await interaction.send(embed=embed)
+		embed, file = await DB.addProfitAndBalFields(self, interaction, dailyReward, embed)
+
+		await interaction.send(embed=embed, file=file)
 
 
 

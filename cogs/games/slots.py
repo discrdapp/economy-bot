@@ -75,10 +75,10 @@ class Slots(commands.Cog):
 
 		embed.add_field(name=f"**--- {result} ---**", value="_ _", inline=False)
 
-		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
+		embed, file = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
 		embed = await DB.calculateXP(self, interaction, priorBal, amntbet, embed, gameID)
 
-		await botMsg.edit(embed=embed)
+		await botMsg.edit(embed=embed, file=file)
 
 		self.bot.get_cog("Totals").addTotals(interaction, amntbet, profitInt, "Slots")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Slt", profitInt)
