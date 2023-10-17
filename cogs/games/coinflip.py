@@ -107,7 +107,7 @@ class Coinflip(commands.Cog):
 
 
 	@nextcord.slash_command()
-	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, use_external_emojis=True)
+	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, use_external_emojis=True, manage_messages=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='coinflip')	
 	async def coinflip(self, interaction:Interaction, amntbet, sidebet = nextcord.SlashOption(
 																required=True,
@@ -172,7 +172,7 @@ class Coinflip(commands.Cog):
 		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="CF", amntBet=amntbet)
 		
 		
-		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
+		embed, _ = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed, gameID)
