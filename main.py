@@ -39,6 +39,7 @@ extensions = ["db",
 			  "cogs.multipliers",
 			  "cogs.others", 				# removable
 			  "cogs.quests", 
+			  "cogs.settings",				# removable
 			  "cogs.shop", 
 			  "cogs.totals",
 			  "cogs.ttt", 					# removable
@@ -73,8 +74,11 @@ async def on_interaction(interaction: Interaction):
 	if not await bot.get_cog("Economy").accCheck(interaction.user):
 		embed = nextcord.Embed(color=1768431, title=f"{bot.user.name} | Welcome!")
 		await bot.get_cog("Economy").StartPlaying(interaction, interaction.user)
+		
+		img = nextcord.File("./images/wumpus/wave.png", filename="wave.png")
+		embed.set_thumbnail(url="attachment://wave.png")
 		embed.description = f"{interaction.user.mention}, now that you're successfully registered, you can use commands. Please run command again!"
-		await interaction.send(embed=embed)
+		await interaction.send(embed=embed, file=img)
 		return
 
 	await bot.process_application_commands(interaction)
