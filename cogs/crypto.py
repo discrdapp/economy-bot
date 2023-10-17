@@ -62,10 +62,21 @@ class Crypto(commands.Cog):
 		# minedETCAmnt = hourlyAmnt/self.ethereumPrice
 
 		try:
+			data = DB.fetchOne("SELECT SUM(CryptoToCollect), Count(1) FROM CryptoMiner")
+			priorAmnt = data[0]
 			DB.update("""UPDATE CryptoMiner SET CryptoToCollect = CASE
 				WHEN CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) > Storage THEN Storage
 				ELSE CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) END 
 				WHERE isMining = 1 AND CryptoToCollect < Storage;""", [hourlyAmnt]*4)
+			afterAmnt = DB.fetchOne("SELECT SUM(CryptoToCollect) FROM CryptoMiner")[0]
+
+			if not priorAmnt or not afterAmnt:
+				return
+
+			chnl = self.bot.get_channel(config.channelIDForBitcoin)
+			embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto Miners")
+			embed.description = f"**Payout time!**\n**{data[1]:,}** miners paid!\n**{afterAmnt-priorAmnt:,}**{emojis.coin} worth of crypto was paid out!"
+			await chnl.send(embed=embed)
 		except Exception as e:
 			print(f"error in ProcessCryptoMining:\n{e}")
 
