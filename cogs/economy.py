@@ -39,11 +39,14 @@ class Economy(commands.Cog):
 		# if interaction.application_command.qualified_name == 'start'
 		# 	await interaction.send(embed=embed)
 		# else
+
+		img = nextcord.File("./images/logo.png", filename="logo.png")
+		embed.set_thumbnail(url="attachment://logo.png")
 		try:
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, file=img)
 		except:
 			try:
-				await interaction.followup.send(embed=embed)
+				await interaction.followup.send(embed=embed, file=img)
 			except:
 				pass
 
