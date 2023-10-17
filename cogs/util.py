@@ -178,12 +178,12 @@ class Util(commands.Cog):
 		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="HighLow", amntBet=amntbet)
 		
 		
-		embed = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
+		embed, file = await DB.addProfitAndBalFields(self, interaction, profitInt, embed)
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed, gameID)
 
-		await deferMsg.edit(embed=embed)
+		await deferMsg.edit(embed=embed, file=file)
 
 		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "HighLow")
 
