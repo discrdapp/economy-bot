@@ -154,6 +154,7 @@ class Blackjack(nextcord.ui.View):
 		self.interaction = None
 		self.ownerId = id
 
+		self.dealersTurn = False
 		self.dealerNum = list()
 		self.dealerHand = list()
 		self.embed = None
@@ -222,8 +223,12 @@ class Blackjack(nextcord.ui.View):
 				cards = self.pCARD
 				num = self.pCardNum
 			else:
-				cards = self.dealerHand
-				num = self.dealerNum
+				if self.dealersTurn:
+					cards = self.dealerHand
+					num = self.dealerNum
+				else:
+					cards = [self.dealerHand[0]]
+					num = [self.dealerNum[0]]
 
 			cardsUnicode = list()
 			for card in cards:
@@ -475,6 +480,7 @@ class Blackjack(nextcord.ui.View):
 
 
 	async def EndGame(self):
+		self.dealersTurn = True
 		self.CalculateCardCount(self.dealerNum[1])
 		winner = self.compare_between()
 		await self.displayWinner(winner) 
