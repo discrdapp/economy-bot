@@ -29,6 +29,7 @@ extensions = ["db",
 			  "cogs.games.slots", 			# removable
 			  "cogs.admin", 				# removable
 			  "cogs.bank", 					# removable
+			  "cogs.codes",
 			  "cogs.crypto",
 			  "cogs.daily",					# removable
 			  "cogs.economy", 
