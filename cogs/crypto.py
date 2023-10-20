@@ -202,7 +202,7 @@ class Crypto(commands.Cog):
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("crypto")
 	async def start(self, interaction:Interaction, id=nextcord.SlashOption(choices = [str(x) for x in range(1, 4)])):
-		cryptoMiner = DB.fetchOne("SELECT IsMining, CryptoName FROM CryptoMiner WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
+		cryptoMiner = DB.fetchOne("SELECT IsMining, CryptoName FROM CryptoMiner WHERE DiscordID = ? AND ID = ?;", [interaction.user.id, id])
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Start")
 		if not cryptoMiner:
@@ -213,7 +213,7 @@ class Crypto(commands.Cog):
 			return
 
 
-		DB.update("UPDATE CryptoMiner SET IsMining = 1 WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
+		DB.update("UPDATE CryptoMiner SET IsMining = 1 WHERE DiscordID = ? AND ID = ?;", [interaction.user.id, id])
 		embed.description = f"Successfully started up crypto miner with ID#{id}"
 
 		await interaction.send(embed=embed)
@@ -221,7 +221,7 @@ class Crypto(commands.Cog):
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("crypto")
 	async def stop(self, interaction:Interaction, id=nextcord.SlashOption(choices = [str(x) for x in range(1, 4)])):
-		cryptoMiner = DB.fetchOne("SELECT IsMining, CryptoName FROM CryptoMiner WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
+		cryptoMiner = DB.fetchOne("SELECT IsMining, CryptoName FROM CryptoMiner WHERE DiscordID = ? AND ID = ?;", [interaction.user.id, id])
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Start")
 		if not cryptoMiner:
@@ -231,7 +231,7 @@ class Crypto(commands.Cog):
 			await self.ResetCooldownSendEmbed(interaction, "Miner is already OFF", embed)
 			return
 
-		DB.update("UPDATE CryptoMiner SET IsMining = 0 WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
+		DB.update("UPDATE CryptoMiner SET IsMining = 0 WHERE DiscordID = ? AND ID = ?;", [interaction.user.id, id])
 		embed.description = f"Successfully stopped with ID#{id}"
 
 		await interaction.send(embed=embed)
@@ -243,7 +243,7 @@ class Crypto(commands.Cog):
 				   selection = nextcord.SlashOption(
 						choices=("Storage", "Speed"))):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Upgrade")
-		cryptoMiner = DB.fetchOne("SELECT isMining, Storage, SpeedLevel FROM CryptoMiner WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
+		cryptoMiner = DB.fetchOne("SELECT isMining, Storage, SpeedLevel FROM CryptoMiner WHERE DiscordID = ? AND ID = ?;", [interaction.user.id, id])
 
 		if not cryptoMiner:
 			await self.ResetCooldownSendEmbed(interaction, "Cannot find a miner with that ID", embed)
@@ -268,7 +268,7 @@ class Crypto(commands.Cog):
 				return
 
 			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought Crypto Miner Storage Upgrade")
-			DB.update("UPDATE CryptoMiner SET Storage = Storage + 25000 WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
+			DB.update("UPDATE CryptoMiner SET Storage = Storage + 25000 WHERE DiscordID = ? AND ID = ?;", [interaction.user.id, id])
 
 		elif selection == "Speed":
 			if cryptoMiner[2] >= 10:
@@ -284,7 +284,7 @@ class Crypto(commands.Cog):
 				return
 
 			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought Crypto Miner Speed Upgrade")
-			DB.update("UPDATE CryptoMiner SET SpeedLevel = SpeedLevel + 1 WHERE DiscordID = ? AND ID = ?", [interaction.user.id, id])
+			DB.update("UPDATE CryptoMiner SET SpeedLevel = SpeedLevel + 1 WHERE DiscordID = ? AND ID = ?;", [interaction.user.id, id])
 
 		embed.set_footer(text=f"Log ID: {logID}")
 
@@ -369,7 +369,7 @@ class Crypto(commands.Cog):
 			await self.ResetCooldownSendEmbed(interaction, "You cannot change this while you have crypto stored in the miner.\nPlease withdraw it and try again", embed)
 			return
 		
-		DB.update("UPDATE CryptoMiner SET CryptoName = ? WHERE ID = ? AND DiscordID = ?", [choice, id, interaction.user.id])
+		DB.update("UPDATE CryptoMiner SET CryptoName = ? WHERE ID = ? AND DiscordID = ?;", [choice, id, interaction.user.id])
 
 
 	@miner.subcommand()
@@ -522,9 +522,9 @@ class Crypto(commands.Cog):
 		creditAmnt = floor(amnt * coinPrice * (1.00-self.tax))
 
 		if amnt == balance:
-			DB.delete("DELETE FROM Crypto WHERE DiscordID = ? AND Name = ?", [interaction.user.id, crypto])
+			DB.delete("DELETE FROM Crypto WHERE DiscordID = ? AND Name = ?;", [interaction.user.id, crypto])
 		else:
-			DB.update("UPDATE Crypto SET Quantity = round(Quantity - ?, 2) WHERE DiscordID = ? AND Name = ?", [amnt, interaction.user.id, crypto])
+			DB.update("UPDATE Crypto SET Quantity = round(Quantity - ?, 2) WHERE DiscordID = ? AND Name = ?;", [amnt, interaction.user.id, crypto])
 
 		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, creditAmnt, giveMultiplier=False, activityName=f"Sold {amnt} {crypto}", amntBet=0)
 

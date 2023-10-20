@@ -17,7 +17,7 @@ class Settings(commands.Cog):
 	@settings.subcommand(description="Do you want to see the generated image when you play Blackjack?")
 	async def blackjackimage(self, interaction:Interaction, choice=nextcord.SlashOption(choices = ["on", "off"])):
 		if choice == "on":
-			DB.delete("DELETE FROM Settings WHERE DiscordID = ? AND Setting = ?", [interaction.user.id, "ShowBlackjackImg"])
+			DB.delete("DELETE FROM Settings WHERE DiscordID = ? AND Setting = ?;", [interaction.user.id, "ShowBlackjackImg"])
 		elif choice == "off":
 			DB.insert('INSERT OR IGNORE INTO Settings VALUES (?, ?);', [interaction.user.id, "ShowBlackjackImg"])
 		
@@ -28,7 +28,7 @@ class Settings(commands.Cog):
 	@settings.subcommand(description="Do you want to see the generated image when you play Poker?")
 	async def pokerimage(self, interaction:Interaction, choice=nextcord.SlashOption(choices = ["on", "off"])):
 		if choice == "on":
-			DB.delete("DELETE FROM Settings WHERE DiscordID = ? AND Setting = ?", [interaction.user.id, "ShowPokerImg"])
+			DB.delete("DELETE FROM Settings WHERE DiscordID = ? AND Setting = ?;", [interaction.user.id, "ShowPokerImg"])
 		elif choice == "off":
 			DB.insert('INSERT OR IGNORE INTO Settings VALUES (?, ?);', [interaction.user.id, "ShowPokerImg"])
 		
@@ -37,7 +37,7 @@ class Settings(commands.Cog):
 		await interaction.send(embed=embed)
 	
 def GetUserSetting(userId, settingName:str):
-	return DB.fetchOne("SELECT COUNT(1) FROM Settings WHERE DiscordID = ? AND Setting = ?", [userId, settingName])[0]
+	return DB.fetchOne("SELECT COUNT(1) FROM Settings WHERE DiscordID = ? AND Setting = ?;", [userId, settingName])[0]
 
 
 

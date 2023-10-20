@@ -310,7 +310,7 @@ class Monopoly(commands.Cog):
 	@cooldowns.shared_cooldown("monopoly")
 	async def view(self, interaction:Interaction):
 		DB.insert('INSERT OR IGNORE INTO Monopoly(DiscordID) VALUES (?);', [interaction.user.id])
-		data = DB.fetchOne("SELECT COUNT(1) FROM MonopolyPeople WHERE DiscordID = ?", [interaction.user.id])
+		data = DB.fetchOne("SELECT COUNT(1) FROM MonopolyPeople WHERE DiscordID = ?;", [interaction.user.id])
 
 		tableCount = self.bot.get_cog("Inventory").getCountForItem(interaction.user, 'Table')
 
@@ -356,7 +356,7 @@ class Monopoly(commands.Cog):
 			embed.description = f"That will cost you {round(cost):,}{emojis.coin}, but you only have {balance:,}{emojis.coin}"
 			await interaction.send(embed=embed, ephemeral=True)
 			return
-		data = DB.fetchOne("SELECT COUNT(*) FROM MonopolyPeople WHERE DiscordID = ?", [interaction.user.id])
+		data = DB.fetchOne("SELECT COUNT(*) FROM MonopolyPeople WHERE DiscordID = ?;", [interaction.user.id])
 		tableCount = self.bot.get_cog("Inventory").getCountForItem(interaction.user, 'Table')
 		peopleCount = data[0]
 

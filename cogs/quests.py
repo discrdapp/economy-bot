@@ -141,7 +141,7 @@ class Quests(commands.Cog):
 				fieldToSet = "Profit = Profit + " + str(profit) 
 
 
-		DB.update("UPDATE Quests SET " + fieldToSet + " WHERE DiscordID = ? and ActiveQuest = ?", [user.id, activeQuest])
+		DB.update("UPDATE Quests SET " + fieldToSet + " WHERE DiscordID = ? and ActiveQuest = ?;", [user.id, activeQuest])
 
 		if self.IsQuestComplete(self.goals[f'{questType}'], questType, user, activeQuest):
 			goal = self.GetGoal(questType)
