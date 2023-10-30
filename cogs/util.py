@@ -110,15 +110,15 @@ class Util(commands.Cog):
 			DB.insert('INSERT INTO UsedReferralCommand VALUES (?);', [interaction.user.id])
 
 			# add refferer to database (if not in it already)
-			DB.insert('INSERT OR IGNORE INTO ReferralCount VALUES (?, 0);', [interaction.user.id])
+			DB.insert('INSERT OR IGNORE INTO ReferralCount VALUES (?, 0);', [user.id])
 
 			# get referrer's referral count
-			count = DB.fetchOne("SELECT Amount FROM ReferralCount WHERE DiscordID = ?;", [interaction.user.id])[0]
+			count = DB.fetchOne("SELECT Amount FROM ReferralCount WHERE DiscordID = ?;", [user.id])[0]
 			cmdUseReward = 20000 # the cmd issuer's reward
 			referrerReward = 15000 + (count*1000) # calculate referral reward. 15k + 1000 per user already referred
 
 			# add 1 to the referrer's referral count
-			DB.update("UPDATE ReferralCount SET Amount = Amount + 1 WHERE DiscordID = ?;", [interaction.user.id])
+			DB.update("UPDATE ReferralCount SET Amount = Amount + 1 WHERE DiscordID = ?;", [user.id])
 
 			usedCmdLogID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, cmdUseReward, activityName="Used /referral", amntBet=0)
 			referrerLogID = await self.bot.get_cog("Economy").addWinnings(user.id, referrerReward, activityName=f"Referred {interaction.user.id}", amntBet=0)
