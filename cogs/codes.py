@@ -73,7 +73,7 @@ class Codes(commands.Cog):
 		
 		else:
 			DB.insert("INSERT INTO Codes VALUES(?)", [interaction.user.id])
-			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, self.reward, giveMultiplier=True, activityName=f"Code {code}", amntBet=0)
+			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, self.reward, activityName=f"Code {code}", amntBet=0)
 			embed.description = f"Code redeemed! {self.reward:,}{emojis.coin} added."
 			embed.set_footer(text=f"LogID: {logID}")
 
