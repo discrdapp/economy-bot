@@ -85,6 +85,51 @@ class Util(commands.Cog):
 		elif choice == "out":
 			DB.delete("DELETE FROM Guilds WHERE GuildID = ? AND DiscordID = ?;", [interaction.guild.id, interaction.user.id])
 			await interaction.send("We've removed you from this guild's local leaderboard!")
+	
+	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author, cooldown_id='referral')
+	async def referral(self, interaction:Interaction, user:nextcord.Member):
+		await interaction.response.defer(with_message=True, ephemeral=True)
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Referrals")
+
+		# make sure user has not used command before
+		data = DB.fetchOne("SELECT * FROM UsedReferralCommand WHERE DiscordID = ?;", [interaction.user.id])
+		if data:
+			embed.description = "You can only use this command once!"
+
+		elif not await self.bot.get_cog("Economy").accCheck(user):
+			embed.description = "User has not registered yet. They need to use any command or type `/start` to register."
+		
+		elif interaction.user.id == user.id:
+			embed.description = "You cannot pick yourself!"
+		else:
+			if not await SendConfirmButton(interaction, f"You will be setting {user.mention} as your referral? You can only use this command once. Proceed?"):
+				await interaction.send("Cancelled!", ephemeral=True)
+				return
+			# add user so he cant use command again
+			DB.insert('INSERT INTO UsedReferralCommand VALUES (?);', [interaction.user.id])
+
+			# add refferer to database (if not in it already)
+			DB.insert('INSERT OR IGNORE INTO ReferralCount VALUES (?, 0);', [interaction.user.id])
+
+			# get referrer's referral count
+			count = DB.fetchOne("SELECT Amount FROM ReferralCount WHERE DiscordID = ?;", [interaction.user.id])[0]
+			cmdUseReward = 20000 # the cmd issuer's reward
+			referrerReward = 15000 + (count*1000) # calculate referral reward. 15k + 1000 per user already referred
+
+			# add 1 to the referrer's referral count
+			DB.update("UPDATE ReferralCount SET Amount = Amount + 1 WHERE DiscordID = ?;", [interaction.user.id])
+
+			usedCmdLogID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, cmdUseReward, activityName="Used /referral", amntBet=0)
+			referrerLogID = await self.bot.get_cog("Economy").addWinnings(user.id, referrerReward, activityName=f"Referred {interaction.user.id}", amntBet=0)
+
+			embed.description = f"Thank you for setting your referrer!\
+			\nYou received 20,000{emojis.coin} (LogID: {usedCmdLogID}) \n{user.mention} received {referrerReward:,}{emojis.coin} (LogID: {referrerLogID}) for having {count+1} referral(s)."
+			embed.set_footer(text=f"You get 15,000 for referring, PLUS an extra 1,000 per extra person!\n(1 = 15k, 2 = 16k, 3 = 17k, etc.)")
+
+		await interaction.send(embed=embed)
+
+
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 3600, bucket=cooldowns.SlashBucket.author, cooldown_id='feedback')
