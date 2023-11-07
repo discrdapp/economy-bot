@@ -26,20 +26,19 @@ class Player():
 
 
 class JoinGameButton(nextcord.ui.Button):
-	def __init__(self, label, style):
+	def __init__(self, label, style, bot):
 		super().__init__(label=label, style=style)
+		self.bot = bot
 	
 	async def callback(self, interaction:Interaction):
 		assert self.view is not None
 		view:JoinGameView = self.view
 
 		if self.label == "Join":
-			balance = await view.bot.get_cog("Economy").getBalance(interaction.user)
-
 			if interaction.user.id in [player.user.id for player in view.players]:
 				await interaction.send("You have already joined the game", ephemeral=True)
 				return
-			if view.amntbet > balance:
+			if not await self.bot.get_cog("Economy").subtractBet(interaction.user, view.amntbet):
 				await interaction.send(f"You need at least {view.amntbet:,} to join this game", ephemeral=True)
 				return
 
@@ -60,8 +59,8 @@ class JoinGameButton(nextcord.ui.Button):
 class JoinGameView(nextcord.ui.View):
 	def __init__(self, bot, owner:Player, amntbet):
 		super().__init__(timeout=180)
-		joinGameButton = JoinGameButton("Join", nextcord.ButtonStyle.blurple)
-		startGameButton = JoinGameButton("Start", nextcord.ButtonStyle.green)
+		joinGameButton = JoinGameButton("Join", nextcord.ButtonStyle.blurple, bot)
+		startGameButton = JoinGameButton("Start", nextcord.ButtonStyle.green, bot)
 		self.add_item(joinGameButton)
 		self.add_item(startGameButton)
 
@@ -617,6 +616,9 @@ class BJMultiplayer(commands.Cog):
 	async def multiplayerbj(self, interaction:Interaction, amntbet:int):
 		if amntbet < 100:
 			raise Exception("minBet 100")
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user,amntbet):
+			await interaction.send("You don't have enough credits for that bet", ephemeral=True)
+			return
 		
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack Multiplayer")
 
