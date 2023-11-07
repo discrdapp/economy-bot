@@ -8,6 +8,8 @@ from random import randint
 import config, emojis
 from db import DB
 
+from cogs.util import SendConfirmButton
+
 def GetBlocks():
 	itemNameList = DB.fetchAll('SELECT * FROM MinerBlocks;')
 	return itemNameList
@@ -22,24 +24,17 @@ class Miner(commands.Cog):
 		self.bot:commands.bot.Bot = bot
 		self.blocks = GetBlocks()
 		self.highestLevelBlock = GetHighestLevelBlock()
+		self.mineBlockLevels = [100, 500, 1000, 5000, 10000, 25000]
+		self.priceForUpgrades = [25000, 50000, 100000, 200000, 500000]
 
-	def getInventory(self, userId, whatToGet=None):
-		if whatToGet:
+	def getInventory(self, userId, whatToGet):
+		inv = DB.fetchOne(f"SELECT {whatToGet} FROM MinerInventory WHERE DiscordID = ?;", [userId])
+
+		if not inv:
+			DB.insert('INSERT INTO MinerInventory(DiscordID) VALUES (?);', [userId])
 			inv = DB.fetchOne(f"SELECT {whatToGet} FROM MinerInventory WHERE DiscordID = ?;", [userId])
-
-			if not inv:
-				DB.insert('INSERT INTO MinerInventory(DiscordID) VALUES (?);', [userId])
-				inv = DB.fetchOne(f"SELECT {whatToGet} FROM MinerInventory WHERE DiscordID = ?;", [userId])
-			
-			return inv[0]
-		else:
-			inv = DB.fetchOne("SELECT * FROM MinerInventory WHERE DiscordID = ?;", [userId])
-
-			if not inv:
-				DB.insert('INSERT INTO MinerInventory(DiscordID) VALUES (?);', [userId])
-				inv = DB.fetchOne("SELECT * FROM MinerInventory WHERE DiscordID = ?;", [userId])
-
-			return inv
+		
+		return inv
 
 	def getBackpackSize(self, interaction:Interaction):
 		return DB.fetchOne('SELECT BackpackLevel FROM MinerInventory WHERE DiscordID = ?;', [interaction.user.id])[0]*32
@@ -60,14 +55,14 @@ class Miner(commands.Cog):
 			await interaction.send(embed=embed)
 			return
 
-		inv = self.getInventory(interaction.user.id)
-
+		inv = self.getInventory(interaction.user.id, "BackpackLevel, Dirt, Cobblestone, Coal, Iron, Gold, Emerald, Diamond")
 
 		spaceUsed = 0
-		for item in inv[3:]:
+		for item in inv[1:]:
 			spaceUsed += item
 		# spaceLeft left is inventory size - the count
-		spaceLeft = self.getBackpackSize(interaction) - spaceUsed
+		backpackSize = self.getBackpackSize(interaction)
+		spaceLeft = backpackSize - spaceUsed
 
 		if spaceLeft <= 0:
 			embed.description = "Your backpack is full! You will need to sell your blocks before you can Mine some more."
@@ -78,7 +73,7 @@ class Miner(commands.Cog):
 		# 0: dirt, 1: cobblestone, 2: coal, 3: iron, 4: gold
 		unlockedCount = -1
 		for block in self.blocks:
-			if inv[1] >= block[4]:
+			if inv[0] >= block[4]:
 				unlockedCount += 1
 		block = randint(0, unlockedCount)
 
@@ -87,24 +82,27 @@ class Miner(commands.Cog):
 		elif block == 2: amnt = randint(12, 16)
 		elif block == 3: amnt = randint(8, 12)
 		elif block == 4: amnt = randint(4, 8)
-		elif block == 5: amnt = randint(1, 4)
+		elif block == 5: amnt = randint(2, 6)
+		elif block == 6: amnt = randint(1, 4)
 
+		blockCurrAmnt = inv[block+1]
 		if amnt < spaceLeft: 
 			# if inventory has space for all the blocks
 			embed.description = f"Mined {amnt} {self.blocks[block][3]}!"
-			await interaction.send(embed=embed)
 			# inv[block+2] += amnt
-			amntToSetTo = inv[block+3] + amnt
+			amntToSetTo = blockCurrAmnt + amnt
+			embed.set_footer(text=f"{spaceUsed+amnt}/{backpackSize}")
 		else: 
 			# if inventory doesn't have space for all the blocks, fill it up
 			embed.description = f"Mined {spaceLeft} {self.blocks[block][3]}!"
 			# inv[block+2] += spaceLeft
-			amntToSetTo = inv[block+3] + spaceLeft
+			amntToSetTo = blockCurrAmnt + spaceLeft
 			embed.set_footer(text="Your backpack is now full!")
-			await interaction.send(embed=embed)
+		
+		await interaction.send(embed=embed)
 
 		blockName = self.blocks[block][1]
-		DB.update(f"UPDATE MinerInventory SET {blockName} = ? WHERE DiscordID = ?;", [amntToSetTo, interaction.user.id])
+		DB.update(f"UPDATE MinerInventory SET BlocksMined = BlocksMined + ?, {blockName} = ? WHERE DiscordID = ?;", [amntToSetTo - blockCurrAmnt, amntToSetTo, interaction.user.id])
 
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("miner")
@@ -114,12 +112,12 @@ class Miner(commands.Cog):
 			embed.description = "You need a Pickaxe to use the Mine commands.\nYou can buy one from the /shop"
 			await interaction.send(embed=embed)
 			return
-		inv = self.getInventory(interaction.user.id)
+		inv = self.getInventory(interaction.user.id, "Dirt, Cobblestone, Coal, Iron, Gold, Emerald, Diamond")
 
 		count = -1
 		totalMoney = 0
 		sellMsg = ""
-		for item in inv[3:]:
+		for item in inv:
 			count += 1
 			if item == 0:
 				continue
@@ -146,13 +144,13 @@ class Miner(commands.Cog):
 	@miner.subcommand()
 	@cooldowns.shared_cooldown("miner")
 	async def backpack(self, interaction:Interaction):
-		inv = self.getInventory(interaction.user.id)
+		inv = self.getInventory(interaction.user.id, "PickaxeLevel, Dirt, Cobblestone, Coal, Iron, Gold, Emerald, Diamond")
 		
 		embed = nextcord.Embed(color=1768431)
-		embed.description = f"**Backpack ({sum(inv[3:])}/{self.getBackpackSize(interaction)}):**\n"
+		embed.description = f"**Backpack ({sum(inv[1:])}/{self.getBackpackSize(interaction)}):**\n"
 		count = 0
-		for num in inv[3:]:	
-			if inv[2] >= self.blocks[count][4]: 
+		for num in inv[1:]:	
+			if inv[0] >= self.blocks[count][4]: 
 				embed.add_field(name="_ _", value=f"\t{num} {self.blocks[count][3]}\n")
 			
 			count += 1
@@ -170,17 +168,36 @@ class Miner(commands.Cog):
 			await interaction.send(embed=embed)
 			return
 
-		if interaction.user.id != config.botOwnerDiscordID:
-			embed.description = "Upgrading is disabled while we work on a permanent solution for it..."
-			await interaction.send(embed=embed)
-			return
-
+		# if interaction.user.id != config.botOwnerDiscordID:
+		# 	embed.description = "Upgrading is disabled while we work on a permanent solution for it..."
+		# 	await interaction.send(embed=embed)
+		# 	return
+		
+		
+		userData = self.getInventory(interaction.user.id, "PickaxeLevel, BackpackLevel, BlocksMined")
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if userchoice == "pickaxe":
-			lvl = self.getInventory(interaction.user.id, "PickaxeLevel")
+			lvl = userData[0]
 
 			if lvl == self.highestLevelBlock:
-				embed.description = "You're already at the highest level!"
+				embed.description = "Your pickaxe is already at the highest level!"
 				await interaction.send(embed=embed)
+				return
+			
+			if self.mineBlockLevels[lvl-1] > userData[2]:
+				embed.description = f"You must mine {self.mineBlockLevels[lvl-1]:,} blocks for this upgrade! You're currently at {userData[2]}:,"
+				await interaction.send(embed=embed)
+				return
+			
+			cost = self.priceForUpgrades[lvl-1]
+			if balance < cost:
+				embed.description = f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}"
+				await interaction.send(embed=embed, ephemeral=True)
+				return
+
+			if not await SendConfirmButton(interaction, f"This will cost you {cost:,} {emojis.coin}. Proceed?"):
+				embed.description = "You have cancelled this transaction."
+				await interaction.send(embed=embed, ephemeral=True)
 				return
 
 			DB.update("UPDATE MinerInventory SET PickaxeLevel = PickaxeLevel + 1 WHERE DiscordID = ?;", [interaction.user.id])
@@ -196,11 +213,29 @@ class Miner(commands.Cog):
 			await interaction.send(embed=embed, ephemeral=True)
 
 		elif userchoice == "backpack":
-			lvl = self.getInventory(interaction.user.id, "BackpackLevel")
-			if lvl == 3:
+			lvl = userData[1]
+
+			if lvl == 5:
 				embed.description = "Your backpack is already at the highest level!"
 				await interaction.send(embed=embed)
 				return
+
+			if self.mineBlockLevels[lvl-1] > userData[2]:
+				embed.description = f"You must mine {self.mineBlockLevels[lvl-1]:,} blocks for this upgrade! You're currently at {userData[2]:,}"
+				await interaction.send(embed=embed)
+				return
+
+			cost = self.priceForUpgrades[lvl-1]
+			if balance < cost:
+				embed.description = f"That will cost you {cost:,}{emojis.coin}, but you only have {balance:,}{emojis.coin}"
+				await interaction.send(embed=embed, ephemeral=True)
+				return
+
+			if not await SendConfirmButton(interaction, f"This will cost you {cost:,} {emojis.coin}. Proceed?"):
+				embed.description = "You have cancelled this transaction."
+				await interaction.send(embed=embed, ephemeral=True)
+				return
+
 			DB.update("UPDATE MinerInventory SET BackpackLevel = BackpackLevel + 1 WHERE DiscordID = ?;", [interaction.user.id])
 			size = (lvl+1) * 32
 			embed.add_field(name = "Backpack Level", value=f"`{lvl} -> {lvl+1}`", inline=False)
