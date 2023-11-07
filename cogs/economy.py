@@ -175,7 +175,9 @@ class Economy(commands.Cog):
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Donator")
 		if not self.isDonator(interaction.user.id):
-			embed.description = "To be able to claim the Donator Reward, you first need to donate!\nJoin the server shown in the /help menu to learn how!"
+			embed.description = "You must donate to gain access to this command!\nPlease read Donator Perks for more info\
+\n[Donator Perks](https://docs.justingrah.am/thecasino/donator)\n[Donate Now](https://www.paypal.com/paypalme/thecasinobot)"
+			embed.set_footer(text="You will need to join support server to receive perks if you donate!")
 			await deferMsg.edit(embed=embed)
 			return
 
