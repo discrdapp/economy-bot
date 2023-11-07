@@ -54,18 +54,20 @@ class Admin(commands.Cog):
 
 		amnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, amnt)
 		
-		if interaction.guild_id == config.adminServerID:
+		# if donator sending or donator receiving
+		if self.bot.get_cog("Economy").isDonator(interaction.user.id) or self.bot.get_cog("Economy").isDonator(user.id):
+			amntToReceive = math.floor(amnt * .90)
+			tax = "10% tax"
+		# if support server
+		elif interaction.guild_id == config.adminServerID:
 			amntToReceive = math.floor(amnt * .60)
 			tax = "40% tax"
 			embed.set_footer(text="Donator servers have 20% tax and donators have 10%!")
+		# if donator server
 		else:
-			if self.bot.get_cog("Economy").isDonator(interaction.user.id) or self.bot.get_cog("Economy").isDonator(user.id):
-				amntToReceive = math.floor(amnt * .90)
-				tax = "10% tax"
-			else:
-				amntToReceive = math.floor(amnt * .80)
-				tax = "20% tax"
-				embed.set_footer(text="Donators have only 10% tax, send and receive!")
+			amntToReceive = math.floor(amnt * .80)
+			tax = "20% tax"
+			embed.set_footer(text="Donators have 10% tax, for sending and receiving!")
 		if not await SendConfirmButton(interaction, f"They will only receive {amntToReceive:,}{emojis.coin} ({tax}). Proceed?"):
 			embed.description = "You have cancelled this transaction."
 			await interaction.send(embed=embed, ephemeral=True)
@@ -281,7 +283,7 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 		DB.insert("INSERT INTO Donators(DiscordID, Level, DonatorReward) VALUES(?, ?, ?)", [member.id, level, donatorReward])
 
 		await interaction.send(f"Donator role added.\n{creditsGiven:,}{emojis.coin} added.\n{donatorReward:,}{emojis.coin} added to your Donator Reward\nTripled your daily reward\n\
-Doubled your weekly reward.\nDoubled your monthly reward.\nSet your fee for 10% to send/receive coins.")
+Doubled your weekly reward.\nDoubled your monthly reward.\nSet your fee for 10% to send/receive coins.\n\n**Please provide <@547475078082985990> the server ID you'd like to allow /send to work in**")
 
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
