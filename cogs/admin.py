@@ -280,7 +280,8 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 
 		DB.insert("INSERT INTO Donators(DiscordID, Level, DonatorReward) VALUES(?, ?, ?)", [member.id, level, donatorReward])
 
-		await interaction.send(f"Donator role added.\n{creditsGiven} credits added.\n{donatorReward} credits added to your Donator Reward")
+		await interaction.send(f"Donator role added.\n{creditsGiven:,}{emojis.coin} added.\n{donatorReward:,}{emojis.coin} added to your Donator Reward\nTripled your daily reward\n\
+Doubled your weekly reward.\nDoubled your monthly reward.\nSet your fee for 10% to send/receive coins.")
 
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
