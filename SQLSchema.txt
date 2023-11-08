@@ -5,6 +5,11 @@ CREATE TABLE "ActiveBuffs" (
 	PRIMARY KEY("ID" AUTOINCREMENT)
 );
 
+CREATE TABLE "Codes" (
+	"DiscordID"	TEXT NOT NULL,
+	PRIMARY KEY("DiscordID")
+)
+
 CREATE TABLE "Crypto" (
 	"DiscordID"	TEXT NOT NULL,
 	"Name"	TEXT NOT NULL,
@@ -37,7 +42,8 @@ CREATE TABLE "Economy" (
 	"XP"	bigint(20) NOT NULL DEFAULT '0',
 	"TotalXP"	bigint(20) NOT NULL DEFAULT '0',
 	"Level"	int(11) NOT NULL DEFAULT '0',
-	"DailyReward"	int(11) NOT NULL DEFAULT '2500'
+	"DailyReward"	int(11) NOT NULL DEFAULT '2500',
+	PRIMARY KEY("DiscordID")
 );
 
 CREATE TABLE "Guilds" (
@@ -88,15 +94,17 @@ CREATE TABLE "MinerBlocks" (
 
 CREATE TABLE "MinerInventory" (
 	"DiscordID"	varchar(64) DEFAULT NULL,
-	"BackpackLevel" int(3) NOT NULL DEFAULT '1',
-	"PickaxeLevel" int(3) NOT NULL DEFAULT '1',
+	"BackpackLevel"	int(3) NOT NULL DEFAULT '1',
+	"PickaxeLevel"	int(3) NOT NULL DEFAULT '1',
+	"BlocksMined"	int(11) NOT NULL DEFAULT '0',
 	"Dirt"	int(11) NOT NULL DEFAULT '0',
 	"Cobblestone"	int(11) NOT NULL DEFAULT '0',
 	"Coal"	int(11) NOT NULL DEFAULT '0',
 	"Iron"	int(11) NOT NULL DEFAULT '0',
 	"Gold"	int(11) NOT NULL DEFAULT '0',
 	"Emerald"	int(11) NOT NULL DEFAULT '0',
-	"Diamond"	int(11) NOT NULL DEFAULT '0'
+	"Diamond"	int(11) NOT NULL DEFAULT '0',
+	PRIMARY KEY("DiscordID")
 );
 
 CREATE TABLE "Monopoly" (
@@ -128,6 +136,17 @@ CREATE TABLE `Quests` (
         PRIMARY KEY (DiscordID, ActiveQuest)
 );
 
+CREATE TABLE "ReferralCount" (
+	"DiscordID"	TEXT,
+	"Amount"	INTEGER
+);
+
+CREATE TABLE "Settings" (
+	"DiscordID"	TEXT NOT NULL,
+	"Setting"	TEXT NOT NULL,
+	PRIMARY KEY("DiscordID","Setting")
+);
+
 CREATE TABLE "Totals" (
 	"DiscordID"	varchar(64) DEFAULT NULL,
 	"Paid"	bigint(20) NOT NULL DEFAULT '0',
@@ -142,5 +161,15 @@ CREATE TABLE "Totals" (
 	"RPS"	bigint(20) NOT NULL DEFAULT '0',
 	"Mines"	bigint(20) NOT NULL DEFAULT '0',
 	"HighLow"	bigint(20) NOT NULL DEFAULT '0',
-	"Horse"	bigint(20) NOT NULL DEFAULT '0'
-, "DOND"	bigint(20) NOT NULL DEFAULT '0', "Scratch"	bigint(20) NOT NULL DEFAULT '0');
+	"Horse"	bigint(20) NOT NULL DEFAULT '0',
+	"DOND"	bigint(20) NOT NULL DEFAULT '0',
+	"Scratch"	bigint(20) NOT NULL DEFAULT '0',
+	PRIMARY KEY("DiscordID")
+);
+
+CREATE TABLE "UsedReferralCommand" (
+	"DiscordID"	TEXT NOT NULL,
+	PRIMARY KEY("DiscordID")
+);
+
+CREATE TABLE sqlite_sequence(name,seq);
