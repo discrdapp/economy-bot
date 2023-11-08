@@ -101,12 +101,12 @@ class Admin(commands.Cog):
 		top5 = DB.fetchAll("SELECT Activity, COUNT(*) as Amnt FROM Logs WHERE DiscordID = ? GROUP BY Activity order by Amnt DESC LIMIT 5;", [user.id])
 		top5Msg = ""
 		for data in top5:
-			top5Msg += f"{data[0]} | {data[1]}\n"
+			top5Msg += f"{data[0]} | {data[1]:,}\n"
 		embed.add_field(name="Top 5 Activities", value=top5Msg)
 
 		economyData = DB.fetchOne("SELECT Credits, Bank, TotalXP, Level FROM Economy WHERE DiscordID = ?;", [user.id])
-		embed.add_field(name="Balance", value=f"{economyData[0]} | {economyData[1]}")
-		embed.add_field(name="XP/Level", value=f"{economyData[2]} | {economyData[3]}")
+		embed.add_field(name="Balance", value=f"{economyData[0]:,} | {economyData[1]:,}")
+		embed.add_field(name="XP/Level", value=f"{economyData[2]:,} | {economyData[3]:,}")
 	
 		await deferMsg.edit(embed=embed)
 	
@@ -117,7 +117,7 @@ class Admin(commands.Cog):
 
 		topActivityMsg = ""
 		for data in topActivity:
-			topActivityMsg += f"{data[0]} | {data[1]}\n"
+			topActivityMsg += f"{data[0]} | {data[1]:,}\n"
 		await interaction.send(topActivityMsg)
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
