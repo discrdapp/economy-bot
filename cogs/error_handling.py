@@ -1,5 +1,5 @@
 import nextcord
-from nextcord.ext import commands 
+from nextcord.ext import commands, application_checks
 from nextcord import Interaction
 
 from cooldowns import CallableOnCooldown, reset_bucket
@@ -30,7 +30,7 @@ class ErrorHandling(commands.Cog):
 			embed.description = f"{commandName} is on cooldown. Please retry again <t:{int(error.resets_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>"
 			embed.set_footer(text="See all your cooldowns with /cooldown")
 
-		elif isinstance(error, commands.CheckFailure):
+		elif isinstance(error, commands.CheckFailure) or isinstance(error, application_checks.ApplicationNotOwner):
 			try:
 				await interaction.send(f"{error}")
 			except Exception:
