@@ -185,7 +185,7 @@ class Miner(commands.Cog):
 				return
 			
 			if self.mineBlockLevels[lvl-1] > userData[2]:
-				embed.description = f"You must mine {self.mineBlockLevels[lvl-1]:,} blocks for this upgrade! You're currently at {userData[2]}:,"
+				embed.description = f"You must mine {self.mineBlockLevels[lvl-1]:,} blocks for this upgrade! You're currently at {userData[2]:,}"
 				await interaction.send(embed=embed)
 				return
 			
@@ -199,6 +199,7 @@ class Miner(commands.Cog):
 				embed.description = "You have cancelled this transaction."
 				await interaction.send(embed=embed, ephemeral=True)
 				return
+			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought Pickaxe Upgrade")		
 
 			DB.update("UPDATE MinerInventory SET PickaxeLevel = PickaxeLevel + 1 WHERE DiscordID = ?;", [interaction.user.id])
 			embed.add_field(name = "⛏️ Pickaxe Level", value=f"`{lvl} -> {lvl+1}`", inline=False)
@@ -210,6 +211,8 @@ class Miner(commands.Cog):
 					msg += f"{block[3]}\t"
 			if msg:
 				embed.add_field(name = "Unlocked Blocks", value=msg, inline=False)
+			
+			embed.set_footer(text=f"LogID: {logID}")
 			await interaction.send(embed=embed, ephemeral=True)
 
 		elif userchoice == "backpack":
@@ -235,12 +238,14 @@ class Miner(commands.Cog):
 				embed.description = "You have cancelled this transaction."
 				await interaction.send(embed=embed, ephemeral=True)
 				return
+			logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, -cost, activityName=f"Bought Pickaxe Upgrade")		
 
 			DB.update("UPDATE MinerInventory SET BackpackLevel = BackpackLevel + 1 WHERE DiscordID = ?;", [interaction.user.id])
 			size = (lvl+1) * 32
 			embed.add_field(name = "Backpack Level", value=f"`{lvl} -> {lvl+1}`", inline=False)
 			embed.add_field(name = "Size", value=f"`{size-32} -> {size}`", inline=False)
 
+			embed.set_footer(text=f"LogID: {logID}")
 			await interaction.send(embed=embed, ephemeral=True)
 
 	@miner.subcommand()
