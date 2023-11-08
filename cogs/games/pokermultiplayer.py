@@ -521,6 +521,10 @@ class PokerMultiplayer(commands.Cog):
 	async def multiplayerpoker(self, interaction:Interaction, startingbet:int):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Poker Multiplayer")
 
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
+		if balance < startingbet:
+			raise Exception("tooPoor")
+
 		owner = Player(interaction.user, interaction, 1)
 		owner.isPlayersTurn = True
 		joinGameView = JoinGameView(self.bot, owner, startingbet)
