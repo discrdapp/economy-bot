@@ -38,9 +38,9 @@ class JoinGameButton(nextcord.ui.Button):
 			if interaction.user.id in [player.user.id for player in view.players]:
 				await interaction.send("You have already joined the game", ephemeral=True)
 				return
-			if not await self.bot.get_cog("Economy").subtractBet(interaction.user, view.amntbet):
-				await interaction.send(f"You need at least {view.amntbet:,} to join this game", ephemeral=True)
-				return
+			balance = await view.bot.get_cog("Economy").getBalance(interaction.user)
+			if balance < view.amntbet:
+				raise Exception("tooPoor")
 
 			view.players.append(Player(interaction.user, len(view.players)+1))
 
@@ -341,6 +341,7 @@ class Blackjack(nextcord.ui.View):
 		# generate the starting cards
 		for player in self.players:
 			player.totalMoneyBet = self.amntbet
+			await self.bot.get_cog("Economy").addWinnings(player.user.id, -self.amntbet)
 
 		self.embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack")
 		file = nextcord.File("./images/bj.png", filename="image.png")
@@ -616,9 +617,10 @@ class BJMultiplayer(commands.Cog):
 	async def multiplayerbj(self, interaction:Interaction, amntbet:int):
 		if amntbet < 100:
 			raise Exception("minBet 100")
-		if not await self.bot.get_cog("Economy").subtractBet(interaction.user,amntbet):
-			await interaction.send("You don't have enough credits for that bet", ephemeral=True)
-			return
+
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
+		if balance < amntbet:
+			raise Exception("tooPoor")
 		
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack Multiplayer")
 
