@@ -276,6 +276,10 @@ class Totals(commands.Cog):
 			# await self.msg.edit(embed=self.embed, file=nextcord.File(fp=image_binary, filename='image.png'))
 			file = nextcord.File(image_binary, filename="image.png")
 			embed.set_image(url="attachment://image.png")
+
+			# thumbnail = nextcord.File("./images/profilepictures/Icons_06.png", filename="thumbnail.png")
+			# embed.set_thumbnail(url="attachment://thumbnail.png")
+
 			await deferMsg.edit(embed=embed, file=file)
 	
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
@@ -551,11 +555,19 @@ class Totals(commands.Cog):
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='stats')
-	async def stats(self, interaction:Interaction):	
+	async def stats(self, interaction:Interaction, user:nextcord.Member=None):
+		if not user:
+			user = interaction.user
 		await interaction.response.defer(with_message=True)
 		deferMsg = await interaction.original_message()
+
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Stats")
 	
-		getRow = DB.fetchOne("SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS, Mines, HighLow, Horse, DOND, Scratch FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
+		getRow = DB.fetchOne("SELECT Paid, Won, Profit, Games, Slots, Blackjack, Crash, Roulette, Coinflip, RPS, Mines, HighLow, Horse, DOND, Scratch FROM Totals WHERE DiscordID = ?;", [user.id])
+		if not getRow:
+			embed.description = "User has not registered yet. They need to use any command or type `/start` to register."
+			await interaction.send(embed=embed)
+			return
 
 		creditsSpent = getRow[0]
 		creditsWon = getRow[1]
@@ -573,7 +585,6 @@ class Totals(commands.Cog):
 		dond = getRow[13]
 		scratch = getRow[14]
 
-		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Stats")
 		embed.add_field(name = "Total Spent", value = f"{creditsSpent:,}", inline=True)
 		embed.add_field(name = "Total Won", value = f"{creditsWon:,}", inline=True)
 		embed.add_field(name = "Profit", value = f"{profit:,}", inline=True)
@@ -589,6 +600,7 @@ class Totals(commands.Cog):
 		embed.add_field(name = "Horse", value = f"{horse:,}", inline=True)
 		embed.add_field(name = "DOND", value = f"{dond:,}", inline=True)
 		embed.add_field(name = "Scratch", value = f"{scratch:,}", inline=True)
+		embed.description = f"Stats for {user.display_name}"
 
 		await deferMsg.edit(embed=embed)
 
