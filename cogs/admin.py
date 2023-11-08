@@ -80,8 +80,45 @@ class Admin(commands.Cog):
 
 		embed.description = f"{interaction.user.mention} successfully sent {amnt:,}{emojis.coin}to {user.mention}!\nAfter {tax}, they received {amntToReceive:,}{emojis.coin}"
 		await interaction.send(embed=embed)
+	
+	@nextcord.slash_command(guild_ids=[config.adminServerID])
+	@application_checks.is_owner()
+	async def info(self, interaction:Interaction, user: nextcord.Member):
+		pass
+	
+	@info.subcommand()
+	@application_checks.is_owner()
+	async def view(self, interaction:Interaction, user: nextcord.Member):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
 
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | User Info")
 
+		registered = DB.fetchOne("SELECT DateTime FROM Logs WHERE Activity = 'Registered' AND DiscordID = ?;", [user.id])
+		if registered:
+			embed.add_field(name="Registered On", value=registered[0])
+		
+		top5 = DB.fetchAll("SELECT Activity, COUNT(*) as Amnt FROM Logs WHERE DiscordID = ? GROUP BY Activity order by Amnt DESC LIMIT 5;", [user.id])
+		top5Msg = ""
+		for data in top5:
+			top5Msg += f"{data[0]} | {data[1]}\n"
+		embed.add_field(name="Top 5 Activities", value=top5Msg)
+
+		economyData = DB.fetchOne("SELECT Credits, Bank, TotalXP, Level FROM Economy WHERE DiscordID = ?;", [user.id])
+		embed.add_field(name="Balance", value=f"{economyData[0]} | {economyData[1]}")
+		embed.add_field(name="XP/Level", value=f"{economyData[2]} | {economyData[3]}")
+	
+		await deferMsg.edit(embed=embed)
+	
+	@info.subcommand()
+	@application_checks.is_owner()
+	async def activity(self, interaction:Interaction, user: nextcord.Member, amnt:int=10):
+		topActivity = DB.fetchAll("SELECT Activity, COUNT(*) as Amnt FROM Logs WHERE DiscordID = ? GROUP BY Activity order by Amnt DESC LIMIT ?;", [user.id, amnt])
+
+		topActivityMsg = ""
+		for data in topActivity:
+			topActivityMsg += f"{data[0]} | {data[1]}\n"
+		await interaction.send(topActivityMsg)
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
