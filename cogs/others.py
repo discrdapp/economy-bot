@@ -71,10 +71,10 @@ class Others(commands.Cog):
 					return
 		with open("claimed.txt", 'a') as claimedFile:
 			claimedFile.write(f"{userId}\n") 
-		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, 7500, giveMultiplier=False, activityName="Claim", amntBet=0)
+		logID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, 15000, activityName="Claim", amntBet=0)
 
 		bal = await self.bot.get_cog("Economy").getBalance(interaction.user)
-		embed.description = f"Successfully claimed reward! New balance is {bal:,}{emojis.coin}"
+		embed.description = f"Successfully claimed reward and received 15,000{emojis.coin}! New balance is {bal:,}{emojis.coin}"
 		embed.set_footer(text=f"Log ID: {logID}")
 		await interaction.send(embed=embed)
 
@@ -107,7 +107,11 @@ class Others(commands.Cog):
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{emojis.coin}")
 						# value = "\n[Support](https://www.paypal.me/AutopilotJustin) gambling bot's development or [join support server](https://discord.gg/ggUksVN).")
 		embed.add_field(name = "_ _",
-						value = f"[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{emojis.coin}\nAdd this bot to your server - [Click Here](https://discord.com/api/oauth2/authorize?client_id=585235000459264005&permissions=387136&scope=bot)\n[Website](https://justingrah.am/) (WIP)\n[Docs](https://docs.justingrah.am/thecasino/) (WIP)", inline=False)
+						value = f"[Join official server](https://discord.gg/ggUksVN) and use `/claim` in the server for free 15,000{emojis.coin}\
+\nAdd this bot to your server - [Click Here](https://discord.com/api/oauth2/authorize?client_id=585235000459264005&permissions=387136&scope=bot)\
+\n[Website](https://justingrah.am/) (WIP)\
+\n[Docs](https://docs.justingrah.am/thecasino/) (WIP)\
+\n[Donate](https://docs.justingrah.am/thecasino/donator)", inline=False)
 		return embed
 
 	@nextcord.slash_command(description="The Casino Help Command")
