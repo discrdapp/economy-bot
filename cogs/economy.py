@@ -168,7 +168,7 @@ class Economy(commands.Cog):
 		await interaction.send(embed=embed)
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='donator')
+	@cooldowns.cooldown(1, 86400, bucket=cooldowns.SlashBucket.author, cooldown_id='donator')
 	async def donator(self, interaction:Interaction):
 		await interaction.response.defer(with_message=True)
 		deferMsg = await interaction.original_message()
