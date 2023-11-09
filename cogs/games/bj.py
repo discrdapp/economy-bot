@@ -35,7 +35,7 @@ from pilmoji import Pilmoji
 import emojis
 from cogs.settings import GetUserSetting
 from db import DB
-from cogs.util import GetMaxBet
+from cogs.util import GetMaxBet, IsDonatorCheck
 
 class CreditsToBet(nextcord.ui.TextInput):
 	def __init__(self):
@@ -312,10 +312,13 @@ class Blackjack(nextcord.ui.View):
 			self.embed.add_field(name = f"{self.interaction.user.name}'s cards:", value = f"Waiting...", inline=True)
 			self.embed.add_field(name = f"{self.bot.user.name}'s cards", value = f"{dTotal}\n**Score**: {sum(self.dealerNum)}\n", inline=True)
 			self.embed.add_field(name = "_ _", value = "**Options:** hit or stay", inline=False)
-			if not self.showCardCount:
-				self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
-			else:
-				self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}\nCount is {self.currCardCount[0]}")
+			# if not self.showCardCount:
+			# 	self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+			# else:
+			# 	self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}\nCount is {self.currCardCount[0]}")
+			
+			if self.showCardCount:
+				self.embed.set_footer(text=f"Count is {self.currCardCount[0]}")
 
 
 			with io.BytesIO() as image_binary:
@@ -389,10 +392,13 @@ class Blackjack(nextcord.ui.View):
 			self.embed.add_field(name = f"{self.bot.user.name}'s cards", value = f"{self.dealerHand[0]}\n**Score**: {self.dealerNum[0]}\n", inline=True)
 			self.embed.add_field(name = "_ _", value = "**Options:** hit or stay", inline=False)
 			
-			if not self.showCardCount:
-				self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
-			else:
-				self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}\nCount is {self.currCardCount[0]}")
+			# if not self.showCardCount:
+			# 	self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+			# else:
+			# 	self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}\nCount is {self.currCardCount[0]}")
+			
+			if self.showCardCount:
+				self.embed.set_footer(text=f"Count is {self.currCardCount[0]}")
 
 			with io.BytesIO() as image_binary:
 				if not GetUserSetting(self.ownerId, "ShowBlackjackImg"):
@@ -457,10 +463,13 @@ class Blackjack(nextcord.ui.View):
 			value = f"{pTotal}\n**Score**: {sum(self.pCardNum)}", 
 			inline=True)
 
-		if not self.showCardCount:
-			self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
-		else:
-			self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}\nCount is {self.currCardCount[0]}")
+		# if not self.showCardCount:
+		# 	self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}")
+		# else:
+		# 	self.embed.set_footer(text=f"Cards in Deck: {len(self.cards)}\nCount is {self.currCardCount[0]}")
+		
+		if self.showCardCount:
+			self.embed.set_footer(text=f"Count is {self.currCardCount[0]}")
 
 		# ends game if player busted or has 21
 		if (self.is_bust(self.pCardNum) or self.is_blackjack(self.pCardNum)):
@@ -747,7 +756,7 @@ class bj(commands.Cog):
 
 	@nextcord.slash_command(description="Play BlackJack!")
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='blackjack')
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='blackjack', check=lambda *args, **kwargs: IsDonatorCheck(args[1].user.id))
 	async def blackjack(self, interaction:Interaction, amntbet):
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)
 
