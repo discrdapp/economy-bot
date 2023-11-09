@@ -3,6 +3,7 @@ from nextcord.ext import commands
 from nextcord import Interaction 
 
 import cooldowns, random, datetime, math, config
+from cogs.economy import Economy
 
 import emojis
 from db import DB
@@ -34,6 +35,13 @@ class ConfirmButton(nextcord.ui.Button):
 		if self.label == "Confirm":
 			view.doProceed = True
 		view.stop()
+
+
+def IsDonatorCheck(userId):
+	check = DB.fetchOne("SELECT 1 FROM Donators WHERE DiscordID = ?;", [userId])
+	if not check:
+		return 1
+	return 0
 
 async def SendConfirmButton(interaction:Interaction, msg):
 	embed = nextcord.Embed(color=1768431)
