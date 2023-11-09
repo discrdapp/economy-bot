@@ -6,7 +6,7 @@ import cooldowns, asyncio, random
 
 import emojis
 from db import DB
-from cogs.util import GetMaxBet
+from cogs.util import GetMaxBet, IsDonatorCheck
 
 
 class MultiplayerButton(nextcord.ui.Button):
@@ -108,7 +108,7 @@ class Coinflip(commands.Cog):
 
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, attach_files=True, use_external_emojis=True, manage_messages=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='coinflip')	
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='coinflip', check=lambda *args, **kwargs: IsDonatorCheck(args[1].user.id))
 	async def coinflip(self, interaction:Interaction, amntbet, sidebet = nextcord.SlashOption(
 																required=True,
 																name="side", 

@@ -5,7 +5,7 @@ from nextcord import Interaction
 import random, cooldowns
 
 from db import DB
-from cogs.util import GetMaxBet
+from cogs.util import GetMaxBet, IsDonatorCheck
 
 
 class MinesButton(nextcord.ui.Button['MinesView']):
@@ -162,7 +162,7 @@ class Mines(commands.Cog):
 		pass
 
 	@mines.subcommand()
-	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='mines')
+	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='mines', check=lambda *args, **kwargs: IsDonatorCheck(args[1].user.id))
 	async def start(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
 						  minecount:int = nextcord.SlashOption(required=True,name="minecount", choices=[x+1 for x in range(24)])):
 		await interaction.response.defer()

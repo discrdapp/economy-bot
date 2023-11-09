@@ -12,7 +12,7 @@ from cogs.settings import GetUserSetting
 
 import cooldowns, emojis, io
 from db import DB
-from cogs.util import GetMaxBet
+from cogs.util import GetMaxBet, IsDonatorCheck
 
 
 class Button(nextcord.ui.Button['PokerView']):
@@ -424,7 +424,7 @@ class Poker(commands.Cog):
 
 	@nextcord.slash_command(description="Play BlackJack!")
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='blackjack')
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='poker', check=lambda *args, **kwargs: IsDonatorCheck(args[1].user.id))
 	async def poker(self, interaction:Interaction, startingbet):
 		startingbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, startingbet)
 

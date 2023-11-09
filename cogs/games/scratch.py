@@ -7,7 +7,7 @@ from random import randint
 
 import config
 from db import DB
-from cogs.util import GetMaxBet
+from cogs.util import GetMaxBet, IsDonatorCheck
 
 
 class ScratchTile(nextcord.ui.Button):
@@ -145,7 +145,7 @@ class Scratch(commands.Cog):
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='scratch')
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='scratch', check=lambda *args, **kwargs: IsDonatorCheck(args[1].user.id))
 	async def scratch(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 100")):
 		if amntbet < 100:
 			raise Exception("minBet 100")
