@@ -294,7 +294,7 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
-	async def givedonator(self, interaction:Interaction, member: nextcord.Member, level:int=1): # grabs member from input
+	async def givedonator(self, interaction:Interaction, member: nextcord.Member): # grabs member from input
 		if self.bot.get_cog("Economy").isDonator(interaction.user.id):
 			await interaction.send(f"{member.mention} is already a donator!")
 			return
@@ -306,21 +306,24 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 		except:
 			pass
 
-		creditsGiven = 10000
+		creditsGiven = 50000
 		donatorReward = 5000
-		if level == 2:
-			creditsGiven = 20000
-			donatorReward = 10000
-		elif level == 3:
-			creditsGiven = 35000
-			donatorReward = 20000
 		await self.bot.get_cog("Economy").addWinnings(member.id, creditsGiven)
 
 
-		DB.insert("INSERT INTO Donators(DiscordID, Level, DonatorReward) VALUES(?, ?, ?)", [member.id, level, donatorReward])
+		DB.insert("INSERT INTO Donators(DiscordID, Level, DonatorReward) VALUES(?, ?, ?)", [member.id, 1, donatorReward])
 
-		await interaction.send(f"Donator role added.\n{creditsGiven:,}{emojis.coin} added.\n{donatorReward:,}{emojis.coin} added to your Donator Reward\nTripled your daily reward\n\
-Doubled your weekly reward.\nDoubled your monthly reward.\nSet your fee for 10% to send/receive coins.\n\n**Please provide <@547475078082985990> the server ID you'd like to allow /send to work in**")
+		await interaction.send(f"Donator role added.\
+\n{creditsGiven:,}{emojis.coin} added.\
+\n{donatorReward:,}{emojis.coin} added to your Donator Reward\
+\nGame cooldowns **removed**\
+\n**Tripled** your daily reward\
+\n**Doubled** your weekly reward\
+\n**Doubled** your monthly reward\
+\nGave you access to **/donator**\
+\nAdded you to **Donator** role\
+\nSet your fee for **10%** to send/receive coins.\
+\n\n**Please provide <@547475078082985990> the server ID you'd like to allow /send to work in**")
 
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
