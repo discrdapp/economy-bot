@@ -27,7 +27,12 @@ class ErrorHandling(commands.Cog):
 			return
 
 		elif isinstance(error, commands.CommandOnCooldown) or isinstance(error, CallableOnCooldown):
-			embed.description = f"{commandName} is on cooldown. Please retry again <t:{int(error.resets_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>"
+			if commandName.lower() in ["blackjack", "coinflip", "crash", "dond", "horse", "mines", "poker", "rps", "scratch", "slots"]:
+				msg = f"{commandName} is on cooldown. Please retry again <t:{int(error.resets_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>\n[Donate](https://docs.justingrah.am/thecasino/donator) to have NO cooldowns on games!"
+			else:
+				msg = f"{commandName} is on cooldown. Please retry again <t:{int(error.resets_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>"
+				
+			embed.description = msg
 			embed.set_footer(text="See all your cooldowns with /cooldown")
 
 		elif isinstance(error, commands.CheckFailure) or isinstance(error, application_checks.ApplicationNotOwner):
