@@ -66,7 +66,7 @@ class Crypto(commands.Cog):
 			priorAmnt = data[0]
 			DB.update("""UPDATE CryptoMiner SET CryptoToCollect = CASE
 				WHEN CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) > Storage THEN Storage
-				ELSE CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) END 
+				ELSE round(CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)), 2) END 
 				WHERE isMining = 1 AND CryptoToCollect < Storage;""", [hourlyAmnt]*4)
 			afterAmnt = DB.fetchOne("SELECT SUM(CryptoToCollect) FROM CryptoMiner")[0]
 
@@ -120,7 +120,7 @@ class Crypto(commands.Cog):
 	def AddCrypto(self, discordId, crypto, quantity):
 		if quantity > 0:
 			DB.insert('INSERT OR IGNORE INTO Crypto(DiscordID, Name, Quantity) VALUES (?, ?, 0);', [discordId, crypto])
-		DB.update('UPDATE Crypto SET Quantity = Quantity + ? WHERE DiscordID = ? AND Name = ?;', [quantity, discordId, crypto])
+		DB.update('UPDATE Crypto SET Quantity = round(Quantity + ?, 2) WHERE DiscordID = ? AND Name = ?;', [quantity, discordId, crypto])
 	
 	@nextcord.slash_command()
 	@cooldowns.shared_cooldown("crypto")
@@ -376,10 +376,10 @@ class Crypto(commands.Cog):
 	@cooldowns.shared_cooldown("crypto")
 	async def withdraw(self, interaction:Interaction):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto | Miner | Withdraw")
-		balances = DB.fetchAll("SELECT CryptoName, SUM(CryptoToCollect) FROM CryptoMiner WHERE DiscordID = ? AND IsMining = 0 AND CryptoToCollect >= 0.1 GROUP BY CryptoName;", [interaction.user.id])
+		balances = DB.fetchAll("SELECT CryptoName, SUM(CryptoToCollect) FROM CryptoMiner WHERE DiscordID = ? AND IsMining = 0 AND CryptoToCollect >= 5000 GROUP BY CryptoName;", [interaction.user.id])
 
 		if not balances:
-			await self.ResetCooldownSendEmbed(interaction, "You must have miners, and they must be off for you to withdraw.\nYou must also have at least 0.1 crypto in the miner to withdraw", embed)
+			await self.ResetCooldownSendEmbed(interaction, f"You must have miners, and they must be off for you to withdraw.\nYou must also have at least 5,000{emojis.coin} worth of crypto in the miner to withdraw", embed)
 			return
 
 		withdrewMsg = "Successfully withdrew:\n"
@@ -397,12 +397,12 @@ class Crypto(commands.Cog):
 				price = self.ethereumPrice
 				emoji = emojis.ethereumEmoji
 			
-			cryptoAmnt = round(crypto[1] / price, 2)
-			DB.update('UPDATE Crypto SET Quantity = Quantity + ? WHERE DiscordID = ? AND Name = ?', [cryptoAmnt, interaction.user.id, crypto[0]])
-
-			DB.update('UPDATE CryptoMiner SET CryptoToCollect = 0 WHERE DiscordID = ? AND isMining = 0 AND CryptoToCollect >= 0.1', [interaction.user.id])
+			cryptoAmnt = round(crypto[1] / price, 2)			
+			self.AddCrypto(interaction.user.id, crypto[0], cryptoAmnt)
 
 			withdrewMsg += f"{cryptoAmnt} {emoji}\n"
+		
+		DB.update('UPDATE CryptoMiner SET CryptoToCollect = 0 WHERE DiscordID = ? AND isMining = 0 AND CryptoToCollect >= 5000', [interaction.user.id])
 
 		embed.description = withdrewMsg
 
