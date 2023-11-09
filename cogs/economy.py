@@ -134,7 +134,7 @@ class Economy(commands.Cog):
 				elif crypto[0] == "Ethereum":
 					emoji = emojis.ethereumEmoji
 				
-				embed.add_field(name=f"{crypto[0]} {emoji}", value=crypto[1])
+				embed.add_field(name=f"{crypto[0]} {emoji}", value=round(crypto[1], 2))
 
 		# embed.add_field(name = "_ _\nCrates", value = f"{pronouns} have **{crates}** crates", inline=True)
 		# embed.add_field(name = "_ _\nKeys", value = f"{pronouns} have **{keys}** keys", inline=True)
@@ -184,7 +184,7 @@ class Economy(commands.Cog):
 		donatorReward = self.getDonatorReward(interaction.user.id)
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(donatorReward * (multiplier - 1))
-		logID = await self.addWinnings(interaction.user.ii, donatorReward, giveMultiplier=True, activityName="Donator Reward", amntBet=0)
+		logID = await self.addWinnings(interaction.user.id, donatorReward, giveMultiplier=True, activityName="Donator Reward", amntBet=0)
 
 		balance = await self.getBalance(interaction.user)
 		embed.add_field(name = f"You got {donatorReward:,} {emojis.coin}", 
