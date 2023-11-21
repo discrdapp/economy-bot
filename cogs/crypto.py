@@ -343,6 +343,7 @@ class Crypto(commands.Cog):
 		# time = datetime.datetime.now().replace(microsecond=0, second=0, minute=0, tzinfo=datetime.timezone.utc) + datetime.timedelta(hours=6)
 
 		embed.description = f"Next mine <t:{int(time.timestamp())}:R>"
+		embed.set_footer(text="Withdraw with /crypto miner withdraw\nBe sure to turn miners off first!")
 
 		with io.BytesIO() as image_binary:
 			dst.save(image_binary, 'PNG')
