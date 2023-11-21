@@ -99,15 +99,19 @@ class Button(nextcord.ui.Button):
 			if view.owner.id != interaction.user.id:
 				await interaction.send(f"Only {view.owner.mention} can start the game", ephemeral=True)
 			else:
+				try:
+					await interaction.response.defer()
+				except:
+					pass
 				await view.HorseRace(interaction)
 		else:
 			view.players[interaction.user] = self.label
 			await view.UpdateHorseSelections()
 
-		try:
-			await interaction.response.defer()
-		except:
-			pass
+			try:
+				await interaction.response.defer()
+			except:
+				pass
 
 
 class View(nextcord.ui.View):
@@ -218,7 +222,7 @@ class View(nextcord.ui.View):
 					break
 
 
-			await self.msg.edit(content=self.GetFullDisplay(self.horses), view=self, embed=self.embed)
+			await self.msg.edit(content=self.GetFullDisplay(self.horses), view=None, embed=self.embed)
 
 			time.sleep(0.5)
 		await self.EndGame(interaction, winner)
