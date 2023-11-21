@@ -13,26 +13,19 @@ class Codes(commands.Cog):
 		self.currCode = None
 		self.reward = 10000
 
-		self.codes = ["Afraid", "Alarming", "Alien", "Apparition", "Autumn", "Bats", "Bizarre", "Bloody", 
-				"Bones", "Boneyard", "Boo", "Boogeyman", "Broomstick", "Cackle", "Cadaver", "Carve", "Casket", 
-				"Cauldron", "Cemetery", "Chilling", "Cobweb", "Coffin", "Corpse", "Costume", "Creepy", "Crow", 
-				"Dark", "Dead", "Demon", "Devil", "Disguise", "Dracula", "Eerie", "Enchanting", "Epitaph", 
-				"Evil", "Eyeball", "Fall", "Fangs", "Flashlight", "Fog", "Frankenstein", "Fright", "Ghastly", 
-				"Ghost", "Ghoul", "Goblin", "Gory", "Graveyard", "Grim", "Grisly", "Gruesome", "Haunted", "Hayride",
-				"Headstone", "Hobgoblin", "Horrible", "Horrify", "Howl", "Icky", "Imp", "Incantation", "Inferno", 
-				"Invisible", "Jackal", "Jinx", "Jittery", "Kettle", "Killer", "Knife", "Knock", "Kooky", "Laboratory", 
-				"Lair", "Lantern", "Leech", "Legend", "Lifeless", "Lurid", "Lurk", "Macabre", "Magic", "Mask", "Masquerade", 
-				"Mausoleum", "Midnight", "Mist", "Monster", "Moonlight", "Morbid", "Mummy", "Mutilate", "Mysterious", 
-				"Nasty", "Nefarious", "Netherworld", "Night", "Nightmare", "Nocturnal", "October", "Ogre", "Ominous", 
-				"Ooze", "Orange", "Owl", "Party", "Petrify", "Phantom", "Poltergeist", "Possessed", "Potion", "Prank", 
-				"Prowl", "Pumpkin", "Quagmire", "Quake", "Qualm", "Quaver", "Quiet", "Quiver", "Rancid", "Rat", "Rattle", 
-				"Raven", "Reek", "Repulsive", "Revolting", "RIP", "Ritual", "Rotten", "Scarecrow", "Scary", "Scream", 
-				"Shadow", "Shiver", "Shriek", "Sinister", "Skeleton", "Skull", "Slaughter", "Slimy", "Sorcerer", 
-				"Specter", "Spell", "Spider", "Spirit", "Spooky", "Supernatural", "Tarantula", "Terrible", "Terrify", 
-				"Terror", "Thrilling", "Toad", "Tombstone", "Transylvania", "Tremble", "Troll", "Twilight", "Ugly", 
-				"Undead", "Undertaker", "Unearthly", "Unnerving", "Urn", "Vampire", "Vanish", "Vault", "Vengeance", 
-				"Venom", "Vermin", "Victim", "Vile", "Vixen", "Voodoo", "Wand", "Weird", "Werewolf", "Whisper", "Wicked", 
-				"Witch", "Wizard", "Wraith", "Wretched", "Yell", "Yowl", "Yuck", "Zombie"]
+		self.codes = ["Christmas", "Merry", "Festive", "Santa",
+					"Elves", "Jolly",
+					"Reindeer", "Carols",
+					"Mistletoe", "Frankincense", "Myrrh", "Nativity",
+					"Xmas", "Yuletide", "Tinsel", "Stocking",
+					"Presents", "Fruitcake", "Chimney",
+					"Birth", "Family", "Candy", "Pinecone",
+					"Spirit", "Tidings", "Tradition", "Rudolph",
+					"Sleigh", "Holiday", "Holly", "Ornaments",
+					"Scrooge", "Sledge", "Snowball",
+					"Snowman", "Rejoice","Celebrate", "Chestnuts",
+					"Angel", "Elf", "Feast", "Goose", "Bells", "Turkey", "Cookie", 
+					"Decorations", "Frosty", "Gingerbread", "Chocolate", "Nutcracker", "Winter"]
 		self.embed = nextcord.Embed(color=1768431, title=f"New Code")
 	
 	@commands.Cog.listener()
