@@ -135,6 +135,7 @@ class Button(nextcord.ui.Button['Blackjack']):
 				img.save(image_binary, 'PNG')
 				image_binary.seek(0)
 				await view.msg.edit(embed=view.embed, view=view, files=[nextcord.File(fp=image_binary, filename='people.png'), nextcord.File("images/bj.png", filename="thumbnail.png")])
+				img.close()
 			else:
 				await view.msg.edit(embed=view.embed, view=view, file=nextcord.File("images/bj.png", filename="thumbnail.png"))
 
@@ -328,6 +329,7 @@ class Blackjack(nextcord.ui.View):
 					image_binary.seek(0)
 					await self.msg.edit(content=f"{self.interaction.user.mention}", view=self, 
 											files=[nextcord.File(fp=image_binary, filename='people.png'), self.file], embed=self.embed)
+					img.close()
 				else:
 					await self.msg.edit(content=f"{self.interaction.user.mention}", view=self, file=self.file, embed=self.embed)
 
@@ -407,6 +409,7 @@ class Blackjack(nextcord.ui.View):
 					image_binary.seek(0)
 					await self.msg.edit(content=f"{self.interaction.user.mention}", view=self, 
 											files=[nextcord.File(fp=image_binary, filename='people.png'), self.file], embed=self.embed)
+					img.close()
 				else:
 					await self.msg.edit(content=f"{self.interaction.user.mention}", view=self, file=self.file, embed=self.embed)
 
@@ -737,6 +740,7 @@ class Blackjack(nextcord.ui.View):
 				img.save(image_binary, 'PNG')
 				image_binary.seek(0)
 				await self.msg.edit(embed=self.embed, view=None, files=[nextcord.File(fp=image_binary, filename='people.png'), file])
+				img.close()
 			else:
 				await self.msg.edit(embed=self.embed, view=None, file=file)
 

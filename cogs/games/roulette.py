@@ -334,6 +334,7 @@ class View(nextcord.ui.View):
 			roulette.save(image_binary, 'PNG')
 			image_binary.seek(0)
 			await self.msg.edit(embed=self.embed, file=nextcord.File(fp=image_binary, filename='image.png'))
+			roulette.close()
 
 		self.bot.get_cog("Totals").addTotals(interaction, amntSpent, moneyToAdd, "Roulette")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Rltte", moneyToAdd - amntSpent)

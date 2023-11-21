@@ -349,6 +349,7 @@ class Crypto(commands.Cog):
 			dst.save(image_binary, 'PNG')
 			image_binary.seek(0)
 			await interaction.send(embed=embed, file=nextcord.File(fp=image_binary, filename='image.png'))
+			dst.close()
 
 
 	@miner.subcommand()

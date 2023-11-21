@@ -178,6 +178,7 @@ class PokerView(nextcord.ui.View):
 				img.save(image_binary, 'PNG')
 				image_binary.seek(0)
 				await self.msg.edit(view=self, embed=self.embed, file=nextcord.File(fp=image_binary, filename='poker.png'))
+				img.close()
 			else:
 				await self.msg.edit(view=self, embed=self.embed)
 
@@ -232,6 +233,7 @@ class PokerView(nextcord.ui.View):
 					img.save(image_binary, 'PNG')
 					image_binary.seek(0)
 					await self.msg.edit(view=self, embed=self.embed, files=[self.file, nextcord.File(fp=image_binary, filename='poker.png')])
+					img.close()
 				else:
 					await self.msg.edit(view=self, embed=self.embed, file=self.file)
 
@@ -395,6 +397,7 @@ class PokerView(nextcord.ui.View):
 				img.save(image_binary, 'PNG')
 				image_binary.seek(0)
 				await self.msg.edit(view=None, embed=self.embed, files=[file, nextcord.File(fp=image_binary, filename='poker.png')])
+				img.close()
 			else:
 				await self.msg.edit(view=None, embed=self.embed, file=file)
 
