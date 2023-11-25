@@ -122,7 +122,7 @@ class Crypto(commands.Cog):
 			DB.insert('INSERT OR IGNORE INTO Crypto(DiscordID, Name, Quantity) VALUES (?, ?, 0);', [discordId, crypto])
 		DB.update('UPDATE Crypto SET Quantity = round(Quantity + ?, 2) WHERE DiscordID = ? AND Name = ?;', [quantity, discordId, crypto])
 	
-	@nextcord.slash_command()
+	@nextcord.slash_command(description="Invest or buy a crypto miner")
 	@cooldowns.shared_cooldown("crypto")
 	async def crypto(self, interaction:Interaction):
 		pass

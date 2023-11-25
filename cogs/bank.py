@@ -44,7 +44,7 @@ class Bank(commands.Cog):
 	async def withdraw(self, interaction:Interaction, amnt):
 		await self._withdraw(interaction, amnt)
 
-	@nextcord.slash_command()
+	@nextcord.slash_command(description="Deposit/withdraw your funds to limit yourself")
 	# @cooldowns.shared_cooldown("bank")
 	async def bank(self, interaction:Interaction):
 		pass

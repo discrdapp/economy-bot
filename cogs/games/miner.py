@@ -41,7 +41,7 @@ class Miner(commands.Cog):
 
 	cooldowns.define_shared_cooldown(1, 1, cooldowns.SlashBucket.author, cooldown_id="miner")
 
-	@nextcord.slash_command()
+	@nextcord.slash_command(description="Minigame to mine and sell blocks. Requires pickaxe!")
 	@cooldowns.shared_cooldown("miner")
 	async def miner(self, interaction:Interaction):
 		pass
