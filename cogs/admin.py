@@ -36,6 +36,14 @@ class Admin(commands.Cog):
 			msg += f"{x}\n"
 
 		await interaction.send(msg)
+	
+	@nextcord.slash_command()
+	async def pay(self, interaction:Interaction, user: nextcord.Member, amnt):
+		await self.send(interaction, user, amnt)
+	
+	@nextcord.slash_command()
+	async def transfer(self, interaction:Interaction, user: nextcord.Member, amnt):
+		await self.send(interaction, user, amnt)
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='send')
@@ -53,6 +61,10 @@ class Admin(commands.Cog):
 		
 
 		amnt = await self.bot.get_cog("Economy").GetBetAmount(interaction, amnt)
+
+		if amnt < 100:
+			await interaction.send("You must send at least 100 coins")
+			return
 		
 		# if donator sending or donator receiving
 		if self.bot.get_cog("Economy").isDonator(interaction.user.id) or self.bot.get_cog("Economy").isDonator(user.id):
