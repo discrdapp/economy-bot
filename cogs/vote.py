@@ -26,6 +26,7 @@ class Vote(commands.Cog):
 		except:
 			embed.add_field(name="Links", value="1. [top.gg](https://top.gg/bot/585235000459264005/vote/)\n" + 
 				"2. [discordbotlist](https://discordbotlist.com/bots/casino-bot/upvote)\n")
+			embed.set_footer(text="Use the /vote command again\nafter voting to receive your perks!")
 			await interaction.send("You have not voted yet.", embed=embed)
 			return
 
