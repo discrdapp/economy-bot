@@ -16,7 +16,10 @@ class DealNoDealButton(nextcord.ui.Button):
 		assert self.view is not None
 		offerView: OfferView = self.view
 		view: View = offerView.view
-
+		
+		if view.ownerId != interaction.user.id:
+			await interaction.send("This is not your game!", ephemeral=True)
+			return
 		if self.label == "Deal":
 			await view.EndGame(interaction, offerView.offer)
 		elif self.label == "No Deal":
