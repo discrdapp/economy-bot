@@ -21,7 +21,7 @@ class Button(nextcord.ui.Button):
 
 class ConfirmButtonView(nextcord.ui.View):
 	def __init__(self):
-		super().__init__()
+		super().__init__(timeout=20)
 		self.doProceed = False
 
 class ConfirmButton(nextcord.ui.Button):
