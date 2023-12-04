@@ -7,7 +7,7 @@ import math, datetime, cooldowns
 import config, emojis
 from db import DB
 
-from cogs.util import SendConfirmButton
+from cogs.util import SendConfirmButton, IsDonatorCheck
 
 class Admin(commands.Cog):
 	def __init__(self, bot):
@@ -67,7 +67,7 @@ class Admin(commands.Cog):
 			return
 		
 		# if donator sending or donator receiving
-		if self.bot.get_cog("Economy").isDonator(interaction.user.id) or self.bot.get_cog("Economy").isDonator(user.id):
+		if IsDonatorCheck(interaction.user.id) or IsDonatorCheck(user.id):
 			amntToReceive = math.floor(amnt * .90)
 			tax = "10% tax"
 		# if support server
@@ -307,7 +307,7 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def givedonator(self, interaction:Interaction, member: nextcord.Member): # grabs member from input
-		if self.bot.get_cog("Economy").isDonator(interaction.user.id):
+		if IsDonatorCheck(interaction.user.id) == 0:
 			await interaction.send(f"{member.mention} is already a donator!")
 			return
 
