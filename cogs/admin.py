@@ -307,7 +307,7 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def givedonator(self, interaction:Interaction, member: nextcord.Member): # grabs member from input
-		if not IsDonatorCheck(interaction.user.id):
+		if not IsDonatorCheck(member.id):
 			await interaction.send(f"{member.mention} is already a donator!")
 			return
 
