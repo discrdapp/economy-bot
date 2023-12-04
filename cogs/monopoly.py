@@ -342,7 +342,8 @@ class Monopoly(commands.Cog):
 		pass
 
 	@hire.subcommand()
-	@cooldowns.shared_cooldown("monopoly")
+	# @cooldowns.shared_cooldown("monopoly")
+	@cooldowns.cooldown(1, 25, bucket=cooldowns.SlashBucket.author, cooldown_id='person')
 	async def person(self, interaction:Interaction, amnt:int):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Monopoly | Hire | Person")
 		
