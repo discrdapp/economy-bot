@@ -159,7 +159,8 @@ class Miner(commands.Cog):
 		await interaction.send(embed=embed)
 
 	@miner.subcommand()
-	@cooldowns.shared_cooldown("miner")
+	# @cooldowns.shared_cooldown("miner")
+	@cooldowns.cooldown(1, 25, bucket=cooldowns.SlashBucket.author, cooldown_id='minerupgrade')
 	async def upgrade(self, interaction:Interaction, userchoice = nextcord.SlashOption(required=True,name="item", choices=("pickaxe", "backpack"))):
 		embed = nextcord.Embed(color=1768431)
 
