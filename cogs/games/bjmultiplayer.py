@@ -4,7 +4,7 @@ from nextcord import Interaction
 
 # import cooldowns
 from random import shuffle
-import asyncio, cooldowns
+import asyncio, cooldowns, emojis
 
 
 class Player():
@@ -40,7 +40,8 @@ class JoinGameButton(nextcord.ui.Button):
 				return
 			balance = await view.bot.get_cog("Economy").getBalance(interaction.user)
 			if balance < view.amntbet:
-				raise Exception("tooPoor")
+				await interaction.send(f"You do not have enough {emojis.coin} to do that (or you are trying to use an amount less than 1)", ephemeral=True)
+				return
 
 			view.players.append(Player(interaction.user, len(view.players)+1))
 
