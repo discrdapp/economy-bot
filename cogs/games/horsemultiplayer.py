@@ -170,6 +170,9 @@ class View(nextcord.ui.View):
 
 	
 	async def Start(self):
+		for player in self.players.keys():
+			await self.bot.get_cog("Economy").addWinnings(player.id, -self.amntbet)
+
 		self.add_item(Button("Red", nextcord.ButtonStyle.red))
 		self.add_item(Button("Blue", nextcord.ButtonStyle.blurple))
 		self.add_item(Button("Green", nextcord.ButtonStyle.green))
@@ -257,7 +260,10 @@ class HorseMultiplayer(commands.Cog):
 
 		if amntbet < 100:
 			raise Exception("minBet 100")
-		
+		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
+		if balance < amntbet:
+			raise Exception("tooPoor")
+
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Horse Multiplayer")
 
 		joinGameView = JoinGameView(self.bot, interaction.user, amntbet)
