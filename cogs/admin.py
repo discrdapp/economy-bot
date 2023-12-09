@@ -85,12 +85,15 @@ class Admin(commands.Cog):
 			await interaction.send(embed=embed, ephemeral=True)
 			return
 		
+		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amnt):
 			raise Exception("tooPoor")
+		
+		senderID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, 0, activityName=f"Sent to {user.id}", amntBet=amnt)
+		# discordid, winnings, giveMultiplier=False, activityName=None, amntBet=None
+		receiverID = await self.bot.get_cog("Economy").addWinnings(user.id, amntToReceive, activityName=f"Recieved from {interaction.user.id}", amntBet=0)
 
-		await self.bot.get_cog("Economy").addWinnings(user.id, amntToReceive)
-
-		embed.description = f"{interaction.user.mention} successfully sent {amnt:,}{emojis.coin}to {user.mention}!\nAfter {tax}, they received {amntToReceive:,}{emojis.coin}"
+		embed.description = f"{interaction.user.mention} successfully sent {amnt:,}{emojis.coin}to {user.mention}! (Log ID: {senderID}\nAfter {tax}, they received {amntToReceive:,}{emojis.coin} (Log ID: {receiverID})"
 		await interaction.send(embed=embed)
 	
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
