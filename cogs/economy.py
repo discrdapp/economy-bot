@@ -52,7 +52,11 @@ class Economy(commands.Cog):
 
 	async def GetBetAmount(self, interaction:Interaction, amntbet):
 		if amntbet.isdigit():
-			return int(amntbet)
+			try:
+				amnt = int(amntbet)
+				return amnt
+			except:
+				pass
 		if amntbet == "all" or amntbet == "allin" or amntbet == "everything":
 			return await self.getBalance(interaction.user)
 		if amntbet == "half":
@@ -67,7 +71,11 @@ class Economy(commands.Cog):
 			return math.floor(await self.getBalance(interaction.user) * float(amntbet))
 		if "/" in amntbet:
 			pos = amntbet.find("/")
-			return math.floor(await self.getBalance(interaction.user) * float(int(amntbet[:pos]) / int(amntbet[pos+1:])))
+			try:
+				amnt = math.floor(await self.getBalance(interaction.user) * float(int(amntbet[:pos]) / int(amntbet[pos+1:])))
+				return amnt
+			except:
+				pass
 		raise commands.BadArgument(f'You entered {amntbet} for the amount you want to bet. Please enter a number instead.')
 
 	@nextcord.slash_command()
