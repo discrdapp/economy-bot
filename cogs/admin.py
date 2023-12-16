@@ -224,6 +224,11 @@ class Admin(commands.Cog):
 
 		todayActivities = {}
 		weeksActivities = {}
+
+		registered = {}
+		registered["day"] = 0
+		registered["week"] = 0
+		registered["month"] = 0
 		
 		for record in amnt:
 			# print(record)
@@ -234,18 +239,28 @@ class Admin(commands.Cog):
 			
 			if diff.total_seconds() <= 2592000:
 				monthsUses += 1
+				if record[1] == "Registered":
+					registered["month"] += 1
+
 				if diff.total_seconds() <= 604800:
 					weeksUses += 1
 					if record[1] in weeksActivities:
 						weeksActivities[record[1]] += 1
 					else:
 						weeksActivities[record[1]] = 1
+					if record[1] == "Registered":
+						registered["week"] += 1
+
 					if diff.total_seconds() <= 86400:
 						todaysUses += 1
 						if record[1] in todayActivities:
 							todayActivities[record[1]] += 1
 						else:
 							todayActivities[record[1]] = 1
+						if record[1] == "Registered":
+							registered["month"] += 1
+
+
 						if diff.total_seconds() <= 21600:
 							sixHourUses += 1
 							if diff.total_seconds() <= 3600:
@@ -273,8 +288,8 @@ class Admin(commands.Cog):
 				break
 
 		
-		text = f"I have been used:\n\t\t**{monthsUses}** times this month.\n\
-\t\t**{weeksUses}** times this week.\n\t\t**{todaysUses}** times today.\n\
+		text = f"I have been used:\n\t\t**{monthsUses}** times this month. ({registered['month']} new users)\n\
+\t\t**{weeksUses}** times this week. ({registered['week']} new users)\n\t\t**{todaysUses}** times today. ({registered['day']} new users)\n\
 \t\t**{sixHourUses}** times in the past 6 hours.\n\t\t**{hourUses}** times in the past hour.\n\
 And in total, over **{totalUses:,}** times.\n\n\
 Today's top uses:\n{todayActivitiesMsg}\n\n\
