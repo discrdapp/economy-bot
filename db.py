@@ -87,9 +87,12 @@ class DB(commands.Cog):
 		return embed
 
 	@staticmethod
-	async def addProfitAndBalFields(self, interaction:Interaction, profit:int, embed:nextcord.Embed, redEmbed=False, giveMultiplier=True):
+	async def addProfitAndBalFields(self, interaction:Interaction, profit:int, embed:nextcord.Embed, redEmbed=False, giveMultiplier=True, calculateRankedCP:bool=True):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
+
+		if calculateRankedCP:
+			await self.bot.get_cog("RankedSystem").AddRankedPoints(interaction, profit > 0)
 
 		name = "Profit"
 		if profit > 0 and redEmbed != True:
