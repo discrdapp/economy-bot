@@ -258,7 +258,7 @@ class Admin(commands.Cog):
 						else:
 							todayActivities[record[1]] = 1
 						if record[1] == "Registered":
-							registered["month"] += 1
+							registered["day"] += 1
 
 
 						if diff.total_seconds() <= 21600:
