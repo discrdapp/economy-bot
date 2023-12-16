@@ -167,7 +167,6 @@ class Coinflip(commands.Cog):
 
 		profitInt = moneyToAdd - amntbet
 
-		embed.set_thumbnail(url="attachment://image.png")
 		embed.add_field(name=f"{self.bot.user.name} | Coinflip", value=f"The coin landed on {side}\n_ _",inline=False)
 		gameID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, moneyToAdd, giveMultiplier=True, activityName="CF", amntBet=amntbet)
 		
@@ -177,7 +176,8 @@ class Coinflip(commands.Cog):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed, gameID)
 
-		await deferMsg.edit(file=file, embed=embed)
+		embed.set_thumbnail(url="attachment://image.png")
+		await interaction.send(file=file, embed=embed)
 
 		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "Coinflip")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "CF", profitInt)
