@@ -44,7 +44,7 @@ class Daily(commands.Cog):
 		logID = await self.bot.get_cog("Economy").addWinnings(userId, dailyReward, giveMultiplier=True, activityName="Daily Reward", amntBet=0)
 		embed.description = f"You got {dailyReward:,} {emojis.coin}"
 		embed.set_footer(text=f"Log ID: {logID}")
-		embed, file = await DB.addProfitAndBalFields(self, interaction, dailyReward, embed)
+		embed, file = await DB.addProfitAndBalFields(self, interaction, dailyReward, embed, calculateRankedCP=False)
 
 		await interaction.send(embed=embed, file=file)
 
