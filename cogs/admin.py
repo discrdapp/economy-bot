@@ -19,7 +19,11 @@ class Admin(commands.Cog):
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def select(self, interaction:Interaction, whattoselect,
-		  table = nextcord.SlashOption(required=True, name="table", choices=("Donators", "Economy", "Inventory", "Items", "Logs", "MinerBlocks", "MinerInventory", "Multipliers", "Quests", "Totals")),
+		  table = nextcord.SlashOption(required=True, name="table", choices=("ActiveBuffs", "Codes", "Crypto", "CryptoMiner", 
+																	   "Donators", "Economy", "Guilds", "Inventory", "Items", 
+																	   "Logs", "MinerBlocks", "MinerInventory", "Monopoly", 
+																	   "MonopolyPeople", "Multipliers", "Quests", "RankedUsers", 
+																	   "Settings", "Totals")),
 		  conditions=None):
 		if interaction.user.id != config.botOwnerDiscordID:
 			await interaction.send("No.")
