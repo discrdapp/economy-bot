@@ -174,7 +174,7 @@ class Others(commands.Cog):
 		# 	helpMsg = "Play with friends. Everyone votes for a color the bot will pick."
 		# 	usageMsg = "**/colorguesser <bet>**"
 		elif option == "slots":
-			helpMsg = "Play the slots and try to get the same fruit!"
+			helpMsg = "Play the slots and try to get the same fruit!\n\n3 of the same fruit will win you the **BIG WIN**.\nYou must bet at least 10\% \of the **Big Win** to partake in winning it"
 			usageMsg = "**/slots <bet>**"
 		elif option == "rockpaperscissors":
 			helpMsg = "Beat the computer in a classic game of Rock-Paper-Scissors"
