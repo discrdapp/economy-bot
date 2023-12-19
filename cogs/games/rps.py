@@ -66,7 +66,6 @@ class rps(commands.Cog):
 			file = nextcord.File("./images/rps/scissorslost.png", filename="image.png")
 
 		embed = nextcord.Embed(color=0xff2020)
-		embed.set_thumbnail(url="attachment://image.png")
 		if winner == 1:
 			moneyToAdd = amntbet * 2 
 			profitInt = moneyToAdd - amntbet
@@ -95,6 +94,7 @@ class rps(commands.Cog):
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed, gameID)
 
+		embed.set_thumbnail(url="attachment://image.png")
 		await interaction.send(content=f"{interaction.user.mention}", file=file, embed=embed)
 		
 		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "RPS")
