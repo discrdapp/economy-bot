@@ -52,6 +52,7 @@ class Crypto(commands.Cog):
 	cooldowns.define_shared_cooldown(1, 3, cooldowns.SlashBucket.author, cooldown_id="crypto")
 
 	@tasks.loop(time=miningProcessTimes)
+	# @tasks.loop(seconds=30)
 	async def ProcessCryptoMining(self):
 		# between 150 - 205 an hour
 		hourlyAmnt = randrange(150, 200, 10)
@@ -62,20 +63,35 @@ class Crypto(commands.Cog):
 		# minedETCAmnt = hourlyAmnt/self.ethereumPrice
 
 		try:
-			data = DB.fetchOne("SELECT SUM(CryptoToCollect), Count(1) FROM CryptoMiner")
-			priorAmnt = data[0]
+			prevData = DB.fetchAll("SELECT CryptoName, SUM(CryptoToCollect), COUNT(1) FROM CryptoMiner GROUP BY CryptoName")
 			DB.update("""UPDATE CryptoMiner SET CryptoToCollect = CASE
 				WHEN CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) > Storage THEN Storage
 				ELSE round(CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)), 2) END 
 				WHERE isMining = 1 AND CryptoToCollect < Storage;""", [hourlyAmnt]*4)
-			afterAmnt = DB.fetchOne("SELECT SUM(CryptoToCollect) FROM CryptoMiner")[0]
+			afterData = DB.fetchAll("SELECT CryptoName, SUM(CryptoToCollect), COUNT(1) FROM CryptoMiner GROUP BY CryptoName")
 
-			if not priorAmnt or not afterAmnt:
+			if not prevData or not afterData:
 				return
+			
+			totalMiners = 0
+			cryptosMinedMsg = ""
+			for data in afterData:
+				totalMiners += data[2]
+			
+				if data[0] == "Bitcoin":
+					price = self.bitcoinPrice
+					emoji = emojis.bitcoinEmoji
+				elif data[0] == "Litecoin":
+					price = self.litecoinPrice
+					emoji = emojis.litecoinEmoji
+				elif data[0] == "Ethereum":
+					price = self.ethereumPrice
+					emoji = emojis.ethereumEmoji
+				cryptosMinedMsg += f"**{round(data[1]/price, 2):,}** {data[0]} {emoji}\n"
 
 			chnl = self.bot.get_channel(config.channelIDForBitcoin)
 			embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto Miners")
-			embed.description = f"**Payout time!**\n**{data[1]:,}** miners paid!\n**{afterAmnt-priorAmnt:,}**{emojis.coin} worth of crypto was paid out!"
+			embed.description = f"**Payout time!**\n**{totalMiners:,}** miners paid!\nTotal crypto paid:\n{cryptosMinedMsg}"
 			await chnl.send(embed=embed)
 		except Exception as e:
 			print(f"error in ProcessCryptoMining:\n{e}")
