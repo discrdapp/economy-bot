@@ -251,10 +251,16 @@ class Economy(commands.Cog):
 	async def getBalance(self, user: nextcord.User):
 		balance = DB.fetchOne("SELECT Credits FROM Economy WHERE DiscordID = ?;", [user.id])[0]
 		return balance
-	
+
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 30, bucket=cooldowns.SlashBucket.author, cooldown_id='top')
+	async def leaderboard(self, interaction:Interaction, 
+			   option = nextcord.SlashOption( required=False,name="option", choices=("Balance", "Level", "Profit")), 
+			   local = nextcord.SlashOption(required=False,name="local", choices=("local", "global"))):
+		await self.top(interaction, option, local)
+
+	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 15, bucket=cooldowns.SlashBucket.author, cooldown_id='top')
 	async def top(self, interaction:Interaction, 
 			   option = nextcord.SlashOption(
 					required=False,
