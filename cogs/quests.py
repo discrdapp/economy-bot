@@ -9,6 +9,7 @@ import sqlite3
 import emojis
 import config
 from db import DB
+from cogs.util import PrintProgress
 
 # @dataclass
 # class GameResults:
@@ -111,7 +112,7 @@ class Quests(commands.Cog):
 		total = self.goals[rest]
 
 		amnt = DB.fetchOne("SELECT " + rest + " FROM Quests WHERE DiscordID = ? and ActiveQuest = ?;", [interaction.user.id, activeQuest])[0]
-		return f"Your current quest is to {goal} in {self.realGameNamesDict[game]}.\nProgress: {amnt}/{total} ({round((amnt/total)*100, 2)}%)\n{await self.PrintProgress(interaction, amnt/total)}"
+		return f"Your current quest is to {goal} in {self.realGameNamesDict[game]}.\nProgress: {amnt}/{total} ({round((amnt/total)*100, 2)}%)\n{await PrintProgress(amnt/total)}"
 
 
 	# game must be "Slt", "BJ", "Crsh", "Rltte", "CF", "RPS"
@@ -194,54 +195,6 @@ class Quests(commands.Cog):
 			return "win 20 games"
 		if questType == "Profit":
 			return f"earn a profit of 50,000{emojis.coin}"
-
-	async def PrintProgress(self, interaction:Interaction, percentFilled):
-		if percentFilled <= 0.03:
-			percentFilled = 0
-		elif percentFilled < 0.1:
-			percentFilled = 1
-		elif percentFilled >= 0.9:
-			percentFilled = 9
-		else:
-			percentFilled = round(percentFilled * 10)
-
-		progress = ""
-		for x in range(1, 11):
-			if x == 1: # left side 
-				if x <= percentFilled:
-					progress += emojis.tlf
-				else:
-					progress += emojis.tl
-			elif x == 10: # right side
-				if x <= percentFilled:
-					progress += emojis.trf
-				else:
-					progress += emojis.tr
-			else: # middle
-				if x <= percentFilled:
-					progress += emojis.tf
-				else:
-					progress += emojis.t
-
-		progress += "\n"
-		for x in range(1, 11):
-			if x == 1: # left side 
-				if x <= percentFilled:
-					progress += emojis.blf
-				else:
-					progress += emojis.bl
-			elif x == 10: # right side
-				if x <= percentFilled:
-					progress += emojis.brf
-				else:
-					progress += emojis.br
-			else: # middle
-				if x <= percentFilled:
-					progress += emojis.bf
-				else:
-					progress += emojis.b
-
-		return progress
 
 
 def setup(bot):
