@@ -72,7 +72,45 @@ def GetMaxBet(game):
 	if game == "Slots": 	return 1000000
 
 	return 1000000
-		
+
+
+async def PrintProgress(percentFilled):
+	if percentFilled <= 0.03:
+		percentFilled = 0
+	elif percentFilled < 0.1:
+		percentFilled = 1
+	elif percentFilled >= 0.9:
+		percentFilled = 9
+	else:
+		percentFilled = round(percentFilled * 10)
+
+	topLine = ""
+	bottomLine = ""
+	for x in range(1, 11):
+		if x == 1: # left side 
+			if x <= percentFilled:
+				topLine += emojis.tlf
+				bottomLine += emojis.blf
+			else:
+				topLine += emojis.tl
+				bottomLine += emojis.bl
+		elif x == 10: # right side
+			if x <= percentFilled:
+				topLine += emojis.trf
+				bottomLine += emojis.brf
+			else:
+				topLine += emojis.tr
+				bottomLine += emojis.br
+		else: # middle
+			if x <= percentFilled:
+				topLine += emojis.tf
+				bottomLine += emojis.bf
+			else:
+				topLine += emojis.t
+				bottomLine += emojis.b
+
+
+	return topLine + "\n" + bottomLine
 
 class Util(commands.Cog):
 	def __init__(self, bot):
