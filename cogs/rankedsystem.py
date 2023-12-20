@@ -5,6 +5,7 @@ from nextcord import Interaction, Color
 import cooldowns, emojis
 from random import randrange
 from db import DB
+from cogs.util import PrintProgress
 
 
 class RankedSystem(commands.Cog):
@@ -87,7 +88,7 @@ class RankedSystem(commands.Cog):
 		rank, points, _ = self.GetRankPointsHighest(user)
 
 		embed = nextcord.Embed(color=Color.blurple(), title=f"{self.bot.user.name} | Rank")
-		embed.description = f"You are {self.ranks[rank]}, with {points} Casino Points"
+		embed.description = f"You are {self.ranks[rank]}, with {points} Casino Points\n{await PrintProgress(points/1000)}"
 		if rank == len(self.ranks)-1:
 			embed.set_footer(text="You are at the highest rank!")
 		await interaction.send(embed=embed)
