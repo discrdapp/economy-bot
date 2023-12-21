@@ -291,8 +291,8 @@ class Dond(commands.Cog):
 		if amntbet < 1000:
 			raise Exception("minBet 1000")
 		
-		if amntbet > GetMaxBet("DOND"):
-			raise Exception(f"maxBet {GetMaxBet('DOND')}")
+		if amntbet > GetMaxBet(interaction.user.id, "DOND"):
+			raise Exception(f"maxBet {GetMaxBet(interaction.user.id, 'DOND')}")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

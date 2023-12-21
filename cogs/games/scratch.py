@@ -150,8 +150,8 @@ class Scratch(commands.Cog):
 		if amntbet < 100:
 			raise Exception("minBet 100")
 		
-		if amntbet > GetMaxBet("Scratch"):
-			raise Exception(f"maxBet {GetMaxBet('Scratch')}")
+		if amntbet > GetMaxBet(interaction.user.id, "Scratch"):
+			raise Exception(f"maxBet {GetMaxBet(interaction.user.id, 'Scratch')}")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

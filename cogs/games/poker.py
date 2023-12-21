@@ -434,8 +434,8 @@ class Poker(commands.Cog):
 		if startingbet < 100:
 			raise Exception("minBet 100")
 		
-		if startingbet > GetMaxBet("Poker"):
-			raise Exception(f"maxBet {GetMaxBet('Poker')}")
+		if startingbet > GetMaxBet(interaction.user.id, "Poker"):
+			raise Exception(f"maxBet {GetMaxBet(interaction.user.id, 'Poker')}")
 		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, startingbet):
 			raise Exception("tooPoor")

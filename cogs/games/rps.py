@@ -29,8 +29,8 @@ class rps(commands.Cog):
 		if amntbet < 100:
 			raise Exception("minBet 100")
 
-		if amntbet > GetMaxBet("RPS"):
-			raise Exception(f"maxBet {GetMaxBet('RPS')}")
+		if amntbet > GetMaxBet(interaction.user.id, "RPS"):
+			raise Exception(f"maxBet {GetMaxBet(interaction.user.id, 'RPS')}")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

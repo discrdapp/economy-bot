@@ -171,8 +171,8 @@ class Mines(commands.Cog):
 			await msgSent.edit("Minimum bet is 1000")
 			return
 		
-		if amntbet > GetMaxBet("Mines"):
-			raise Exception(f"maxBet {GetMaxBet('Mines')}")
+		if amntbet > GetMaxBet(interaction.user.id, "Mines"):
+			raise Exception(f"maxBet {GetMaxBet(interaction.user.id, 'Mines')}")
 
 		priorbal = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):

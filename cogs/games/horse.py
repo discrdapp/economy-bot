@@ -180,8 +180,8 @@ class Horse(commands.Cog):
 		if amntbet < 100:
 			raise Exception("minBet 100")
 		
-		if amntbet > GetMaxBet("Horse"):
-			raise Exception(f"maxBet {GetMaxBet('Horse')}")
+		if amntbet > GetMaxBet(interaction.user.id, "Horse"):
+			raise Exception(f"maxBet {GetMaxBet(interaction.user.id, 'Horse')}")
 		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

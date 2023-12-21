@@ -47,8 +47,8 @@ class Slots(commands.Cog):
 		if amntbet < 100:
 			raise Exception("minBet 100")
 		
-		if amntbet > GetMaxBet("Slots"):
-			raise Exception(f"maxBet {GetMaxBet('Slots')}")
+		if amntbet > GetMaxBet(interaction.user.id, "Slots"):
+			raise Exception(f"maxBet {GetMaxBet(interaction.user.id, 'Slots')}")
 
 		priorBal = await self.bot.get_cog("Economy").getBalance(interaction.user)
 

@@ -145,8 +145,8 @@ class Coinflip(commands.Cog):
 		if amntbet < 100:
 			raise Exception("minBet 100")
 
-		if amntbet > GetMaxBet("Coinflip"):
-			raise Exception(f"maxBet {GetMaxBet('Coinflip')}")
+		if amntbet > GetMaxBet(interaction.user.id, "Coinflip"):
+			raise Exception(f"maxBet {GetMaxBet(interaction.user.id, 'Coinflip')}")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")

@@ -134,8 +134,8 @@ class Crash(commands.Cog):
 		if amntbet < 100:
 			raise Exception("minBet 100")
 		
-		if amntbet > GetMaxBet("Crash"):
-			raise Exception(f"maxBet {GetMaxBet('Crash')}")
+		if amntbet > GetMaxBet(interaction.user.id, "Crash"):
+			raise Exception(f"maxBet {GetMaxBet(interaction.user.id, 'Crash')}")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")
