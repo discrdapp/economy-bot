@@ -58,18 +58,32 @@ async def SendConfirmButton(interaction:Interaction, msg):
 
 	return view.doProceed
 
-def GetMaxBet(game):
-	if game == "Blackjack": return 1000000
-	if game == "Coinflip": 	return 1000000
-	if game == "Crash": 	return 1000000
-	if game == "DOND": 		return 1000000
-	if game == "Horse": 	return 1000000
-	if game == "Mines": 	return 1000000
-	if game == "Poker": 	return 1000000
-	if game == "Roulette": 	return 1000000
-	if game == "RPS": 		return 1000000
-	if game == "Scratch": 	return 1000000
-	if game == "Slots": 	return 1000000
+def GetMaxBet(userId, game):
+	donatorCheck = DB.fetchOne("SELECT 1 FROM Donators WHERE DiscordID = ?;", [userId])
+	if donatorCheck:
+		if game == "Blackjack": return 10000000
+		if game == "Coinflip": 	return 10000000
+		if game == "Crash": 	return 10000000
+		if game == "DOND": 		return 10000000
+		if game == "Horse": 	return 10000000
+		if game == "Mines": 	return 10000000
+		if game == "Poker": 	return 10000000
+		if game == "Roulette": 	return 10000000
+		if game == "RPS": 		return 10000000
+		if game == "Scratch": 	return 10000000
+		if game == "Slots": 	return 10000000
+	else:
+		if game == "Blackjack": return 1000000
+		if game == "Coinflip": 	return 1000000
+		if game == "Crash": 	return 1000000
+		if game == "DOND": 		return 1000000
+		if game == "Horse": 	return 1000000
+		if game == "Mines": 	return 1000000
+		if game == "Poker": 	return 1000000
+		if game == "Roulette": 	return 1000000
+		if game == "RPS": 		return 1000000
+		if game == "Scratch": 	return 1000000
+		if game == "Slots": 	return 1000000
 
 	return 1000000
 
