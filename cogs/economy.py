@@ -176,6 +176,22 @@ class Economy(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title=self.bot.user.name)
 		embed.add_field(name="Free Money Commands", value="`/vote`\n`/search`\n`/daily`\n`/weekly`\n`/monthly`\n`/work`\n`/crime`\n`/beg`")
 		await interaction.send(embed=embed)
+	
+	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='donate')
+	async def donate(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Donate")
+		if not IsDonatorCheck(interaction.user.id):
+			embed.description = "[Perks & Information for Donating](https://docs.justingrah.am/thecasino/donator) \
+				\n\nThere are multiple ways to donate. Please click your preferred one below: \
+				\n[PayPal](https://www.paypal.com/paypalme/thecasinobot) | [Venmo](https://venmo.com/justinis235) | [CashApp](https://cash.app/$JNGraham)"
+			embed.set_footer(text="You will need to join support server to receive perks if you donate!")
+			await deferMsg.edit(embed=embed)
+			return
+
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 86400, bucket=cooldowns.SlashBucket.author, cooldown_id='donator')
