@@ -6,6 +6,7 @@ import cooldowns, json, time, math
 
 import emojis
 from db import DB
+from cogs.util import IsDonatorCheck
 
 class Daily(commands.Cog):
 	def __init__(self, bot):
@@ -38,7 +39,7 @@ class Daily(commands.Cog):
 
 		dailyReward = await self.getDailyReward(interaction)
 
-		if self.bot.get_cog("Economy").isDonator(interaction.user.id):
+		if IsDonatorCheck(interaction.user.id):
 			dailyReward *= 3
 
 		logID = await self.bot.get_cog("Economy").addWinnings(userId, dailyReward, giveMultiplier=True, activityName="Daily Reward", amntBet=0)

@@ -2,9 +2,9 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
-import json, time, math, cooldowns
+import json, time, math, cooldowns, emojis
 
-import emojis
+from cogs.util import IsDonatorCheck
 
 class WeeklyMonthly(commands.Cog):
 	def __init__(self, bot):
@@ -38,7 +38,7 @@ class WeeklyMonthly(commands.Cog):
 
 
 		weeklyReward = 12500
-		if self.bot.get_cog("Economy").isDonator(interaction.user.id):
+		if IsDonatorCheck(interaction.user.id):
 			weeklyReward *= 2
 
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
@@ -80,7 +80,7 @@ class WeeklyMonthly(commands.Cog):
 
 
 		monthlyReward = 36000
-		if self.bot.get_cog("Economy").isDonator(interaction.user.id):
+		if IsDonatorCheck(interaction.user.id):
 			monthlyReward *= 2
 		multiplier = self.bot.get_cog("Multipliers").getMultiplier(interaction.user.id)
 		extraMoney = int(monthlyReward * (multiplier - 1))
