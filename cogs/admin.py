@@ -72,18 +72,28 @@ class Admin(commands.Cog):
 		
 		# if donator sending or donator receiving
 		if IsDonatorCheck(interaction.user.id) or IsDonatorCheck(user.id):
+			if amnt > 5000000:
+				embed.description = f"You can only send up to 5,000,000 {emojis.coin}"
+				await interaction.send(embed=embed, ephemeral=True)
+				return
 			amntToReceive = math.floor(amnt * .90)
 			tax = "10% tax"
-		# if support server
-		elif interaction.guild_id == config.adminServerID:
-			amntToReceive = math.floor(amnt * .60)
-			tax = "40% tax"
-			embed.set_footer(text="Donator servers have 20% tax and donators have 10%!")
-		# if donator server
 		else:
-			amntToReceive = math.floor(amnt * .80)
-			tax = "20% tax"
-			embed.set_footer(text="Donators have 10% tax, for sending and receiving!")
+			if amnt > 950000:
+				embed.description = f"You can only send up to 500,000 {emojis.coin}"
+				embed.set_footer(text=f"Donators can send/receive up to 5,000,000 credits!")
+				await interaction.send(embed=embed, ephemeral=True)
+				return
+			# if support server
+			if interaction.guild_id == config.adminServerID:
+				amntToReceive = math.floor(amnt * .60)
+				tax = "40% tax"
+				embed.set_footer(text="Donator servers have 20% tax and donators have 10%!")
+			# if donator server
+			else:
+				amntToReceive = math.floor(amnt * .80)
+				tax = "20% tax"
+				embed.set_footer(text="Donators have 10% tax, for sending and receiving!")
 		if not await SendConfirmButton(interaction, f"They will only receive {amntToReceive:,}{emojis.coin} ({tax}). Proceed?"):
 			embed.description = "You have cancelled this transaction."
 			await interaction.send(embed=embed, ephemeral=True)
