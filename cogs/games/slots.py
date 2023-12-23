@@ -39,7 +39,7 @@ class Slots(commands.Cog):
 	
 
 	@nextcord.slash_command(description="Pay to play the slots!")
-	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='slots', check=lambda *args, **kwargs: IsDonatorCheck(args[1].user.id))
+	@cooldowns.cooldown(1, 9, bucket=cooldowns.SlashBucket.author, cooldown_id='slots', check=lambda *args, **kwargs: not IsDonatorCheck(args[1].user.id))
 	@commands.bot_has_guild_permissions(send_messages=True, use_external_emojis=True)
 	async def slots(self, interaction:Interaction, amntbet):
 		amntbet = await self.bot.get_cog("Economy").GetBetAmount(interaction, amntbet)

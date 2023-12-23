@@ -171,7 +171,7 @@ class Horse(commands.Cog):
 
 	@nextcord.slash_command()
 	@commands.bot_has_guild_permissions(send_messages=True, embed_links=True, use_external_emojis=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='horse', check=lambda *args, **kwargs: IsDonatorCheck(args[1].user.id))
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='horse', check=lambda *args, **kwargs: not IsDonatorCheck(args[1].user.id))
 	async def horse(self, 
 		 interaction:Interaction, 
 		 amntbet:int=nextcord.SlashOption(required=True, description="Enter the amount you want to bet. Minimum is 100"),

@@ -285,7 +285,7 @@ class Dond(commands.Cog):
 		}
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author, cooldown_id='dond', check=lambda *args, **kwargs: IsDonatorCheck(args[1].user.id))
+	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author, cooldown_id='dond', check=lambda *args, **kwargs: not IsDonatorCheck(args[1].user.id))
 	async def dond(self, interaction:Interaction, amntbet:int=nextcord.SlashOption(description="Enter the amount you want to bet. Minimum is 1000"), 
 				casecount:int = nextcord.SlashOption(choices=[5, 10])):
 		if amntbet < 1000:
