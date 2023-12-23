@@ -4,11 +4,13 @@ import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
 
-import cooldowns, asyncio, random, math
+import cooldowns, random, math
 
 import emojis
 from db import DB
 from cogs.totals import log
+# from cogs.util import IsDonatorCheck
+from cogs.util import IsDonatorCheck
 
 class Economy(commands.Cog):
 	def __init__(self, bot):
@@ -99,7 +101,7 @@ class Economy(commands.Cog):
 		# embed.add_field(name = "Weekly", value = f"12500{emojis.coin}", inline=False)
 		# embed.add_field(name = "Monthly", value = f"36000{emojis.coin}", inline=True)
 
-		if self.isDonator(interaction.user.id):
+		if IsDonatorCheck(interaction.user.id):
 			embed.add_field(name = "_ _\nDonator Reward", value = f"{self.getDonatorReward(interaction.user.id)}{emojis.coin}", inline=False)
 		else:
 			embed.add_field(name = "_ _\nDonator Reward", value = f"You are not a donator", inline=False)
@@ -182,7 +184,7 @@ class Economy(commands.Cog):
 		deferMsg = await interaction.original_message()
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Donator")
-		if not self.isDonator(interaction.user.id):
+		if not IsDonatorCheck(interaction.user.id):
 			embed.description = "You must donate to gain access to this command!\nPlease read Donator Perks for more info\
 \n[Donator Perks](https://docs.justingrah.am/thecasino/donator)\n[Donate Now](https://www.paypal.com/paypalme/thecasinobot)"
 			embed.set_footer(text="You will need to join support server to receive perks if you donate!")
@@ -199,11 +201,6 @@ class Economy(commands.Cog):
 						value = f"You have {balance:,} credits\nMultiplier: {multiplier}x\nExtra Money: {extraMoney:,}", inline=False)
 		embed.set_footer(text=f"Log ID: {logID}")
 		await deferMsg.edit(embed=embed)
-
-
-	def isDonator(self, discordid):
-		donatorCheck = DB.fetchOne("SELECT 1 FROM Donators WHERE DiscordID = ?;", [discordid])
-		return donatorCheck
 
 	def getDonatorReward(self, discordid):
 		donatorReward = DB.fetchOne("SELECT DonatorReward FROM Donators WHERE DiscordID = ?;", [discordid])
