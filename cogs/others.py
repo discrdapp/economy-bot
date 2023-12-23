@@ -93,15 +93,15 @@ class Others(commands.Cog):
 				  		 value="`crypto miner buy/start/stop/status/setcrypto`, `crypto buy/sell`")
 
 		embed.add_field(name = ":gear: Other Commands",
-					   value = "`balance`, `top`, `position`, `shop`, `use`, `stats`, `bank`, "
-							 + "`profile`, `level`, `rewards`, `inventory`, `cooldown`, `log`, `feedback`", inline=False)
+					   value = "`balance`, `rank`, `top`, `position`, `shop`, `use`, `stats`, `bank`, "
+							 + "`profile`, `level`, `rewards`, `inventory`, `pay`, `cooldown`, `log`, `feedback`", inline=False)
 
 		embed.add_field(name = ":money_with_wings: Earn Money",
 					   value = "`vote`, `work`, `daily`, `weekly`, `monthly`, `search`, `claim`, `beg`, `crime`, `fish`, `dig`, `monopoly`", inline=False)
 
 		embed.add_field(name=":grey_question: Quests", value=f"`quests`")
 
-		embed.add_field(name="New commands! :bangbang:", value = "`referral`, `code`, `settings`", inline=False)
+		embed.add_field(name="New commands! :bangbang:", value = "`referral`, `settings`, `donate`", inline=False)
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{emojis.coin}")
