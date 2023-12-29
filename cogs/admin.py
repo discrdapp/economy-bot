@@ -319,7 +319,8 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def copy(self, interaction:Interaction, *, words):
-		await interaction.send(words) # send the message
+		await interaction.channel.send(words) # send the message
+		await interaction.response.defer(with_message=False)
 
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
