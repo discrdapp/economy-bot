@@ -128,7 +128,7 @@ class Economy(commands.Cog):
 				return
 
 		balance = await self.getBalance(user)
-		cryptoBalances = DB.fetchAll(f"SELECT Name, Quantity FROM Crypto WHERE DiscordID = ?;", [interaction.user.id])
+		cryptoBalances = DB.fetchAll(f"SELECT Name, Quantity FROM Crypto WHERE DiscordID = ?;", [user.id])
 		# crates, keys = self.bot.get_cog("Inventory").getInventory(user)
 
 		embed.add_field(name = "Credits", value = f"{pronouns} have **{balance:,}**{emojis.coin}", inline=False)
@@ -184,13 +184,11 @@ class Economy(commands.Cog):
 		deferMsg = await interaction.original_message()
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Donate")
-		if not IsDonatorCheck(interaction.user.id):
-			embed.description = "[Perks & Information for Donating](https://docs.justingrah.am/thecasino/donator) \
-				\n\nThere are multiple ways to donate. Please click your preferred one below: \
-				\n[PayPal](https://www.paypal.com/paypalme/thecasinobot) | [Venmo](https://venmo.com/justinis235) | [CashApp](https://cash.app/$JNGraham)"
-			embed.set_footer(text="You will need to join support server to receive perks if you donate!")
-			await deferMsg.edit(embed=embed)
-			return
+		embed.description = "[Perks & Information for Donating](https://docs.justingrah.am/thecasino/donator) \
+			\n\nThere are multiple ways to donate. Please click your preferred one below: \
+			\n[PayPal](https://www.paypal.com/paypalme/thecasinobot) | [Venmo](https://venmo.com/justinis235) | [CashApp](https://cash.app/$JNGraham)"
+		embed.set_footer(text="You will need to join support server to receive perks if you donate!")
+		await deferMsg.edit(embed=embed)
 
 
 	@nextcord.slash_command()
