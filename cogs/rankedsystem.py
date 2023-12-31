@@ -1,8 +1,8 @@
 import nextcord
-from nextcord.ext import commands 
+from nextcord.ext import commands, tasks
 from nextcord import Interaction, Color
 
-import cooldowns, emojis
+import cooldowns, emojis, config
 from random import randrange
 from db import DB
 from cogs.util import PrintProgress
@@ -20,6 +20,33 @@ class RankedSystem(commands.Cog):
 		   "Expert Gambler",
 		   "Prestigious Gambler",
 		   "Cracked Gambler"]
+	
+	@commands.Cog.listener()
+	async def on_ready(self):
+		if not self.SendRanks.is_running():
+			self.SendRanks.start()
+	
+	@tasks.loop(hours=6)
+	async def SendRanks(self):
+		try:
+			rankData = [0]*len(self.ranks)
+			chnl = self.bot.get_channel(config.channelIDForRanks)
+			msg = await chnl.fetch_message(config.messageIDForRanks)
+
+			newMsg = ""
+			data = DB.fetchAll("SELECT Rank, Count(1) FROM RankedUsers GROUP BY Rank;")
+
+			for eachRank in data:
+				rankData[eachRank[0]] = eachRank[1]
+		
+			for x in range(len(rankData)):
+				newMsg += f"{self.ranks[x]}: {rankData[x]}\n"
+
+			await msg.edit(content=newMsg)
+		except Exception as e:
+			print(f"Exception in SendRanks\n{e}")
+			
+		
 	
 	def GetRankPointsHighest(self, user:nextcord.Member):
 		data = DB.fetchOne("SELECT Rank, CasinoPoints, HighestEarned FROM RankedUsers WHERE DiscordID = ?;", [user.id])
