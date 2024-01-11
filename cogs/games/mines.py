@@ -22,6 +22,8 @@ class MinesButton(nextcord.ui.Button['MinesView']):
 		assert self.view is not None
 		view: MinesView = self.view
 
+		await interaction.response.defer()
+
 		if view.gameover:
 			return
 
@@ -72,7 +74,7 @@ class MinesButton(nextcord.ui.Button['MinesView']):
 # This is our actual board View
 class MinesView(nextcord.ui.View):
 	def __init__(self, bot, ownerId:int, mineCount:int, profit, amntbet, priorbal):
-		super().__init__()
+		super().__init__(timeout=None)
 		# self.current_player = self.X
 		self.board = [
 			[0, 0, 0, 0, 0],
