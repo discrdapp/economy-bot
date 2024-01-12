@@ -61,32 +61,10 @@ async def SendConfirmButton(interaction:Interaction, msg):
 
 def GetMaxBet(userId, game):
 	donatorCheck = DB.fetchOne("SELECT 1 FROM Donators WHERE DiscordID = ?;", [userId])
-	if donatorCheck:
-		if game == "Blackjack": return 10000000
-		if game == "Coinflip": 	return 10000000
-		if game == "Crash": 	return 10000000
-		if game == "DOND": 		return 10000000
-		if game == "Horse": 	return 10000000
-		if game == "Mines": 	return 10000000
-		if game == "Poker": 	return 10000000
-		if game == "Roulette": 	return 10000000
-		if game == "RPS": 		return 10000000
-		if game == "Scratch": 	return 10000000
-		if game == "Slots": 	return 10000000
+	if donatorCheck or userId == 678309361038262330:
+		return 10000000
 	else:
-		if game == "Blackjack": return 1000000
-		if game == "Coinflip": 	return 1000000
-		if game == "Crash": 	return 1000000
-		if game == "DOND": 		return 1000000
-		if game == "Horse": 	return 1000000
-		if game == "Mines": 	return 1000000
-		if game == "Poker": 	return 1000000
-		if game == "Roulette": 	return 1000000
-		if game == "RPS": 		return 1000000
-		if game == "Scratch": 	return 1000000
-		if game == "Slots": 	return 1000000
-
-	return 1000000
+		return 1000000
 
 
 async def PrintProgress(percentFilled):
@@ -267,6 +245,9 @@ class Util(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | HighLow")
 		if amntbet < 100:
 			raise Exception("minBet 100")
+		
+		if amntbet > GetMaxBet(interaction.user.id, "Highlow"):
+			raise Exception(f"maxBet {GetMaxBet(interaction.user.id, 'Highlow')}")
 
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amntbet):
 			raise Exception("tooPoor")
