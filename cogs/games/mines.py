@@ -22,8 +22,6 @@ class MinesButton(nextcord.ui.Button['MinesView']):
 		assert self.view is not None
 		view: MinesView = self.view
 
-		await interaction.response.defer()
-
 		if view.gameover:
 			return
 
