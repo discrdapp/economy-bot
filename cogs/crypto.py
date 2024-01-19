@@ -42,17 +42,10 @@ class Crypto(commands.Cog):
 		if not self.ProcessCryptoMining.is_running():
 			self.ProcessCryptoMining.start()
 
-	def cog_unload(self):
-		if self.UpdateCryptoPrices.is_running():
-			self.UpdateCryptoPrices.cancel()
-		if self.ProcessCryptoMining.is_running():
-			self.ProcessCryptoMining.cancel()
-
-
 	cooldowns.define_shared_cooldown(1, 3, cooldowns.SlashBucket.author, cooldown_id="crypto")
 
 	@tasks.loop(time=miningProcessTimes)
-	# @tasks.loop(seconds=30)
+	# @tasks.loop(seconds=3)
 	async def ProcessCryptoMining(self):
 		# between 150 - 205 an hour
 		hourlyAmnt = randrange(150, 200, 10)
@@ -63,19 +56,26 @@ class Crypto(commands.Cog):
 		# minedETCAmnt = hourlyAmnt/self.ethereumPrice
 
 		try:
-			prevData = DB.fetchAll("SELECT CryptoName, SUM(CryptoToCollect), COUNT(1) FROM CryptoMiner GROUP BY CryptoName")
+			prevData = DB.fetchAll("SELECT SUM(CryptoToCollect), CryptoName FROM CryptoMiner GROUP BY CryptoName ORDER BY CryptoName;")
+			if not prevData:
+				return
+
 			DB.update("""UPDATE CryptoMiner SET CryptoToCollect = CASE
 				WHEN CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)) > Storage THEN Storage
 				ELSE round(CryptoToCollect + (?+(?*(SpeedLevel-1)*0.1)), 2) END 
 				WHERE isMining = 1 AND CryptoToCollect < Storage;""", [hourlyAmnt]*4)
-			afterData = DB.fetchAll("SELECT CryptoName, SUM(CryptoToCollect), COUNT(1) FROM CryptoMiner GROUP BY CryptoName")
+			afterData = DB.fetchAll("SELECT CryptoName, SUM(CryptoToCollect), COUNT(1) FROM CryptoMiner GROUP BY CryptoName ORDER BY CryptoName;")
 
-			if not prevData or not afterData:
+			print(prevData)
+			print(afterData)
+
+			if not afterData:
 				return
 			
 			totalMiners = 0
 			cryptosMinedMsg = ""
-			for data in afterData:
+			for x in range(len(afterData)):
+				data = afterData[x]
 				totalMiners += data[2]
 			
 				if data[0] == "Bitcoin":
@@ -87,7 +87,7 @@ class Crypto(commands.Cog):
 				elif data[0] == "Ethereum":
 					price = self.ethereumPrice
 					emoji = emojis.ethereumEmoji
-				cryptosMinedMsg += f"**{round(data[1]/price, 2):,}** {data[0]} {emoji}\n"
+				cryptosMinedMsg += f"**{round((data[1]-prevData[x][0])/price, 4):,}** {data[0]} {emoji}\n"
 
 			chnl = self.bot.get_channel(config.channelIDForBitcoin)
 			embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Crypto Miners")
@@ -350,8 +350,18 @@ class Crypto(commands.Cog):
 			if count == 2:
 				draw.text(xy=(270,20), text=f"{cryptoMiner[2]}", font=font_type, fill="black")
 				draw.text(xy=(270,60), text=f"{cryptoMiner[4]}", font=font_type, fill="black")
+			
+			if cryptoMiner[1] == "Bitcoin":
+				coinPrice = self.bitcoinPrice
+				emoji = emojis.bitcoinEmoji
+			elif cryptoMiner[1] == "Litecoin":
+				coinPrice = self.litecoinPrice
+				emoji = emojis.litecoinEmoji
+			elif cryptoMiner[1] == "Ethereum":
+				coinPrice = self.ethereumPrice
+				emoji = emojis.ethereumEmoji
 
-			embed.add_field(name=f"Miner #{cryptoMiner[0]} ({mining})", value=f"Mining {cryptoMiner[1]}\n{cryptoMiner[2]:,}/{cryptoMiner[4]:,}")
+			embed.add_field(name=f"Miner #{cryptoMiner[0]} ({mining})", value=f"Mining {cryptoMiner[1]}\n{round(cryptoMiner[2]/coinPrice, 4)} {emoji}\n{cryptoMiner[2]:,}/{cryptoMiner[4]:,}{emojis.coin}")
 
 			count += 1
 
