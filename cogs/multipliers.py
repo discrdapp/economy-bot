@@ -49,7 +49,7 @@ class Multipliers(commands.Cog):
 				DB.update("UPDATE Multipliers SET Expires = ? WHERE DiscordID = ? and Multiplier = ?;", [newTime.strftime('%Y-%d-%m %H:%M:%S'), userId, multiplierAmnt])
 				return "Successfully extended multiplier!"
 			else:
-				return "ERROR: You cannot stack multipliers. You can only extend your current one's time."
+				return f"You cannot stack multipliers! You currently have a {multiplier}x multiplier that expires in <t:{int(currExpiration.timestamp())}:R>. Please wait for this to expire and try again."
 
 		strExpiration = expiration.strftime('%Y-%d-%m %H:%M:%S')
 		DB.insert("INSERT INTO Multipliers(DiscordID, Multiplier, Expires) VALUES(?, ?, ?)", [userId, multiplierAmnt, strExpiration])
