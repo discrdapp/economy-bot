@@ -140,8 +140,40 @@ class Inventory(commands.Cog):
 		
 		self.removeItemFromInventory(interaction.user, itemSelected, amnt)
 
-		if itemSelected == "Voter Chip":
-			embed.description = self.bot.get_cog("Multipliers").addMultiplier(interaction.user.id, 1.5, datetime.datetime.now() + datetime.timedelta(minutes=(150*amnt)))
+		if itemSelected in ["Voter Chip", "High Card", "One Pair", "Two Pair", "Straight", "Flush", "Full House", "Four of a Kind", "Straight Flush", "Royal Flush"]:
+			if itemSelected == "Voter Chip":
+				multiplier = 1.3
+				minutes = 150
+			if itemSelected == "High Card":
+				multiplier = 1.1
+				minutes = 120
+			if itemSelected == "One Pair":
+				multiplier = 1.1
+				minutes = 120
+			if itemSelected == "Two Pair":
+				multiplier = 1.15
+				minutes = 120
+			if itemSelected == "Straight":
+				multiplier = 1.2
+				minutes = 120
+			if itemSelected == "Flush":
+				multiplier = 1.3
+				minutes = 120
+			if itemSelected == "Full House":
+				multiplier = 1.4
+				minutes = 90
+			if itemSelected == "Four of a Kind":
+				multiplier = 1.5
+				minutes = 60
+			if itemSelected == "Straight Flush":
+				multiplier = 1.6
+				minutes = 30
+			if itemSelected == "Royal Flush":
+				multiplier = 1.75
+				minutes = 15
+
+			embed.description = self.bot.get_cog("Multipliers").addMultiplier(interaction.user.id, multiplier, datetime.datetime.now() + datetime.timedelta(minutes=(minutes*amnt)))
+
 		if itemSelected == "Dealer Chip" or itemSelected == "Ace of Spades" or itemSelected == "Big Blind Chip" or itemSelected == "Deck of Cards" or itemSelected == "Three of a Kind":
 			self.addActiveItemToDB(interaction.user, itemSelected, amnt)
 			if itemSelected != "Three of a Kind":
