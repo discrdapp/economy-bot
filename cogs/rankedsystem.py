@@ -1,5 +1,5 @@
 import nextcord
-from nextcord.ext import commands, tasks
+from nextcord.ext import commands, tasks, application_checks
 from nextcord import Interaction, Color
 
 import cooldowns, emojis, config
@@ -20,11 +20,35 @@ class RankedSystem(commands.Cog):
 		   "Expert Gambler",
 		   "Prestigious Gambler",
 		   "Cracked Gambler"]
+		
+		self.guild = None
+
+		# actual server
+		self.roleIDs = {"Noobie Gambler": 1198730494578266163, 
+				  "Mediocre Gambler": 1198730592183931000, 
+				  "Competent Gambler": 1198730733024448602, 
+				  "Proficient Gambler": 1198730805606875187, 
+				  "Professional Gambler": 1198731426095439942, 
+				  "Expert Gambler": 1198730831783542877, 
+				  "Prestigious Gambler": 1198730889279058081, 
+				  "Cracked Gambler": 1198730915598319647}
+		
+		# test server
+		# self.roleIDs = {"Noobie Gambler": 1199091278252609587, 
+		# 		  "Mediocre Gambler": 1199086647535468584, 
+		# 		  "Competent Gambler": 1199091394468393072, 
+		# 		  "Proficient Gambler": 1199091422687674388, 
+		# 		  "Professional Gambler": 1199091469470937128, 
+		# 		  "Expert Gambler": 1199091499695095902, 
+		# 		  "Prestigious Gambler": 1199091537456414830, 
+		# 		  "Cracked Gambler": 1199091566216757329}
 	
 	@commands.Cog.listener()
 	async def on_ready(self):
 		if not self.SendRanks.is_running():
 			self.SendRanks.start()
+
+		self.guild = await self.bot.fetch_guild(config.adminServerID)
 	
 	@tasks.loop(hours=6)
 	async def SendRanks(self):
@@ -46,6 +70,13 @@ class RankedSystem(commands.Cog):
 		except Exception as e:
 			print(f"Exception in SendRanks\n{e}")
 			
+	
+	async def UpdateDiscordRole(self, user:nextcord.User, roleToAdd, roleToRemove):
+		member = await self.guild.fetch_member(user.id)
+		if not member:
+			return
+		await member.add_roles(self.guild.get_role(self.roleIDs[roleToAdd]))
+		await member.remove_roles(self.guild.get_role(self.roleIDs[roleToRemove]))
 		
 	
 	def GetRankPointsHighest(self, user:nextcord.Member):
@@ -56,6 +87,15 @@ class RankedSystem(commands.Cog):
 			return 0, 0, 0
 
 		return data[0], data[1], data[2]
+	
+	@nextcord.slash_command(guild_ids=[config.adminServerID])
+	@application_checks.is_owner()
+	async def forceaddrankedpoints(self, interaction:Interaction, won:bool):
+		if won:
+			await interaction.send("Adding points")
+		else:
+			await interaction.send("Removing points")
+		await self.AddRankedPoints(interaction, won)
 
 	
 	async def AddRankedPoints(self, interaction:Interaction, won:bool):
@@ -81,6 +121,8 @@ class RankedSystem(commands.Cog):
 
 			await interaction.send(embed=embed)
 
+			await self.UpdateDiscordRole(interaction.user, self.ranks[rank], self.ranks[rank+1])
+
 		# promote, but not at highest rank
 		elif newPoints > 1000 and rank != len(self.ranks)-1:
 			rank += 1
@@ -97,6 +139,8 @@ class RankedSystem(commands.Cog):
 			embed.set_footer(text="Check your rank with /rank")
 
 			await interaction.send(embed=embed)
+
+			await self.UpdateDiscordRole(interaction.user, self.ranks[rank], self.ranks[rank-1])
 
 		if rank > highestEarned:
 			DB.update("UPDATE RankedUsers SET Rank = ?, CasinoPoints = ?, HighestEarned = ? WHERE DiscordID = ?", [rank, newPoints, rank, interaction.user.id])
