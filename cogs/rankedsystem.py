@@ -72,7 +72,10 @@ class RankedSystem(commands.Cog):
 			
 	
 	async def UpdateDiscordRole(self, user:nextcord.User, roleToAdd, roleToRemove):
-		member = await self.guild.fetch_member(user.id)
+		try:
+			member = await self.guild.fetch_member(user.id)
+		except:
+			return
 		if not member:
 			return
 		await member.add_roles(self.guild.get_role(self.roleIDs[roleToAdd]))
