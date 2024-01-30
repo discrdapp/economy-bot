@@ -5,10 +5,11 @@ from nextcord import Interaction
 import config
 import ztoken
 
-bot = commands.AutoShardedBot()
+bot = commands.AutoShardedBot(intents=nextcord.Intents.all())
 bot.remove_command('help')
 
 extensions = ["db", 
+			  "cogs.achievements",
 			  "cogs.games.bj",				# removable
 			  "cogs.games.bjmultiplayer",	# removable
 			  "cogs.games.coinflip",		# removable
@@ -39,6 +40,7 @@ extensions = ["db",
 			  "cogs.monopoly",				# removable
 			  "cogs.multipliers",
 			  "cogs.others", 				# removable
+			  "cogs.prestige",				# removable
 			  "cogs.quests", 
 			  "cogs.rankedsystem",			# removable
 			  "cogs.settings",				# removable
