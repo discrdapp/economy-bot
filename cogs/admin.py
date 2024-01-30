@@ -51,10 +51,10 @@ class Admin(commands.Cog):
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='send')
-	@cooldowns.cooldown(4, 300, bucket=cooldowns.SlashBucket.author)
+	@cooldowns.cooldown(4, 300, bucket=cooldowns.SlashBucket.author, cooldown_id='pay')
 	async def send(self, interaction:Interaction, user: nextcord.Member, amnt):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Send")
-		if interaction.guild_id not in [821015960931794964, config.adminServerID, 825179206958055425, 467084194200289280, 670038316271403021, 751429233049468960, 1057947351542669332, 1057947351542669332]:
+		if interaction.guild_id not in [821015960931794964, config.adminServerID, 1181383297310400572, 825179206958055425, 467084194200289280, 670038316271403021, 751429233049468960, 1057947351542669332, 1057947351542669332]:
 			embed.description = "This command can only be used in [Donator](https://docs.justingrah.am/thecasino/donator) servers and the [Support Server](https://discord.gg/ggUksVN)."
 			await interaction.send(embed=embed, ephemeral=True)
 			return
@@ -313,8 +313,15 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
+	async def forcestart(self, interaction:Interaction, member: nextcord.Member):
+		await self.bot.get_cog("Economy").StartPlaying(interaction, member)
+		await interaction.send("User registered")
+
+	@nextcord.slash_command(guild_ids=[config.adminServerID])
+	@application_checks.is_owner()
 	async def end(self, interaction:Interaction):
-		await self.bot.logout()
+		await interaction.send("Shutting down... Goodbye.")
+		await self.bot.close()
 
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
@@ -336,7 +343,13 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 	async def givexp(self, interaction:Interaction, user: nextcord.Member, xp:int):
 		DB.update("UPDATE Economy SET XP = XP + ?, TotalXP = TotalXP + ? WHERE DiscordID = ?;", [xp, xp, user.id])
 		await self.bot.get_cog("XP").levelUp(interaction, user.id) # checks if they lvl up
+		await interaction.send(f"Added {xp} XP to {user.mention}")
 
+	@nextcord.slash_command(guild_ids=[config.adminServerID])
+	@application_checks.is_owner()
+	async def givelevel(self, interaction:Interaction, user: nextcord.Member, level:int):
+		await self.bot.get_cog("XP").addLevel(user.id, level) # checks if they lvl up
+		await interaction.send(f"Added {level} levels to {user.mention}")
 
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
