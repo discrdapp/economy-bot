@@ -46,6 +46,9 @@ class XP(commands.Cog):
 	async def addXP(self, interaction:Interaction, xp):
 		DB.update("UPDATE Economy SET XP = XP + ?, totalXP = totalXP + ? WHERE DiscordID = ?;", [xp, xp, interaction.user.id])
 		await self.levelUp(interaction, interaction.user.id)
+	
+	async def addLevel(self, discordId, level):
+		DB.update("UPDATE Economy SET Level = Level + ? WHERE DiscordID = ?;", [level, discordId])
 
 
 	async def levelUp(self, interaction:Interaction, discordid):
