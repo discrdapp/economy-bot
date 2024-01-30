@@ -72,7 +72,7 @@ async def PrintProgress(percentFilled):
 		percentFilled = 0
 	elif percentFilled < 0.1:
 		percentFilled = 1
-	elif percentFilled >= 0.9:
+	elif percentFilled >= 0.9 and percentFilled != 1:
 		percentFilled = 9
 	else:
 		percentFilled = round(percentFilled * 10)
@@ -453,10 +453,86 @@ class Util(commands.Cog):
 			if random.randint(0, 2) == 0: # 24.75% chance to get a random item
 				await self.bot.get_cog("Inventory").GiveRandomItem(interaction)
 
+	@nextcord.slash_command(description='Show the current list of bounties')
+	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author, cooldown_id='bounties')
+	async def bounties(self, interaction:Interaction):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bounties")
+		if interaction.guild_id != config.adminServerID:
+			raise Exception("onlySupportServer")
+		
+		bounties = DB.fetchAll("SELECT PlacedOn, Amount FROM Bounties")
+		if not bounties:
+			embed.description = "No current bounties!"
+			await interaction.send(embed=embed)
+			return
+		
+		msg = ""
+		for bounty in bounties:
+			user = await self.bot.fetch_user(bounty[0])
+			msg += f"{user.mention} - {bounty[1]}{emojis.coin}\n"
+		
+		embed.description = msg
+		await interaction.send(embed=embed)
+
+	@nextcord.slash_command(description='Set a bounty on someone. Higher payout for /rob')
+	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author, cooldown_id='bounty')
+	async def bounty(self, interaction:Interaction, member: nextcord.Member, amount:int):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bounty")
+		if interaction.guild_id != config.adminServerID:
+			raise Exception("onlySupportServer")
+
+		if interaction.user.id == member.id:
+			embed.description = "Trying to place a bounty on yourself? That doesn't make sense. :joy:"
+			await deferMsg.edit(embed=embed)
+			return
+		
+		if not await self.bot.get_cog("Economy").accCheck(member):
+			embed.description = f"{member} has not registered yet. Cannot place bounty on them."
+			await deferMsg.edit(embed=embed)
+
+			cooldowns.reset_bucket(self.bounty.callback, interaction)
+			return
+		
+		bal = await self.bot.get_cog("Economy").getBalance(member)
+		if bal < 2500:
+			embed.description = f"{member.mention} needs at least 2,500{emojis.coin} to receive a bounty"
+			await deferMsg.edit(embed=embed)
+
+			cooldowns.reset_bucket(self.bounty.callback, interaction)
+			return
+
+		
+		alreadyHasBounty = DB.fetchOne("SELECT count(1) FROM Bounties WHERE PlacedOn = ?", [member.id])[0]
+		if alreadyHasBounty:
+			print(alreadyHasBounty)
+			embed.description = f"This person already has a bounty on them... Wait until that bounty is completed before placing a new one"
+			await deferMsg.edit(embed=embed)
+
+			cooldowns.reset_bucket(self.bounty.callback, interaction)
+			return
+		
+		alreadyPlacedBounty = DB.fetchOne("SELECT count(1) FROM Bounties WHERE PlacedBy = ?", [interaction.user.id])[0]
+		if alreadyPlacedBounty:
+			print(alreadyPlacedBounty)
+			embed.description = f"You already have an active bounty on someone... Wait until that bounty is completed before placing a new one"
+			await deferMsg.edit(embed=embed)
+			return
+		
+		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amount):
+			raise Exception("tooPoor")
+
+		DB.insert("INSERT INTO Bounties VALUES(?, ?, ?)", [member.id, interaction.user.id, amount])
+
+		embed.description = "Bounty placed!"
+		await deferMsg.edit(embed=embed)
+
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 45, bucket=cooldowns.SlashBucket.author, cooldown_id='rob')
-	async def rob(self, interaction:Interaction, *, member: nextcord.Member):
+	async def rob(self, interaction:Interaction, member: nextcord.Member):
 		await interaction.response.defer(with_message=True)
 		deferMsg = await interaction.original_message()
 
@@ -469,7 +545,7 @@ class Util(commands.Cog):
 			return
 
 		if not await self.bot.get_cog("Economy").accCheck(member):
-			embed.description = f"{member} has not registed yet. Cannot rob them."
+			embed.description = f"{member} has not registered yet. Cannot rob them."
 			await deferMsg.edit(embed=embed)
 
 			cooldowns.reset_bucket(self.rob.callback, interaction)
@@ -492,6 +568,7 @@ class Util(commands.Cog):
 			return
 
 		choice = random.randrange(0, 10)
+		# choice = 3
 		# amnt = random.range(500, 5000)
 
 		if choice > 7: # 20% chance
@@ -521,6 +598,13 @@ class Util(commands.Cog):
 
 		if choice <= 4: # 0 - 4		(50%)
 			message = f"While {member.mention} was sleeping, you took {amnt:,}{emojis.coin} out of their pockets."
+
+			bountyAmnt = DB.fetchOne("SELECT Amount FROM Bounties WHERE PlacedOn = ?", [member.id])
+			if bountyAmnt:
+				embed.add_field(name="BOUNTY CLAIMED", value=f"You received an extra {bountyAmnt[0]}{emojis.coin} for completing the bounty")
+				await self.bot.get_cog("Economy").addWinnings(interaction.user.id, bountyAmnt[0])
+				DB.delete("DELETE FROM Bounties WHERE PlacedOn = ?", [member.id])
+
 		else: # 5, 6, or 7			(30%)
 			message = f"As you walk past {member.mention}, you try to pick pocket them, but they notice. They beat you up and steal {amnt:,}{emojis.coin} from you instead."
 
