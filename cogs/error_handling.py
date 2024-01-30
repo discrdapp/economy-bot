@@ -85,6 +85,15 @@ class ErrorHandling(commands.Cog):
 				except:
 					pass
 				return
+			
+			if err == "onlySupportServer":
+				embed.description = f"You can only use that command in the Support Server.\n[Click Here]({config.serverInviteURL}) to join the Support Server"
+				await emojis.SendInteractionWithStop(interaction, embed, True)
+				try:
+					reset_bucket(interaction.application_command.callback, interaction)
+				except:
+					pass
+				return
 
 			if "minBet" in err:
 				embed.description = f"Minimum bet is {err[7:]} {emojis.coin}" 
