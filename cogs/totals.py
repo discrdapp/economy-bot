@@ -6,6 +6,7 @@ from nextcord import Interaction
 import sqlite3, datetime, json, cooldowns, uuid
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 from math import floor
+from random import shuffle
 
 import config, io
 from db import DB
@@ -128,6 +129,9 @@ class Totals(commands.Cog):
 			"sienna": 0xA0522D,
 			"tangerine": 0xF08000
 		}
+		self.avatarList = ["aku", "ben10", "billy", "bloo", "blossom", "bubbles", "buttercup", "chicken", "chowder", "coco", "courage", "cow", "dexter", 
+							"Ed", "Edd", "Eddy", "Edurardo", "Grim", "Hector", "ImWeasel", "IRBaboon", "JhonnyBravo", "Lazlo", "Mac", "Mandy", "MojoJojo", 
+							"Numbuh1", "Numbuh2", "Numbuh3", "Numbuh4", "Numbuh5", "SamuraiJack", "TheRedGuy", "Vilgas", "Wilt"]
 
 	@nextcord.slash_command()
 	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author, cooldown_id='rob')
@@ -143,7 +147,7 @@ class Totals(commands.Cog):
 			await deferMsg.edit(embed=embed)
 			return
 
-		if str(interaction.user.id) != game[2]:
+		if str(interaction.user.id) != game[2] and interaction.user.id != config.botOwnerDiscordID:
 			embed.description = "This is not your log to view!"
 			await deferMsg.edit(embed=embed)
 			return
@@ -184,6 +188,22 @@ class Totals(commands.Cog):
 	@nextcord.slash_command()
 	async def profile(self, interaction:Interaction):
 		pass
+
+	@profile.subcommand()
+	async def avatar(self, interaction:Interaction):
+		pass
+
+	@avatar.subcommand()
+	async def list(self, interaction:Interaction):
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Profile | Avatar | List")
+		
+		msg = ""
+		for name in self.avatarList:
+			msg += f"{name}\n"
+		embed.description = msg
+
+		await interaction.send(embed=embed)
+
 	
 	@profile.subcommand()
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='view')
@@ -200,7 +220,10 @@ class Totals(commands.Cog):
 		level = eco[1]
 		xp = eco[2]
  
-		requiredXP = self.XPtoLevelUp[level]
+		try:
+			requiredXP = self.XPtoLevelUp[level]
+		except:
+			requiredXP = xp
 
 		crates, keys = self.bot.get_cog("Inventory").getInventory(interaction.user)
 
@@ -216,7 +239,7 @@ class Totals(commands.Cog):
 		background = profile["background"]
 
 		embed = nextcord.Embed(color=embedColor, title=f"{self.bot.user.name} | Profile")
-		embed.set_thumbnail(url=interaction.user.avatar)
+		# embed.set_thumbnail(url=interaction.user.avatar)
 		# embed.add_field(name = "User", value = f"{interaction.user.name}", inline=True)
 		# embed.add_field(name = "Level", value = f"{level}", inline=True)
 		# embed.add_field(name = "Balance", value = f"{balance}", inline=True)
@@ -231,27 +254,86 @@ class Totals(commands.Cog):
 		badgeList = list()
 		if games >= self.gameBadge:
 			img250 = Image.open("./images/badges/250.png")
-			newSize = (50, 50)
-			img250 = img250.resize(newSize)
-			badgeList.append(img250)
+			badgeList.append(img250.resize((50, 45)))
 
 		if balance >= self.balBadge:
 			img10k = Image.open("./images/badges/10k.png")
-			newSize = (50, 50)
-			img10k = img10k.resize(newSize)
-			badgeList.append(img10k)
+			badgeList.append(img10k.resize((50, 50)))
 
 		if profit >= self.profitBadge:
 			img1k = Image.open("./images/badges/1k.png")
-			newSize = (50, 50)
-			img1k = img1k.resize(newSize)
-			badgeList.append(img1k)
+			badgeList.append(img1k.resize((50, 50)))
 
 		if level >= self.lvlBadge:
 			level5 = Image.open("./images/badges/level5.png")
-			newSize = (50, 50)
-			level5 = level5.resize(newSize)
-			badgeList.append(level5)
+			badgeList.append(level5.resize((50, 50)))
+
+		#if has aceofspades
+		# aceOfSpades = Image.open("./images/emojis/AceofSpades.png")
+		# badgeList.append(aceOfSpades.resize((40, 50)))
+
+		#if has threeofakind
+		# threeOfAKind = Image.open("./images/emojis/3ofakind.png")
+		# badgeList.append(threeOfAKind.resize((50, 50)))
+
+		#if has straight
+		# straight = Image.open("./images/emojis/straight.png")
+		# badgeList.append(straight.resize((50, 50)))
+
+		#if has fourofakind
+		# fourOfAKind = Image.open("./images/emojis/4ofakind.png")
+		# badgeList.append(fourOfAKind.resize((50, 50)))
+
+		achievementCount = DB.fetchOne("SELECT COUNT(*) FROM AchievementProgress WHERE DiscordID = ?", [interaction.user.id])
+		if achievementCount:
+			achievementCount = achievementCount[0]
+			if achievementCount > (self.bot.get_cog("Achievements").achievementCount / 10):
+				# earned 10% of achievements
+				pass
+			if achievementCount > (self.bot.get_cog("Achievements").achievementCount / 4):
+				# earned 25% of achievements
+				pass
+			if achievementCount > (self.bot.get_cog("Achievements").achievementCount / 2):
+				# earned half the achievements
+				pass
+			if achievementCount == (self.bot.get_cog("Achievements").achievementCount / 2):
+				# earned all the achievements
+				pass
+		
+		prestige = DB.fetchOne("SELECT Prestige FROM Prestige WHERE DiscordID = ?", [interaction.user.id])
+		if prestige:
+			prestige = prestige[0]
+
+			if prestige >= 1:
+				prestige1 = Image.open("./images/badges/prestige/prestige1.png")
+				badgeList.append(prestige1.resize((50, 50)))
+			if prestige >= 2:
+				prestige2 = Image.open("./images/badges/prestige/prestige2.png")
+				badgeList.append(prestige2.resize((50, 50)))
+			if prestige >= 3:
+				prestige3 = Image.open("./images/badges/prestige/prestige3.png")
+				badgeList.append(prestige3.resize((50, 50)))
+			if prestige >= 4:
+				prestige4 = Image.open("./images/badges/prestige/prestige4.png")
+				badgeList.append(prestige4.resize((50, 50)))
+			if prestige >= 5:
+				prestige5 = Image.open("./images/badges/prestige/prestige5.png")
+				badgeList.append(prestige5.resize((50, 50)))
+			if prestige >= 6:
+				prestige6 = Image.open("./images/badges/prestige/prestige6.png")
+				badgeList.append(prestige6.resize((50, 50)))
+			if prestige >= 7:
+				prestige7 = Image.open("./images/badges/prestige/prestige7.png")
+				badgeList.append(prestige7.resize((50, 50)))
+			if prestige >= 8:
+				prestige8 = Image.open("./images/badges/prestige/prestige8.png")
+				badgeList.append(prestige8.resize((50, 50)))
+			if prestige >= 9:
+				prestige9 = Image.open("./images/badges/prestige/prestige9.png")
+				badgeList.append(prestige9.resize((50, 50)))
+			if prestige >= 10:
+				prestige10 = Image.open("./images/badges/prestige/prestige10.png")
+				badgeList.append(prestige10.resize((50, 50)))
 
 		yPos = 215
 		xPos = 100
@@ -270,6 +352,14 @@ class Totals(commands.Cog):
 
 		embed.set_footer(text=f"Customize your profile with /profile edit")
 
+		avatar = DB.fetchOne("SELECT Value FROM Profiles WHERE DiscordID = ? AND Name = 'Avatar';", [interaction.user.id])
+		if avatar:
+			thumbnail = nextcord.File(f"./images/profilepictures/{avatar[0]}.png", filename="thumbnail.png")
+			embed.set_thumbnail(url="attachment://thumbnail.png")
+		else:
+			thumbnail = None
+			embed.set_thumbnail(url=interaction.user.avatar)
+
 		with io.BytesIO() as image_binary:
 			img.save(image_binary, 'PNG')
 			image_binary.seek(0)
@@ -277,10 +367,11 @@ class Totals(commands.Cog):
 			file = nextcord.File(image_binary, filename="image.png")
 			embed.set_image(url="attachment://image.png")
 
-			# thumbnail = nextcord.File("./images/profilepictures/Icons_06.png", filename="thumbnail.png")
-			# embed.set_thumbnail(url="attachment://thumbnail.png")
 
-			await deferMsg.edit(embed=embed, file=file)
+			if thumbnail:
+				await deferMsg.edit(embed=embed, files=[file, thumbnail])
+			else:
+				await deferMsg.edit(embed=embed, file=file)
 	
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
@@ -315,43 +406,89 @@ class Totals(commands.Cog):
 		badgeList = list()
 		# if games >= self.gameBadge:
 		img250 = Image.open("./images/badges/250.png")
-		img250 = img250.resize((50, 45))
-		badgeList.append(img250)
+		badgeList.append(img250.resize((50, 45)))
 
 		# if balance >= self.balBadge:
 		img10k = Image.open("./images/badges/10k.png")
-		img10k = img10k.resize((50, 50))
-		badgeList.append(img10k)
+		badgeList.append(img10k.resize((50, 50)))
 
 		# if profit >= self.profitBadge:
 		img1k = Image.open("./images/badges/1k.png")
-		img1k = img1k.resize((50, 50))
-		badgeList.append(img1k)
+		badgeList.append(img1k.resize((50, 50)))
 
 		# if level >= self.lvlBadge:
 		level5 = Image.open("./images/badges/level5.png")
-		level5 = level5.resize((50, 50))
-		badgeList.append(level5)
+		badgeList.append(level5.resize((50, 50)))
 
 		#if has aceofspades
 		aceOfSpades = Image.open("./images/emojis/AceofSpades.png")
-		aceOfSpades = aceOfSpades.resize((40, 50))
-		badgeList.append(aceOfSpades)
+		badgeList.append(aceOfSpades.resize((40, 50)))
 
 		#if has threeofakind
 		threeOfAKind = Image.open("./images/emojis/3ofakind.png")
-		threeOfAKind = threeOfAKind.resize((50, 50))
-		badgeList.append(threeOfAKind)
+		badgeList.append(threeOfAKind.resize((50, 50)))
 
 		#if has straight
 		straight = Image.open("./images/emojis/straight.png")
-		straight = straight.resize((50, 50))
-		badgeList.append(straight)
+		badgeList.append(straight.resize((50, 50)))
 
 		#if has fourofakind
 		fourOfAKind = Image.open("./images/emojis/4ofakind.png")
-		fourOfAKind = fourOfAKind.resize((50, 50))
-		badgeList.append(fourOfAKind)
+		badgeList.append(fourOfAKind.resize((50, 50)))
+
+		achievementCount = DB.fetchOne("SELECT COUNT(*) FROM AchievementProgress WHERE DiscordID = ?", [interaction.user.id])
+		if achievementCount:
+			achievementCount = achievementCount[0]
+			if achievementCount > (self.bot.get_cog("Achievements").achievementCount / 10):
+				# earned 10% of achievements
+				pass
+			if achievementCount > (self.bot.get_cog("Achievements").achievementCount / 4):
+				# earned 25% of achievements
+				pass
+			if achievementCount > (self.bot.get_cog("Achievements").achievementCount / 2):
+				# earned half the achievements
+				pass
+			if achievementCount == (self.bot.get_cog("Achievements").achievementCount / 2):
+				# earned all the achievements
+				pass
+		
+		prestige = DB.fetchOne("SELECT Prestige FROM Prestige WHERE DiscordID = ?", [interaction.user.id])
+		if prestige:
+			prestige = prestige[0]
+
+			if prestige >= 1:
+				prestige1 = Image.open("./images/badges/prestige/prestige1.png")
+				badgeList.append(prestige1.resize((50, 50)))
+			if prestige >= 2:
+				prestige2 = Image.open("./images/badges/prestige/prestige2.png")
+				badgeList.append(prestige2.resize((50, 50)))
+			if prestige >= 3:
+				prestige3 = Image.open("./images/badges/prestige/prestige3.png")
+				badgeList.append(prestige3.resize((50, 50)))
+			if prestige >= 4:
+				prestige4 = Image.open("./images/badges/prestige/prestige4.png")
+				badgeList.append(prestige4.resize((50, 50)))
+			if prestige >= 5:
+				prestige5 = Image.open("./images/badges/prestige/prestige5.png")
+				badgeList.append(prestige5.resize((50, 50)))
+			if prestige >= 6:
+				prestige6 = Image.open("./images/badges/prestige/prestige6.png")
+				badgeList.append(prestige6.resize((50, 50)))
+			if prestige >= 7:
+				prestige7 = Image.open("./images/badges/prestige/prestige7.png")
+				badgeList.append(prestige7.resize((50, 50)))
+			if prestige >= 8:
+				prestige8 = Image.open("./images/badges/prestige/prestige8.png")
+				badgeList.append(prestige8.resize((50, 50)))
+			if prestige >= 9:
+				prestige9 = Image.open("./images/badges/prestige/prestige9.png")
+				badgeList.append(prestige9.resize((50, 50)))
+			if prestige >= 10:
+				prestige10 = Image.open("./images/badges/prestige/prestige10.png")
+				badgeList.append(prestige10.resize((50, 50)))
+			
+
+		shuffle(badgeList)
 
 		yPos = 215
 		xPos = 100
@@ -412,6 +549,31 @@ class Totals(commands.Cog):
 	@profile.subcommand()
 	async def edit(self, interaction:Interaction):
 		pass
+	
+	# @edit.subcommand(description="Set your avatar for your /profile")
+	# @cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='avatar')
+	# async def setavatar(self, interaction:Interaction, choice:str):
+	# 	choice = choice.lower()
+
+	# 	embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Profile | Edit | Avatar")
+
+	# 	if choice not in self.avatarList:
+	# 		embed.description = "Choice not found!"
+	# 		await interaction.send(embed=embed)
+	# 		return
+		
+	# 	try:
+	# 		DB.insert("INSERT INTO Profiles VALUES(?, 'Avatar', ?);", [interaction.user.id, choice])
+	# 	except:
+	# 		DB.update("UPDATE Profiles SET Value = ? WHERE DiscordID = ? AND Name = 'Avatar';", [choice, interaction.user.id])
+		
+	# 	embed.description = "Successfully set avatar!"
+
+	# 	thumbnail = nextcord.File(f"./images/profilepictures/{choice}.png", filename="thumbnail.png")
+	# 	embed.set_thumbnail(url="attachment://thumbnail.png")
+
+	# 	await interaction.send(embed=embed, file=thumbnail)
+		
 
 	@edit.subcommand(description="Get color list from /colors")
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='embedcolor')
