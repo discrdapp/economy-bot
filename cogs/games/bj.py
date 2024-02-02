@@ -92,22 +92,22 @@ class Button(nextcord.ui.Button['Blackjack']):
 				await interaction.response.send_modal(self.modal)
 				await self.modal.wait()
 
-				await self.msg.edit(content=f"{interaction.user.mention}\nChecking for blackjack")
+				await view.msg.edit(content=f"{interaction.user.mention}\nChecking for blackjack")
 				await asyncio.sleep(0.6)
-				await self.msg.edit(content=f"{interaction.user.mention}\nChecking for blackjack.")
+				await view.msg.edit(content=f"{interaction.user.mention}\nChecking for blackjack.")
 				await asyncio.sleep(0.6)
-				await self.msg.edit(content=f"{interaction.user.mention}\nChecking for blackjack..")
+				await view.msg.edit(content=f"{interaction.user.mention}\nChecking for blackjack..")
 				await asyncio.sleep(0.6)
-				await self.msg.edit(content=f"{interaction.user.mention}\nChecking for blackjack...")
+				await view.msg.edit(content=f"{interaction.user.mention}\nChecking for blackjack...")
 				await asyncio.sleep(0.6)
 				if view.dealerNum[1] == 10: # checks if dealer's second card is a 10
-					await self.msg.edit(content=f"{interaction.user.mention}\nChecking for blackjack... Protected by insurance!")
+					await view.msg.edit(content=f"{interaction.user.mention}\nChecking for blackjack... Protected by insurance!")
 					await view.displayWinner(999)
 					return
 				else:
-					await self.msg.edit(content=f"{interaction.user.mention}\nDealer does not have blackjack... game will continue")
+					await view.msg.edit(content=f"{interaction.user.mention}\nDealer does not have blackjack... game will continue")
 			if self.label == "Double Down":
-				if not await self.bot.get_cog("Economy").subtractBet(interaction.user, self.view.amntbet):
+				if not await self.bot.get_cog("Economy").subtractBet(interaction.user, view.amntbet):
 					await interaction.send("You don't have enough credits for that bet", ephemeral=True)
 					return
 				self.view.amntbet *= 2
@@ -350,10 +350,12 @@ class Blackjack(nextcord.ui.View):
 	async def player_first_turn(self):
 		for x in range(0,2):
 			# player draws a card
+			# if x == 0:
+			# 	pDrawnCard = "♦ 2"
+			# else:
+			# 	pDrawnCard = "♠ A"
 			if self.usedAceofSpades and x == 0:
 				pDrawnCard = "♠ A"
-			# else:
-			# 	pDrawnCard = "♦ 10"
 			else:
 				pDrawnCard = self.take_card()
 			self.pCARD.append(pDrawnCard)
@@ -413,16 +415,20 @@ class Blackjack(nextcord.ui.View):
 				else:
 					await self.msg.edit(content=f"{self.interaction.user.mention}", view=self, file=self.file, embed=self.embed)
 
-			if (self.is_blackjack(self.pCardNum)):
-				if self.dealerHand[0].split()[1] == "A" and self.usedDealerChip:
-					self.remove_item(self.doubleDown)
+			if (self.is_blackjack(self.pCardNum)): # if player has blackjack
+				if self.dealerHand[0].split()[1] == "A": # if dealer has Ace showing and player used dealer chip
+					self.remove_item(self.doubleDown) # remove double down button
 					for child in self.children:
-						if child.label == "Hit":
+						if child.label == "Hit": # remove Hit button 
 							self.remove_item(child)
+					# will be left with Stand and Insurance
 					await self.msg.edit(embed=self.embed, view=self, content=f"{self.interaction.user.mention}\nYou got a blackjack! Dealer has an ace, would you like to take insurance or stand?")
 				else:
-					await self.stand()
-				return 
+					# player dealt blackjack
+					if(len(self.pCARD) == 2):
+						await self.EndGame() # end game because instant win
+					else: # player has blackjack, but not first 2 cards
+						await self.stand()
 
 
 	async def hit(self, isDoubleDown=False):
@@ -486,6 +492,9 @@ class Blackjack(nextcord.ui.View):
 
 
 	async def stand(self):
+		self.clear_items()
+		self.stop()
+		await self.msg.edit(view=self)
 		# generate dealer's hand
 		await self.dealer_turn()
 		await self.EndGame()
@@ -746,6 +755,12 @@ class Blackjack(nextcord.ui.View):
 
 		self.bot.get_cog("Totals").addTotals(self.interaction, self.amntbet, moneyToAdd, "Blackjack")	
 		await self.bot.get_cog("Quests").AddQuestProgress(self.interaction, user, "BJ", profitInt)
+		# if player won by blackjack:
+		# 		has blackjack (21 with first 2 cards) and did not win by insurance
+		await self.bot.get_cog("Achievements").AddAchievementProgress(self.interaction, 
+				 "Blackjack", 
+				 [self.amntbet, moneyToAdd > self.amntbet, sum(self.pCardNum) == 21 and len(self.pCARD) == 2 and winner == 1], 
+				 self.ownerId)
 
 
 class bj(commands.Cog):
