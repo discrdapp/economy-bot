@@ -21,7 +21,10 @@ class XP(commands.Cog):
 		getRow = DB.fetchOne(f"SELECT XP, TotalXP, Level FROM Economy WHERE DiscordID = ?;", [interaction.user.id])
 		level = getRow[2]
 		xp = getRow[0]
-		requiredXP = self.XPtoLevelUp[level]
+		try:
+			requiredXP = self.XPtoLevelUp[level]
+		except:
+			requiredXP = xp
 
 		totalXP = getRow[1]
 
