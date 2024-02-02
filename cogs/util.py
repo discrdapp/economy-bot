@@ -67,7 +67,7 @@ def GetMaxBet(userId, game):
 		return 1000000
 
 
-async def PrintProgress(percentFilled):
+async def PrintProgress(percentFilled, oneBar:bool=False):
 	if percentFilled <= 0.03:
 		percentFilled = 0
 	elif percentFilled < 0.1:
@@ -77,33 +77,53 @@ async def PrintProgress(percentFilled):
 	else:
 		percentFilled = round(percentFilled * 10)
 
-	topLine = ""
-	bottomLine = ""
-	for x in range(1, 11):
-		if x == 1: # left side 
-			if x <= percentFilled:
-				topLine += emojis.tlf
-				bottomLine += emojis.blf
-			else:
-				topLine += emojis.tl
-				bottomLine += emojis.bl
-		elif x == 10: # right side
-			if x <= percentFilled:
-				topLine += emojis.trf
-				bottomLine += emojis.brf
-			else:
-				topLine += emojis.tr
-				bottomLine += emojis.br
-		else: # middle
-			if x <= percentFilled:
-				topLine += emojis.tf
-				bottomLine += emojis.bf
-			else:
-				topLine += emojis.t
-				bottomLine += emojis.b
+	if not oneBar:
+		topLine = ""
+		bottomLine = ""
 
-
-	return topLine + "\n" + bottomLine
+		for x in range(1, 11):
+			if x == 1: # left side 
+				if x <= percentFilled:
+					topLine += emojis.tlf
+					bottomLine += emojis.blf
+				else:
+					topLine += emojis.tl
+					bottomLine += emojis.bl
+			elif x == 10: # right side
+				if x <= percentFilled:
+					topLine += emojis.trf
+					bottomLine += emojis.brf
+				else:
+					topLine += emojis.tr
+					bottomLine += emojis.br
+			else: # middle
+				if x <= percentFilled:
+					topLine += emojis.tf
+					bottomLine += emojis.bf
+				else:
+					topLine += emojis.t
+					bottomLine += emojis.b
+		return topLine + "\n" + bottomLine
+	
+	else:
+		line = ""
+		for x in range(1, 11):
+			if x == 1: # left side 
+				if x <= percentFilled:
+					line += emojis.small_lf
+				else:
+					line += emojis.small_l
+			elif x == 10: # right side
+				if x <= percentFilled:
+					line += emojis.small_rf
+				else:
+					line += emojis.small_r
+			else: # middle
+				if x <= percentFilled:
+					line += emojis.small_mf
+				else:
+					line += emojis.small_m
+		return line
 
 class Util(commands.Cog):
 	def __init__(self, bot):
@@ -618,6 +638,27 @@ class Util(commands.Cog):
 		await deferMsg.edit(embed=embed)
 
 
+	@nextcord.slash_command()
+	@cooldowns.cooldown(1, 45, bucket=cooldowns.SlashBucket.author, cooldown_id='rob')
+	async def history(self, interaction:Interaction):
+		await interaction.response.defer(with_message=True)
+		deferMsg = await interaction.original_message()
+
+		logs = DB.fetchAll("SELECT ID, DateTime, CreditsSpent, CreditsGained, Activity FROM Logs WHERE DiscordID = ? LIMIT 10", [interaction.user.id])
+
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bounty")
+		if not logs:
+			embed.description = "You do not have any logs to show."
+			await deferMsg.edit(embed=embed)
+			return
+
+		msg = "GameID | DateTime | CreditsSpent | CreditsGains | Activity\n"
+		for log in logs:
+			msg += f"\n{log[0]} | {log[1]} | {log[2]} | {log[3]} | {log[4]}"
+		
+		embed.description = msg
+
+		await deferMsg.edit(embed=embed)
 
 
 def setup(bot):
