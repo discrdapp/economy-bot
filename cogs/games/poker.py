@@ -339,10 +339,10 @@ class PokerView(nextcord.ui.View):
 
 		if playerResult > dealerResult:
 			msg = f"**Player wins!**\nPlayer had {self.scores[playerResult]}{pMsgAddon}.\nOpponent had {self.scores[dealerResult]}{dMsgAddon}"
-			await self.GameOver(interaction, msg, winner=True)
+			await self.GameOver(interaction, msg, winner=True, playerHand=self.scores[playerResult])
 		elif playerResult < dealerResult:
 			msg = f"**Player lost.**\nOpponent had {self.scores[dealerResult]}{dMsgAddon}.\nPlayer had {self.scores[playerResult]}{pMsgAddon}"
-			await self.GameOver(interaction, msg, winner=False)
+			await self.GameOver(interaction, msg, winner=False, playerHand=self.scores[playerResult])
 		else:
 			index = "23456789TJQKA"
 			pScore = index.find(pSorted[0][-1])
@@ -356,17 +356,21 @@ class PokerView(nextcord.ui.View):
 				dScore = index.find(dSorted[3][-1])
 				dCard = dSorted[3][-1]
 
+			winner=False
+			tie=False
 			if pScore == dScore:
 				msg = f"**It is a tie.**\nBoth have {self.scores[playerResult]}{pMsgAddon}"
-				await self.GameOver(interaction, msg, tie=True)
+				tie = True
 			elif pScore > dScore:
 				msg = f"**Player wins!**\nBoth have {self.scores[playerResult]}, but player has {pCard} high\nDealer only has {dCard} high"
-				await self.GameOver(interaction, msg, winner=True)
+				winner = True
 			else:
 				msg = f"**Player lost.**\nBoth have {self.scores[playerResult]}, but dealer has {dCard} high\nPlayer only has {pCard} high"
-				await self.GameOver(interaction, msg, winner=False)
+				winner = False
+			
+			await self.GameOver(interaction, msg, winner=winner, tie=tie, playerHand=self.scores[playerResult])
 
-	async def GameOver(self, interaction:Interaction, msg, winner:bool=False, folded:bool=False, tie:bool=False):
+	async def GameOver(self, interaction:Interaction, msg, winner:bool=False, folded:bool=False, tie:bool=False, playerHand="Fold"):
 		if folded:
 			moneyToAdd = 0
 		else: 
@@ -400,6 +404,8 @@ class PokerView(nextcord.ui.View):
 				img.close()
 			else:
 				await self.msg.edit(view=None, embed=self.embed, file=file)
+		
+		await self.bot.get_cog("Achievements").AddAchievementProgress(interaction, "Poker", [self.amntbet, moneyToAdd > self.amntbet, playerHand], self.ownerId)
 
 	def PlayerDrawCards(self):
 		# self.pCards = ["♠ A", "♦ T"]
