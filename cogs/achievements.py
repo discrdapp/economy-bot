@@ -208,7 +208,7 @@ class Achievements(commands.Cog):
 
 			count = DB.fetchOne(f"""SELECT COUNT(*) 
 					   FROM AchievementProgress 
-					   WHERE DiscordID = {discordId} AND ID IN ({strIDs}) AND Description LIKE 'Win a game with %'""")[0]
+					   WHERE DiscordID = {discordId} AND ID IN ({strIDs})""")[0]
 			if count == 10:
 				await self.EarnAchievementByID(800)
 
