@@ -199,7 +199,11 @@ class Achievements(commands.Cog):
 		# amntBet | won? | if won, won with
 		if data[1]:
 			strIDs = ','.join([str(y) for x in self.pokerAchievementIDs for y in x])
-			achievementID = DB.fetchOne(f"SELECT ID FROM AchievementLIST WHERE ID IN ({strIDs}) AND Description LIKE '%{data[2]}%'")[0]
+			try:
+				achievementID = DB.fetchOne(f"SELECT ID FROM AchievementLIST WHERE ID IN ({strIDs}) AND Description LIKE '%{data[2]}%'")[0]
+			except:
+				print(f"NO ACHIEVEMENT FOUND FOR {strIDs} {data[2]}")
+				return
 			await self.EarnAchievementByID(interaction, discordId, achievementID)
 
 			count = DB.fetchOne(f"""SELECT COUNT(*) 
