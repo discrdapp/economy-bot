@@ -527,7 +527,6 @@ class Util(commands.Cog):
 		
 		alreadyHasBounty = DB.fetchOne("SELECT count(1) FROM Bounties WHERE PlacedOn = ?", [member.id])[0]
 		if alreadyHasBounty:
-			print(alreadyHasBounty)
 			embed.description = f"This person already has a bounty on them... Wait until that bounty is completed before placing a new one"
 			await deferMsg.edit(embed=embed)
 
@@ -536,7 +535,6 @@ class Util(commands.Cog):
 		
 		alreadyPlacedBounty = DB.fetchOne("SELECT count(1) FROM Bounties WHERE PlacedBy = ?", [interaction.user.id])[0]
 		if alreadyPlacedBounty:
-			print(alreadyPlacedBounty)
 			embed.description = f"You already have an active bounty on someone... Wait until that bounty is completed before placing a new one"
 			await deferMsg.edit(embed=embed)
 			return

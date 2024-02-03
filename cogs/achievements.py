@@ -41,7 +41,6 @@ class DisplayAchievements(menus.ListPageSource):
 					value = f"{entries[x][1]}\n**Unlocked!**\n"
 					progress = entries[x][2]
 				else:
-					print(progress)
 					value = f"{entries[x][1]}\n{progress}/{entries[x][2]}\n"
 				value += await PrintProgress(progress/int(entries[x][2]))
 			embed.add_field(name=name, value=value, inline=False)
@@ -89,7 +88,6 @@ class Achievements(commands.Cog):
 						 WHERE AP.Progress >= AL.Goal AND AP.DiscordID = {discordId} AND AP.ID in ({strIDs}) AND AP.Progress != -1;""")
 
 		if not progress:
-			print("returning")
 			return
 		# achievement: ID, Name
 		for achievement in progress:
@@ -107,7 +105,6 @@ class Achievements(commands.Cog):
 
 	async def EarnAchievementByID(self, interaction:Interaction, discordId, achievementID):
 		alreadyHasAchievement = DB.fetchOne("SELECT 1 FROM AchievementProgress WHERE DiscordID = ? AND ID = ?;", [discordId, achievementID])
-		print(alreadyHasAchievement)
 		if alreadyHasAchievement:
 			return
 		achievement = DB.fetchOne("SELECT Name, Reward FROM AchievementList WHERE ID = ?;", [achievementID])

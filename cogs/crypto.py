@@ -66,9 +66,6 @@ class Crypto(commands.Cog):
 				WHERE isMining = 1 AND CryptoToCollect < Storage;""", [hourlyAmnt]*4)
 			afterData = DB.fetchAll("SELECT CryptoName, SUM(CryptoToCollect), COUNT(1) FROM CryptoMiner GROUP BY CryptoName ORDER BY CryptoName;")
 
-			print(prevData)
-			print(afterData)
-
 			if not afterData:
 				return
 			
