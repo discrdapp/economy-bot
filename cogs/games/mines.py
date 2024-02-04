@@ -66,12 +66,13 @@ class MinesButton(nextcord.ui.Button['MinesView']):
 			embed.set_footer(text="Click one of the checkmarks to withdraw your winnings")
 
 		embed.description = msg
-		await interaction.response.edit_message(embed=embed, view=view)
+		# await interaction.response.edit_message(embed=embed, view=view)
+		await view.msg.edit(embed=embed, view=view)
 
 
 # This is our actual board View
 class MinesView(nextcord.ui.View):
-	def __init__(self, bot, ownerId:int, mineCount:int, profit, amntbet, priorbal):
+	def __init__(self, bot, msg:nextcord.Message, ownerId:int, mineCount:int, profit, amntbet, priorbal):
 		super().__init__(timeout=None)
 		# self.current_player = self.X
 		self.board = [
@@ -83,14 +84,15 @@ class MinesView(nextcord.ui.View):
 		]
 
 		self.bot:commands.bot.Bot = bot
-
-		self.profit = profit
-		self.amntbet = amntbet
+		
+		self.msg = msg
 		self.ownerId = ownerId
 		self.mineCount = mineCount
+		self.profit = profit
+		self.amntbet = amntbet
+		self.priorBal = priorbal
 		self.totalChecks = len(self.board) * len(self.board[0]) - self.mineCount 
 		self.spacesClicked = 0
-		self.priorBal = priorbal
 		# prevent somehow calling gameover after game ended
 		self.gameover = False
 
@@ -123,7 +125,8 @@ class MinesView(nextcord.ui.View):
 		embed, file = await DB.addProfitAndBalFields(self, interaction, moneyToAdd-self.amntbet, embed)
 		embed = await DB.calculateXP(self, interaction, self.priorBal, self.amntbet, embed, gameID)
 		
-		await interaction.response.edit_message(embed=embed, view=self, file=file)
+		# await interaction.response.edit_message(embed=embed, view=self, file=file)
+		await self.msg.edit(embed=embed, view=self)
 
 		self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Mines")
 
@@ -184,7 +187,7 @@ class Mines(commands.Cog):
 
 		msg = f"Roobet Mines\nCurrent Profit to Withdraw: 0 (1.00x)\nNext Profit: {(nextProfit-amntbet):,} ({profit[0]:,}x)"
 		embed = nextcord.Embed(color=1768431, title=f"The Casino | Roobet Mines", description=msg)
-		await msgSent.edit(embed=embed, view=MinesView(self.bot, interaction.user.id, minecount, profit, amntbet, priorbal))
+		await msgSent.edit(embed=embed, view=MinesView(self.bot, msgSent, interaction.user.id, minecount, profit, amntbet, priorbal))
 
 	@mines.subcommand()
 	async def profits(self, interaction: Interaction, minecount:int = nextcord.SlashOption(required=True,name="minecount", choices=[x+1 for x in range(24)])):
