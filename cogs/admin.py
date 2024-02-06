@@ -19,10 +19,10 @@ class Admin(commands.Cog):
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def select(self, interaction:Interaction, whattoselect,
-		  table = nextcord.SlashOption(required=True, name="table", choices=("ActiveBuffs", "Codes", "Crypto", "CryptoMiner", 
+		  table = nextcord.SlashOption(required=True, name="table", choices=("ActiveBuffs", "Bounties", "Codes", "Crypto", "CryptoMiner", 
 																	   "Donators", "Economy", "Guilds", "Inventory", "Items", 
 																	   "Logs", "MinerBlocks", "MinerInventory", "Monopoly", 
-																	   "MonopolyPeople", "Multipliers", "Quests", "RankedUsers", 
+																	   "MonopolyPeople", "Multipliers", "Prestige", "Quests", "RankedUsers", 
 																	   "Settings", "Totals")),
 		  conditions=None):
 		if interaction.user.id != config.botOwnerDiscordID:
@@ -80,7 +80,7 @@ class Admin(commands.Cog):
 			amntToReceive = math.floor(amnt * .90)
 			tax = "10% tax"
 		else:
-			if amnt > 950000:
+			if amnt > 500000:
 				embed.description = f"You can only send up to 500,000 {emojis.coin}"
 				embed.set_footer(text=f"Donators can send/receive up to 5,000,000 credits!")
 				await interaction.send(embed=embed, ephemeral=True)
