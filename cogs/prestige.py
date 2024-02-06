@@ -110,21 +110,21 @@ class Prestige(commands.Cog):
 			await interaction.send("Cancelled.", ephemeral=True)
 			return
 
-		# DB.delete("DELETE FROM ActiveBuffs WHERE DiscordID = ?;", [interaction.user.id])
-		# DB.delete("DELETE FROM Crypto WHERE DiscordID = ?;", [interaction.user.id])
-		# DB.delete("DELETE FROM CryptoMiner WHERE DiscordID = ?;", [interaction.user.id])
-		# DB.delete("DELETE FROM Economy WHERE DiscordID = ?;", [interaction.user.id])
-		# DB.delete("DELETE FROM Inventory WHERE DiscordID = ?;", [interaction.user.id])
-		# DB.delete("DELETE FROM MinerInventory WHERE DiscordID = ?;", [interaction.user.id])
-		# DB.delete("DELETE FROM Monopoly WHERE DiscordID = ?;", [interaction.user.id])
-		# DB.delete("DELETE FROM MonopolyPeople WHERE DiscordID = ?;", [interaction.user.id])
-		# DB.delete("DELETE FROM Multipliers WHERE DiscordID = ?;", [interaction.user.id])
-		# DB.delete("DELETE FROM Quests WHERE DiscordID = ?;", [interaction.user.id])
-		# DB.delete("DELETE FROM RankedUsers WHERE DiscordID = ?;", [interaction.user.id])
-		# DB.delete("DELETE FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM ActiveBuffs WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM Crypto WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM CryptoMiner WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM Economy WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM Inventory WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM MinerInventory WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM Monopoly WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM MonopolyPeople WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM Multipliers WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM Quests WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM RankedUsers WHERE DiscordID = ?;", [interaction.user.id])
+		DB.delete("DELETE FROM Totals WHERE DiscordID = ?;", [interaction.user.id])
 
-		# DB.insert('INSERT INTO Economy(DiscordID, Credits) VALUES (?, ?);', [interaction.user.id, 50000*(prestigeLvl+1)])
-		# DB.insert('INSERT INTO Totals(DiscordID) VALUES (?);', [interaction.user.id])
+		DB.insert('INSERT INTO Economy(DiscordID, Credits) VALUES (?, ?);', [interaction.user.id, 50000*(prestigeLvl+1)])
+		DB.insert('INSERT INTO Totals(DiscordID) VALUES (?);', [interaction.user.id])
 
 
 		if insert:
