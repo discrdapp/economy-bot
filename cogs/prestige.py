@@ -144,20 +144,24 @@ class Prestige(commands.Cog):
 	async def info(self, interaction:Interaction):
 		embed = nextcord.Embed(color=Color.blurple(), title=f"{self.bot.user.name} | Prestige | Info")
 		
-		embed.description = """Welcome... to the next level of The Casino.\nPrestiging is like how it is in Call of Duty or games like Cookie Clicker
+		embed.description = f"""Welcome... to the next level of The Casino.\nPrestiging is like how it is in Call of Duty or games like Cookie Clicker
 		\nSpecific requirements must be met to prestige.
 		Prestiging grants a Badge and permanent rewards, and each time you prestige, the rewards get better:
+
+		**REWARDS ARE A WORK IN PROGRESS**\nPrestiging will currently not give you anything, but you will start with some extra credits. 
+		\nJoin the [Support Server]({config.serverInviteURL}) to stay up-to-date on this!
+		"""
 		
-		Prestige 1: 1.1x multiplier
-		Prestige 2: 1.15x multiplier
-		Prestige 3
-		Prestige 4
-		Prestige 5
-		Prestige 6
-		Prestige 7
-		Prestige 8
-		Prestige 9
-		Prestige 10"""
+		# Prestige 1: 1.1x multiplier
+		# Prestige 2: 1.15x multiplier
+		# Prestige 3
+		# Prestige 4
+		# Prestige 5
+		# Prestige 6
+		# Prestige 7
+		# Prestige 8
+		# Prestige 9
+		# Prestige 10"""
 
 		await interaction.send(embed=embed)
 	
