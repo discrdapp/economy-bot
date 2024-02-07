@@ -52,11 +52,11 @@ class Admin(commands.Cog):
 	
 	@nextcord.slash_command()
 	async def pay(self, interaction:Interaction, user: nextcord.Member, amnt):
-		await self.send(interaction, user, amnt)
+		await self.send(interaction=interaction, user=user, amnt=amnt)
 	
 	@nextcord.slash_command()
 	async def transfer(self, interaction:Interaction, user: nextcord.Member, amnt):
-		await self.send(interaction, user, amnt)
+		await self.send(interaction=interaction, user=user, amnt=amnt)
 	
 
 	@nextcord.slash_command()
