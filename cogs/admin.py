@@ -9,6 +9,15 @@ from db import DB
 
 from cogs.util import SendConfirmButton, IsDonatorCheck
 
+
+def SentMaxAmount(amnt, halfAmnt:bool=False):
+	if halfAmnt:
+		return int(amnt) >= 200000
+	else:
+		return int(amnt) >= 450000
+
+
+
 class Admin(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.bot.Bot = bot
@@ -48,11 +57,16 @@ class Admin(commands.Cog):
 	@nextcord.slash_command()
 	async def transfer(self, interaction:Interaction, user: nextcord.Member, amnt):
 		await self.send(interaction, user, amnt)
+	
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='send')
-	@cooldowns.cooldown(4, 300, bucket=cooldowns.SlashBucket.author, cooldown_id='pay')
-	async def send(self, interaction:Interaction, user: nextcord.Member, amnt):
+	@cooldowns.cooldown(1, 600, bucket=cooldowns.SlashBucket.author, cooldown_id='send1', 
+					 check=lambda *args, **kwargs: not IsDonatorCheck(args[1].user.id) and SentMaxAmount(kwargs['amnt']))
+	@cooldowns.cooldown(1, 300, bucket=cooldowns.SlashBucket.author, cooldown_id='send2', 
+					 check=lambda *args, **kwargs: not IsDonatorCheck(args[1].user.id) and SentMaxAmount(kwargs['amnt'], True))
+	@cooldowns.cooldown(4, 300, bucket=cooldowns.SlashBucket.author, cooldown_id='send3')
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='send4')
+	async def send(self, interaction:Interaction, user: nextcord.Member, amnt:int):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Send")
 		if interaction.guild_id not in [821015960931794964, config.adminServerID, 1181383297310400572, 825179206958055425, 467084194200289280, 670038316271403021, 751429233049468960, 1057947351542669332, 1057947351542669332]:
 			embed.description = "This command can only be used in [Donator](https://docs.justingrah.am/thecasino/donator) servers and the [Support Server](https://discord.gg/ggUksVN)."
@@ -76,6 +90,7 @@ class Admin(commands.Cog):
 			if amnt > 5000000:
 				embed.description = f"You can only send up to 5,000,000 {emojis.coin}"
 				await interaction.send(embed=embed, ephemeral=True)
+				cooldowns.reset_bucket(self.send.callback, interaction)
 				return
 			amntToReceive = math.floor(amnt * .90)
 			tax = "10% tax"
@@ -98,10 +113,12 @@ class Admin(commands.Cog):
 		if not await SendConfirmButton(interaction, f"They will only receive {amntToReceive:,}{emojis.coin} ({tax}). Proceed?"):
 			embed.description = "You have cancelled this transaction."
 			await interaction.send(embed=embed, ephemeral=True)
+			cooldowns.reset_bucket(self.send.callback, interaction)
 			return
 		
 		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amnt):
+			cooldowns.reset_bucket(self.send.callback, interaction)
 			raise Exception("tooPoor")
 		
 		senderID = await self.bot.get_cog("Economy").addWinnings(interaction.user.id, 0, activityName=f"Sent to {user.id}", amntBet=amnt)
