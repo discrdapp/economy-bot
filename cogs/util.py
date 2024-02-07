@@ -506,6 +506,7 @@ class Util(commands.Cog):
 		deferMsg = await interaction.original_message()
 
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Bounty")
+
 		if interaction.guild_id != config.adminServerID:
 			raise Exception("onlySupportServer")
 
@@ -544,6 +545,20 @@ class Util(commands.Cog):
 			await deferMsg.edit(embed=embed)
 			return
 		
+		if amount > 100000:
+			if IsDonatorCheck(interaction.user.id):
+				if amount > 1000000:
+					embed.description = f"As a donator, highest bounty you can place is 1,000,000{emojis.coin}"
+					
+					await interaction.send(embed=embed)
+					return
+			else:
+				embed.description = f"Highest bounty you can place is 100,000{emojis.coin}"
+				embed.set_footer(text=f"Donators can place a bounty of up to 1,000,000 credits!")
+
+				await interaction.send(embed=embed)
+				return
+
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amount):
 			raise Exception("tooPoor")
 
