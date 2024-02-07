@@ -37,6 +37,7 @@ class ConfirmButton(nextcord.ui.Button):
 		view.stop()
 
 
+
 def IsDonatorCheck(userId):
 	isDonor = DB.fetchOne("SELECT 1 FROM Donators WHERE DiscordID = ?;", [userId])
 	if not isDonor:
@@ -215,45 +216,49 @@ class Util(commands.Cog):
 		msg = ""
 		for cmd in self.bot.get_all_application_commands():
 			try:
-				cooldown = cooldowns.get_shared_cooldown(cmd.qualified_name)
-			except:
+				if cmd.qualified_name != 'send':
+					time = await self.GetTimeLeft(interaction, cmd.qualified_name)
+					if time:
+						msg += f"{cmd.qualified_name.title()}: {time}\n"
+				
+				else:
+					for x in ['send1', 'send2', 'send3', 'send4']:
+						time = await self.GetTimeLeft(interaction, x)
+						if time:
+							msg += f"{cmd.qualified_name.title()}: {time}\n"
+							break
+
+
+			except Exception as e:
+				e:cooldowns.exceptions.NonExistent = e
+				if "Cannot find" in e.message:
+					continue
+				print(e)
 				continue
-			bucket = cooldown.get_bucket(interaction)
-
-			ctp = cooldown._get_cooldown_for_bucket(bucket=bucket)
-
-			if not ctp:
-				continue
-
-			if not ctp.next_reset:
-				continue
-
-
-			# resetInCST = ctp.next_reset - datetime.timedelta(hours=5)
-			resetInCST = ctp.next_reset
-
-			diff = resetInCST - datetime.datetime.now()
-
-			totalSeconds = round(diff.total_seconds())
-
-			timeLeft = ""
-			if totalSeconds > 86400: # days
-				timeLeft += f"{math.floor(totalSeconds / 86400)}d"
-				totalSeconds = totalSeconds % 86400
-			if totalSeconds > 3600: # hours
-				timeLeft += f"{math.floor(totalSeconds / 3600)}h"
-				totalSeconds = totalSeconds % 3600
-			if totalSeconds > 60: # minutes
-				timeLeft += f"{math.floor(totalSeconds / 60)}m"
-				totalSeconds = totalSeconds % 60
-			timeLeft += f"{totalSeconds}s"
-
-			msg += f"{cmd.qualified_name.title()}: **{timeLeft}**\n"
+		
 		
 		if not msg:
 			msg = "You currently have no commands on cooldown!"
 
 		await interaction.send(msg)
+	
+	async def GetTimeLeft(self, interaction:Interaction, name):
+		# resetInCST = ctp.next_reset - datetime.timedelta(hours=5)
+		cooldown = cooldowns.get_shared_cooldown(name)
+		bucket = cooldown.get_bucket(interaction)
+
+		ctp = cooldown._get_cooldown_for_bucket(bucket=bucket)
+
+		if not ctp:
+			return False
+
+		if not ctp.next_reset:
+			return False
+
+		timeLeft = f"<t:{int(ctp.next_reset.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>"
+
+		return timeLeft
+
 
 
 	@nextcord.slash_command(description="Quick game. Guess if chosen number is lower than 50 or equal/higher")
@@ -637,7 +642,7 @@ class Util(commands.Cog):
 
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 45, bucket=cooldowns.SlashBucket.author, cooldown_id='rob')
+	@cooldowns.cooldown(1, 45, bucket=cooldowns.SlashBucket.author, cooldown_id='history')
 	async def history(self, interaction:Interaction):
 		await interaction.response.defer(with_message=True)
 		deferMsg = await interaction.original_message()
