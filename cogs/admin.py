@@ -389,7 +389,7 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 
 		DB.insert("INSERT INTO Donators(DiscordID, Level, DonatorReward) VALUES(?, ?, ?)", [member.id, 1, donatorReward])
 
-		await interaction.send(f"Donator role added.\
+		await interaction.send(f"**Donator** role added\
 \n{creditsGiven:,}{emojis.coin} added.\
 \n{donatorReward:,}{emojis.coin} added to your Donator Reward\
 \nGame cooldowns **removed**\
@@ -397,8 +397,10 @@ Week's top uses:\n{weekActivitiesMsg}\n\n"
 \n**Doubled** your weekly reward\
 \n**Doubled** your monthly reward\
 \nGave you access to **/donator**\
-\nAdded you to **Donator** role\
 \nSet your fee for **10%** to send/receive coins.\
+\nMaximum coins you can send increased to 5,000,000{emojis.coin}\
+\nReduced cooldown to send coins\
+\nSet maximum bounty you can place to 1,000,000{emojis.coin}\
 \n\n**Please provide <@547475078082985990> the server ID you'd like to allow /send to work in**")
 
 
