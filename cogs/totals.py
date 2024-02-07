@@ -134,7 +134,7 @@ class Totals(commands.Cog):
 							"Numbuh1", "Numbuh2", "Numbuh3", "Numbuh4", "Numbuh5", "SamuraiJack", "TheRedGuy", "Vilgas", "Wilt"]
 
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author, cooldown_id='rob')
+	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author, cooldown_id='log')
 	async def log(self, interaction:Interaction, gameid):
 		await interaction.response.defer(with_message=True, ephemeral=True)
 		deferMsg = await interaction.original_message()
