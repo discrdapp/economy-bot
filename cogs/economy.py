@@ -155,7 +155,7 @@ class Economy(commands.Cog):
 		await deferMsg.edit(embed=embed)
 		
 	@nextcord.slash_command()
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='search')
+	@cooldowns.cooldown(1, 30, bucket=cooldowns.SlashBucket.author, cooldown_id='search')
 	async def search(self, interaction:Interaction):
 		await interaction.response.defer(with_message=True)
 		deferMsg = await interaction.original_message()
