@@ -53,6 +53,8 @@ class Economy(commands.Cog):
 				pass
 
 	async def GetBetAmount(self, interaction:Interaction, amntbet):
+		if isinstance(amntbet, int):
+			return amntbet
 		if amntbet.isdigit():
 			try:
 				amnt = int(amntbet)
