@@ -8,6 +8,8 @@ import ztoken
 bot = commands.AutoShardedBot(intents=nextcord.Intents.all())
 bot.remove_command('help')
 
+restartingSoon = False
+
 extensions = ["db", 
 			  "cogs.achievements",
 			  "cogs.games.bj",				# removable
@@ -71,6 +73,10 @@ async def on_interaction(interaction: Interaction):
 	# if interaction.user.id != config.botOwnerDiscordID:
 	# 	await interaction.send("Updating bot!!! Check back in 10 minutes! :partying_face: ")
 	# 	return
+	# print(interaction.type)
+	if restartingSoon and interaction.type == 2:
+		await interaction.send(f"Bot will be updating soon! Join the [Support Server]({config.serverInviteURL})] for updates.")
+		return
 
 	if isinstance(interaction.channel, nextcord.PartialMessageable):
 		await interaction.send("Commands are not allowed in DMs! They can only be done in servers.", ephemeral=True)
@@ -87,6 +93,13 @@ async def on_interaction(interaction: Interaction):
 
 	await bot.process_application_commands(interaction)
 
+# manually load a cog
+@bot.slash_command(guild_ids=[config.adminServerID])
+@commands.is_owner()
+async def restartsoon(ctx):
+	global restartingSoon
+	restartingSoon = True
+	await ctx.send("Disabled commands")
 
 # manually load a cog
 @bot.slash_command(guild_ids=[config.adminServerID])
