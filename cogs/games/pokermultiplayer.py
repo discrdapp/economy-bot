@@ -11,6 +11,7 @@ from itertools import combinations
 
 import emojis
 from db import DB
+from cogs.util import GetMaxBet
 
 class Player():
 	def __init__(self, user, interaction, id):
@@ -43,7 +44,9 @@ class Player():
 				return
 
 			if self.label == "Bet":
-				await view.player.gameView.bot.get_cog("Economy").addWinnings(view.player.user.id, -view.player.gameView.startingbet)
+				if not await view.player.gameView.bot.get_cog("Economy").subtractBet(view.player.user.id, view.player.gameView.startingbet):
+					await interaction.send(f"You do not have enough {emojis.coin} to do that!", ephemeral=True)
+					return
 				view.player.totalSpent += view.player.gameView.startingbet
 				view.player.gameView.totalFundsToAdd += view.player.gameView.startingbet
 				if await view.player.gameView.PlayerClickedBet(view.player):
@@ -517,13 +520,16 @@ class PokerMultiplayer(commands.Cog):
 
 	@nextcord.slash_command(description="Play Multiplayer Poker!")
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
-	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='mpoker')
+	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author, cooldown_id='mpoker')
 	async def multiplayerpoker(self, interaction:Interaction, startingbet:int):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Poker Multiplayer")
 
 		balance = await self.bot.get_cog("Economy").getBalance(interaction.user)
 		if balance < startingbet:
 			raise Exception("tooPoor")
+		
+		if startingbet > GetMaxBet(interaction.user.id, "Poker"):
+			raise Exception(f"maxBet {GetMaxBet(interaction.user.id, 'Poker')}")
 
 		owner = Player(interaction.user, interaction, 1)
 		owner.isPlayersTurn = True
