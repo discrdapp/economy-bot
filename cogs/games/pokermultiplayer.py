@@ -44,7 +44,7 @@ class Player():
 				return
 
 			if self.label == "Bet":
-				if not await view.player.gameView.bot.get_cog("Economy").subtractBet(view.player.user.id, view.player.gameView.startingbet):
+				if not await view.player.gameView.bot.get_cog("Economy").subtractBet(view.player.user, view.player.gameView.startingbet):
 					await interaction.send(f"You do not have enough {emojis.coin} to do that!", ephemeral=True)
 					return
 				view.player.totalSpent += view.player.gameView.startingbet
