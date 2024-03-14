@@ -48,6 +48,7 @@ class Daily(commands.Cog):
 		embed, file = await DB.addProfitAndBalFields(self, interaction, dailyReward, embed, calculateRankedCP=False)
 
 		await interaction.send(embed=embed, file=file)
+		file.close()
 
 
 

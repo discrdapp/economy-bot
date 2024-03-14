@@ -117,6 +117,7 @@ class View(nextcord.ui.View):
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, self.amntbet, embed, gameID)
 
 		await interaction.send(embed=embed, file=file)
+		file.close()
 
 		self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Crash")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Crsh", profitInt)

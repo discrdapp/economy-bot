@@ -236,6 +236,7 @@ class PokerView(nextcord.ui.View):
 					img.close()
 				else:
 					await self.msg.edit(view=self, embed=self.embed, file=self.file)
+			self.file.close()
 
 	# pass in either dealer or player hand
 	def GetBestHand(self, isPlayer:bool):
@@ -403,8 +404,9 @@ class PokerView(nextcord.ui.View):
 				await self.msg.edit(view=None, embed=self.embed, files=[file, nextcord.File(fp=image_binary, filename='poker.png')])
 				img.close()
 			else:
-				await self.msg.edit(view=None, embed=self.embed, file=file)
-		
+				await self.msg.edit(view=None, embed=self.embed, file=file)		
+		file.close()
+
 		await self.bot.get_cog("Achievements").AddAchievementProgress(interaction, "Poker", [self.amntbet, moneyToAdd > self.amntbet, playerHand], self.ownerId)
 
 	def PlayerDrawCards(self):

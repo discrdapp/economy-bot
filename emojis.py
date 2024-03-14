@@ -36,18 +36,21 @@ async def SendInteractionWithWave(interaction:Interaction, embed):
 
 	embed.set_thumbnail(url="attachment://helpImage.png")
 	await interaction.send(embed=embed, file=file)
+	file.close()
 
 async def SendInteractionWithStop(interaction:Interaction, embed, ephemeral:bool):
 	file = File("images/wumpus/stop.png", filename="stopImage.png")
 
 	embed.set_thumbnail(url="attachment://stopImage.png")
 	await interaction.send(embed=embed, file=file)
+	file.close()
 
 async def SendInteractionWithError(interaction:Interaction, embed, ephemeral:bool):
 	file = File("images/wumpus/error.png", filename="errorImage.png")
 
 	embed.set_thumbnail(url="attachment://errorImage.png")
 	await interaction.send(embed=embed, file=file)
+	file.close()
 
 def GetWin():
 	return File("images/wumpus/win.png", filename="results.png")

@@ -85,6 +85,7 @@ class ScratchTicket(nextcord.ui.View):
 		# Why don't we just calculate the XP in subtractBet
 		embed = await DB.calculateXP(self, interaction, balance, self.amntbet, embed, gameID)
 		await interaction.edit(content="", embed=embed, view=self, file=file)
+		file.close()
 
 		self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Scratch")
 	

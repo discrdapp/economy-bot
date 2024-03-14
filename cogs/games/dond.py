@@ -272,6 +272,7 @@ class View(nextcord.ui.View):
 		self.embed = await DB.calculateXP(self, interaction, balance - moneyToAdd, self.amntBet, self.embed, gameID)
 
 		await self.msg.edit(embed=self.embed, view=None, file=file)
+		file.close()
 
 		self.bot.get_cog("Totals").addTotals(interaction, self.amntBet, moneyToAdd, "DOND")
 

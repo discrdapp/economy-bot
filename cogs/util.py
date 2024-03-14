@@ -296,6 +296,7 @@ class Util(commands.Cog):
 		embed = await DB.calculateXP(self, interaction, balance - profitInt, amntbet, embed, gameID)
 
 		await deferMsg.edit(embed=embed, file=file)
+		file.close()
 
 		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "HighLow")
 
