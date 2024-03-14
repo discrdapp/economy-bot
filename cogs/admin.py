@@ -28,10 +28,10 @@ class Admin(commands.Cog):
 	@nextcord.slash_command(guild_ids=[config.adminServerID])
 	@application_checks.is_owner()
 	async def select(self, interaction:Interaction, whattoselect,
-		  table = nextcord.SlashOption(required=True, name="table", choices=("ActiveBuffs", "Bounties", "Codes", "Crypto", "CryptoMiner", 
+		  table = nextcord.SlashOption(required=True, name="table", choices=("AchievementProgress", "ActiveBuffs", "Bounties", "Codes", "Crypto", "CryptoMiner", 
 																	   "Donators", "Economy", "Guilds", "Inventory", "Items", 
 																	   "Logs", "MinerBlocks", "MinerInventory", "Monopoly", 
-																	   "MonopolyPeople", "Multipliers", "Prestige", "Quests", "RankedUsers", 
+																	   "MonopolyPeople", "Multipliers", "MultipliersPerm", "Prestige", "Quests", "RankedUsers", 
 																	   "Settings", "Totals")),
 		  conditions=None):
 		if interaction.user.id != config.botOwnerDiscordID:
@@ -228,7 +228,7 @@ class Admin(commands.Cog):
 				seconds = round(seconds)
 				timeLeft += f"{seconds} seconds"
 
-				msg += f"ID: {multiplier[0]}'s expires at {expireDate}. {timeLeft} left. {multiplierValue}x multiplier."
+				msg += f"ID: {multiplier[0]}'s expires at {expireDate}. {timeLeft} left. {multiplierValue}x multiplier\n"
 
 
 		await interaction.send(msg)
