@@ -247,7 +247,7 @@ class Economy(commands.Cog):
 				extraMoney = int(profitAmnt * (multiplier - 1))
 				winnings += extraMoney
 		if winnings != 0:
-			DB.update("UPDATE Economy SET Credits = Credits + ? WHERE DiscordID = ?;", [math.ceil(winnings), discordid])
+			DB.update("UPDATE Economy SET Credits = Credits + ? WHERE DiscordID = ?;", [round(winnings), discordid])
 
 		gameID = None
 		balance = DB.fetchOne("SELECT Credits FROM Economy WHERE DiscordID = ?;", [discordid])[0]
