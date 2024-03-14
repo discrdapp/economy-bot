@@ -102,7 +102,7 @@ class DB(commands.Cog):
 		if profit > 0:
 			file = emojis.GetWin()
 			if giveMultiplier:
-				embed.add_field(name=name, value=f"+{profit:,} (+{int(profit * (multiplier - 1))}){emojis.coin}", inline=True)
+				embed.add_field(name=name, value=f"+{profit:,} (+{round(profit * (multiplier - 1))}){emojis.coin}", inline=True)
 			else:
 				embed.add_field(name=name, value=f"+{profit:,}{emojis.coin}", inline=True)
 		else:
