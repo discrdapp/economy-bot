@@ -57,20 +57,26 @@ class Multipliers(commands.Cog):
 
 
 	def getMultiplier(self, userId:int):
+		tempMultiplier = 1.0
 		multipliers = DB.fetchOne("SELECT Multiplier, Expires FROM Multipliers WHERE DiscordID == ?;", [userId])
-		if not multipliers: 
-			return 1.0
+		if multipliers: 
+			multiplier = multipliers[0]
+			expires = multipliers[1]
 
-		multiplier = multipliers[0]
-		expires = multipliers[1]
-
-		expireDate = datetime.datetime.strptime(expires, '%Y-%d-%m %H:%M:%S')
-		if expireDate > datetime.datetime.now(): # if multiplier not expired, return it
-			return multiplier
+			expireDate = datetime.datetime.strptime(expires, '%Y-%d-%m %H:%M:%S')
+			if expireDate > datetime.datetime.now(): # if multiplier not expired, return it
+				tempMultiplier = multiplier
+			else:
+				DB.delete("DELETE FROM Multipliers WHERE DiscordID = ?;", [userId])
+		
+		permMultipliers = DB.fetchOne("SELECT Multiplier FROM MultipliersPerm WHERE DiscordID == ?;", [userId])
+		permMultiplier = 0
+		if not permMultipliers:
+			permMultiplier = 0
 		else:
-			DB.delete("DELETE FROM Multipliers WHERE DiscordID = ?;", [userId])
+			permMultiplier = permMultipliers[0]
 
-		return 1.0
+		return tempMultiplier + permMultiplier
 
 	def getMultiplierAndExpiration(self, userId, returnExpirationAsString=True):
 		multipliers = DB.fetchOne("SELECT Multiplier, Expires FROM Multipliers WHERE DiscordID == ?;", [userId])
