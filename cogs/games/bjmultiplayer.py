@@ -345,7 +345,6 @@ class Blackjack(nextcord.ui.View):
 			await self.bot.get_cog("Economy").addWinnings(player.user.id, -self.amntbet)
 
 		self.embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Blackjack")
-		file = nextcord.File("./images/bj.png", filename="image.png")
 		self.embed.set_thumbnail(url="attachment://image.png")
 
 
