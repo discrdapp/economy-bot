@@ -122,7 +122,7 @@ class MinesView(nextcord.ui.View):
 
 		gameID = await self.bot.get_cog("Economy").addWinnings(self.ownerId, moneyToAdd, giveMultiplier=True, activityName="Mines", amntBet=self.amntbet)
 		
-		embed, file = await DB.addProfitAndBalFields(self, interaction, moneyToAdd-self.amntbet, embed)
+		embed, _ = await DB.addProfitAndBalFields(self, interaction, moneyToAdd-self.amntbet, embed)
 		embed = await DB.calculateXP(self, interaction, self.priorBal, self.amntbet, embed, gameID)
 		
 		# await interaction.response.edit_message(embed=embed, view=self, file=file)
