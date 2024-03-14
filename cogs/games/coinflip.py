@@ -97,6 +97,7 @@ class MultiplayerView(nextcord.ui.View):
 		self.embed.set_footer(text=f"{winner}'s GameID: {winnerLogID}\n{loser}'s GameID: {loserLogID}")
 
 		await interaction.edit(file=file, embed=self.embed)
+		file.close()
 
 
 

@@ -661,6 +661,7 @@ class Totals(commands.Cog):
 		embed.set_image(url="attachment://image.png")
 		embed.add_field(name="Edited!", value=f"Successfully changed to {choice}.")
 		await deferMsg.edit(file=file, embed=embed)
+		file.close()
 
 
 	@nextcord.slash_command()

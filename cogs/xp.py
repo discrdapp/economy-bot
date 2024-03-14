@@ -72,6 +72,7 @@ class XP(commands.Cog):
 			embed.set_thumbnail(url="attachment://image.png")
 			embed.add_field(name = f"Credits Bonus!", value = f"**{credits}**{emojis.coin}")
 			await interaction.channel.send(file=file, embed=embed)
+			file.close()
 			# await interaction.send(file=file, embed=embed)
 
 

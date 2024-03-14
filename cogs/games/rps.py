@@ -96,6 +96,7 @@ class rps(commands.Cog):
 
 		embed.set_thumbnail(url="attachment://image.png")
 		await interaction.send(content=f"{interaction.user.mention}", file=file, embed=embed)
+		file.close()
 		
 		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "RPS")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "RPS", profitInt)

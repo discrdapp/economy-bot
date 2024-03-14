@@ -752,6 +752,7 @@ class Blackjack(nextcord.ui.View):
 				img.close()
 			else:
 				await self.msg.edit(embed=self.embed, view=None, file=file)
+		file.close()
 
 		self.bot.get_cog("Totals").addTotals(self.interaction, self.amntbet, moneyToAdd, "Blackjack")	
 		await self.bot.get_cog("Quests").AddQuestProgress(self.interaction, user, "BJ", profitInt)
