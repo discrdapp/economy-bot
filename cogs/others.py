@@ -83,7 +83,7 @@ class Others(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title="Thanks for taking an interest in me!")
 		embed.set_footer(text="And that's all for now folks!")
 
-		embed.add_field(name = "BOT HAS SWITCHED TO SLASH COMMANDS", value="Commands start with slash (/). **Below New Commands are WIP**", inline=False)
+		embed.add_field(name = "Commands start with slash (/)", value="_ _", inline=False)
 		
 		embed.add_field(name = ":game_die: Game Commands", 
 						 value="`poker`, `blackjack`, `roulette`, `slots`, `crash`, `horse`, " 
@@ -94,14 +94,12 @@ class Others(commands.Cog):
 
 		embed.add_field(name = ":gear: Other Commands",
 					   value = "`balance`, `rank`, `top`, `position`, `shop`, `use`, `stats`, `bank`, "
-							 + "`profile`, `level`, `rewards`, `inventory`, `pay`, `cooldown`, `log`, `feedback`", inline=False)
+							 + "`profile`, `level`, `rewards`, `inventory`, `pay`, `cooldown`, `log`, `feedback`, `settings`, `donate`", inline=False)
 
 		embed.add_field(name = ":money_with_wings: Earn Money",
-					   value = "`vote`, `work`, `daily`, `weekly`, `monthly`, `search`, `claim`, `beg`, `crime`, `fish`, `dig`, `monopoly`", inline=False)
+					   value = "`vote`, `work`, `daily`, `weekly`, `monthly`, `search`, `claim`, `beg`, `crime`, `fish`, `dig`, `monopoly`, `quests`, `referral`", inline=False)
 
-		embed.add_field(name=":grey_question: Quests", value=f"`quests`")
-
-		embed.add_field(name="New commands! :bangbang:", value = "`referral`, `settings`, `donate`", inline=False)
+		embed.add_field(name="New commands! :bangbang:", value = "`auctions`, `alerts`", inline=False)
 
 		# embed.add_field(name = ":grey_exclamation: Miscellaneous",
 		# 				value = f"\n[Join official server](https://discord.gg/ggUksVN) and use `/claim` for free 7,500{emojis.coin}")
