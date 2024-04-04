@@ -754,7 +754,7 @@ class Blackjack(nextcord.ui.View):
 				await self.msg.edit(embed=self.embed, view=None, file=file)
 		file.close()
 
-		self.bot.get_cog("Totals").addTotals(self.interaction, self.amntbet, moneyToAdd, "Blackjack")	
+		await self.bot.get_cog("Totals").addTotals(self.interaction, self.amntbet, moneyToAdd, "Blackjack")	
 		await self.bot.get_cog("Quests").AddQuestProgress(self.interaction, user, "BJ", profitInt)
 		# if player won by blackjack:
 		# 		has blackjack (21 with first 2 cards) and did not win by insurance

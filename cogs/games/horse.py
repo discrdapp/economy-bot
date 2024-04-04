@@ -161,7 +161,7 @@ class View(nextcord.ui.View):
 		await self.msg.edit(content=self.GetFullDisplay(self.horses), view=self, embed=self.embed, file=file)
 		file.close()
 
-		self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Horse")
+		await self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Horse")
 
 
 

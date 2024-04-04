@@ -119,7 +119,7 @@ class View(nextcord.ui.View):
 		await interaction.send(embed=embed, file=file)
 		file.close()
 
-		self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Crash")
+		await self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Crash")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Crsh", profitInt)
 
 

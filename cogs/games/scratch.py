@@ -87,7 +87,7 @@ class ScratchTicket(nextcord.ui.View):
 		await interaction.edit(content="", embed=embed, view=self, file=file)
 		file.close()
 
-		self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Scratch")
+		await self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Scratch")
 	
 	def GenerateTicket(self):
 		self.winningNumber = randint(10, 99)

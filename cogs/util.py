@@ -298,7 +298,7 @@ class Util(commands.Cog):
 		await deferMsg.edit(embed=embed, file=file)
 		file.close()
 
-		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "HighLow")
+		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "HighLow")
 
 
 

@@ -128,7 +128,7 @@ class MinesView(nextcord.ui.View):
 		# await interaction.response.edit_message(embed=embed, view=self, file=file)
 		await self.msg.edit(embed=embed, view=self)
 
-		self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Mines")
+		await self.bot.get_cog("Totals").addTotals(interaction, self.amntbet, moneyToAdd, "Mines")
 
 class Mines(commands.Cog):
 	def __init__(self, bot):

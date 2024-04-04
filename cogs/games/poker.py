@@ -433,7 +433,7 @@ class Poker(commands.Cog):
 					  "♠ A", "♠ 2", "♠ 3", "♠ 4", "♠ 5", "♠ 6", "♠ 7", "♠ 8", "♠ 9", "♠ T", "♠ J", "♠ Q", "♠ K"]
 		shuffle(self.cards)
 
-	@nextcord.slash_command(description="Play BlackJack!")
+	@nextcord.slash_command(description="Play Poker!")
 	@commands.bot_has_guild_permissions(send_messages=True, manage_messages=True, embed_links=True, use_external_emojis=True, attach_files=True)
 	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='poker', check=lambda *args, **kwargs: not IsDonatorCheck(args[1].user.id))
 	async def poker(self, interaction:Interaction, startingbet):

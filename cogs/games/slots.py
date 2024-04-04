@@ -138,7 +138,7 @@ class Slots(commands.Cog):
 		await botMsg.edit(content=None, embed=embed, file=file)
 		file.close()
 
-		self.bot.get_cog("Totals").addTotals(interaction, amntbet, profitInt, "Slots")
+		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, profitInt, "Slots")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "Slt", profitInt)
 
 

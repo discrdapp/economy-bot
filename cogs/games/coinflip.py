@@ -180,7 +180,7 @@ class Coinflip(commands.Cog):
 		embed.set_thumbnail(url="attachment://image.png")
 		await interaction.send(file=file, embed=embed)
 
-		self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "Coinflip")
+		await self.bot.get_cog("Totals").addTotals(interaction, amntbet, moneyToAdd, "Coinflip")
 		await self.bot.get_cog("Quests").AddQuestProgress(interaction, interaction.user, "CF", profitInt)
 
 def setup(bot):

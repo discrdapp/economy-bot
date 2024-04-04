@@ -6,7 +6,7 @@ from nextcord import Interaction
 import sqlite3, datetime, json, cooldowns, uuid
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 from math import floor
-from random import shuffle
+from random import shuffle, randint
 
 import config, io
 from db import DB
@@ -769,7 +769,7 @@ class Totals(commands.Cog):
 
 
 
-	def addTotals(self, interaction:Interaction, spent, won, game=None):
+	async def addTotals(self, interaction:Interaction, spent, won, game=None):
 		if won < 0:
 			won = 0
 		if spent < 0:
@@ -792,6 +792,9 @@ class Totals(commands.Cog):
 		conn.execute(sql)
 		conn.commit()
 		conn.close()
+
+		# if randint(1, 3) == 3:
+		await self.bot.get_cog("Alerts").SendAlertNotification(interaction)
 
 
 def setup(bot):
