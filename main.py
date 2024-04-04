@@ -2,6 +2,8 @@ import nextcord
 from nextcord.ext import commands 
 from nextcord import Interaction
 
+# from cogs.auctions import AuctionScheduler
+
 import config
 import ztoken
 
@@ -12,6 +14,8 @@ restartingSoon = False
 
 extensions = ["db", 
 			  "cogs.achievements",
+			  "cogs.alerts",
+			  "cogs.auctions",
 			  "cogs.games.bj",				# removable
 			  "cogs.games.bjmultiplayer",	# removable
 			  "cogs.games.coinflip",		# removable
@@ -66,6 +70,7 @@ async def on_ready():
 	print("Ready...")
 
 	await bot.change_presence(activity=nextcord.Game(name="Do /help for help! SLASH COMMANDS!!!"))
+
 
 
 @bot.event
