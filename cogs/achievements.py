@@ -92,10 +92,7 @@ class Achievements(commands.Cog):
 		# achievement: ID, Name
 		for achievement in progress:
 			DB.update("UPDATE AchievementProgress SET Progress = -1 WHERE DiscordID = ? AND ID = ?;", [discordId, achievement[0]])
-			if achievement[2] > 0:
-				await self.bot.get_cog("Economy").addWinnings(discordId, achievement[2], activityName=f"Earned achievement#{achievement[0]}", amntBet=0)
-
-			await self.SendEarnedAchievementMsg(interaction, achievement[1], achievement[2])
+			await self.SendEarnedAchievementMsg(interaction, achievement[1], achievement[2], achievement[0])
 	
 	async def FindAchievementIDWithDesc(self, activity, desc):
 		achievementID = DB.fetchOne(f"SELECT ID FROM AchievementList WHERE Activity = '{activity}' AND Description LIKE '%{desc}%'")
@@ -112,13 +109,14 @@ class Achievements(commands.Cog):
 			return
 		DB.insert("INSERT INTO AchievementProgress VALUES(?, ?, ?)", [discordId, achievementID, -1])
 
-		await self.SendEarnedAchievementMsg(interaction, achievement[0], achievement[1])
+		await self.SendEarnedAchievementMsg(interaction, achievement[0], achievement[1], achievementID)
 
-	async def SendEarnedAchievementMsg(self, interaction:Interaction, name, reward):
+	async def SendEarnedAchievementMsg(self, interaction:Interaction, name, reward, achievementID):
 		embed = nextcord.Embed(color=Color.green(), title=f"{self.bot.user.name} | Achievement Earned!")
 		
 		if reward:
 			embed.description = f"You unlocked an Achievement:\n**{name}**\n**Reward:** {reward}{emojis.coin}"
+			await self.bot.get_cog("Economy").addWinnings(interaction.user.id, reward, activityName=f"Earned achievement#{achievementID}", amntBet=0)
 		else:
 			embed.description = f"You unlocked an Achievement:\n**{name}**"
 		embed.set_footer(text="Check all your /achievements")
