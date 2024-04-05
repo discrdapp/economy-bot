@@ -793,8 +793,8 @@ class Totals(commands.Cog):
 		conn.commit()
 		conn.close()
 
-		# if randint(1, 3) == 3:
-		await self.bot.get_cog("Alerts").SendAlertNotification(interaction)
+		if randint(1, 3) == 3:
+			await self.bot.get_cog("Alerts").SendAlertNotification(interaction)
 
 
 def setup(bot):
