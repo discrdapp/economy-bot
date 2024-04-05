@@ -84,7 +84,7 @@ class ListItemView(nextcord.ui.View):
 				await interaction.send("Must select option for each before submitting listing", ephemeral=True)
 				return
 			if not self.bot.get_cog("Inventory").checkInventoryFor(interaction.user, self.itemName):
-				await interaction.send(f"You do not have item {self.itemName} in your inventory")
+				await interaction.send(f"You do not have item {self.itemName} in your inventory", ephemeral=True)
 				return
 			await interaction.send("Adding listing!", ephemeral=True)
 			self.stop()
@@ -105,7 +105,7 @@ class DisplayAuctionList(menus.ListPageSource):
 
 		# SellerID, Item, CurrentBid, CurrentBidderID 
 		for x in range(0, len(entries)):
-			name = f"ID#{entries[x][0]} | {entries[x][2]} - {entries[x][3]}{emojis.coin} - {entries[x][5]} bids"
+			name = f"ID#{entries[x][0]} | {entries[x][2]} - {entries[x][3]:,}{emojis.coin} - {entries[x][5]} bids"
 
 			value = f"*ends <t:{int(entries[x][6])}:R>*"
 
@@ -144,21 +144,27 @@ class AuctionScheduler(commands.Cog):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Auction")
 		sellerID, itemName, currentBid, currentBidderID = self.GetItem(auction_id)
 
-		sellerUser = await self.bot.fetch_user(sellerID)
+		try:
+			sellerUser = await self.bot.fetch_user(sellerID)
+		except:
+			sellerUser = await self.bot.fetch_user(547475078082985990)
 
 		# if user bid
 		if currentBidderID != "0":
-			buyerUser = await self.bot.fetch_user(currentBidderID)
+			try:
+				buyerUser = await self.bot.fetch_user(currentBidderID)
+			except:
+				buyerUser = await self.bot.fetch_user(547475078082985990)
 
 			# add item to bidder's inventory
 			self.bot.get_cog("Inventory").addItemToInventory(currentBidderID, 1, itemName)
 			# add funds to seller
 			await self.bot.get_cog("Economy").addWinnings(sellerID, round(currentBid*0.975))
 
-			embed.description = f"Congratulations! Your item {itemName} sold for {currentBid} (-2.5% seller fee) {emojis.coin}. Your funds have been added."
+			embed.description = f"Congratulations! Your item {itemName} sold for {currentBid:,} (-2.5% seller fee) {emojis.coin}. Your funds have been added."
 			await sellerUser.send(embed=embed)
 
-			embed.description = f"Congratulations! You have won Auction #{auction_id} for item {itemName} ({currentBid}{emojis.coin}). Item has been added to your inventory"
+			embed.description = f"Congratulations! You have won Auction #{auction_id} for item {itemName} ({currentBid:,}{emojis.coin}). Item has been added to your inventory"
 			await buyerUser.send(embed=embed)
 		# no user bids
 		else:
@@ -172,7 +178,6 @@ class AuctionScheduler(commands.Cog):
 
 
 
-		
 
 	async def load_auctions(self):
 		currentTimestamp = datetime.now().timestamp()
@@ -215,7 +220,7 @@ class AuctionScheduler(commands.Cog):
 		data = DB.fetchAll("SELECT * FROM AuctionListings;")
 		
 		if not data:
-			await interaction.send("There are no active listings...")
+			await interaction.send("There are no active listings...", ephemeral=True)
 			return
 		
 		pages = menus.ButtonMenuPages(
@@ -226,7 +231,7 @@ class AuctionScheduler(commands.Cog):
 		await pages.start(interaction=interaction, ephemeral=True)
 
 	@auction.subcommand()
-	@cooldowns.cooldown(1, 10, bucket=cooldowns.SlashBucket.author, cooldown_id='bid')
+	@cooldowns.cooldown(1, 5, bucket=cooldowns.SlashBucket.author, cooldown_id='bid')
 	async def bid(self, interaction:Interaction, id:int, amnt:int):
 		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Auction | Bid")
 		
@@ -234,45 +239,57 @@ class AuctionScheduler(commands.Cog):
 
 		if not sellerID:
 			embed.description = "Auction listing not found..."
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 		
 		if sellerID == interaction.user.id:
 			embed.description = "You cannot bid on your own item"
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 		
 		if currentBidderID == interaction.user.id:
 			embed.description = "You are already the highest bidder for this item"
-			await interaction.send(embed=embed)
+			await interaction.send(embed=embed, ephemeral=True)
+			return
+		
+		if amnt > 100000:
+			embed.description = f"Bid must be less than 100,000{emojis.coin}"
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 
-		if amnt <= currentBid:
-			embed.description = f"Current bid is {currentBid}. Your bid must be higher"
-			await interaction.send(embed=embed)
-			cooldowns.reset_bucket(self.bid.callback, interaction)
+		if amnt <= currentBid + 100:
+			embed.description = f"Current bid is {currentBid}. Your bid must be at least 100{emojis.coin} higher"
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 
-		if not await SendConfirmButton(interaction, f"You're about to bid on {itemName} for {amnt}{emojis.coin}. Proceed?"):
+
+
+		if not await SendConfirmButton(interaction, f"You're about to bid on {itemName} for {amnt:,}{emojis.coin}. Proceed?"):
 			embed.description = "You have cancelled this transaction."
 			await interaction.send(embed=embed, ephemeral=True)
-			cooldowns.reset_bucket(self.bid.callback, interaction)
 			return
 		
 		if not await self.bot.get_cog("Economy").subtractBet(interaction.user, amnt):
 			embed.description = f"You do not have enough credits for that bid"
-			await interaction.send(embed=embed)
-			cooldowns.reset_bucket(self.bid.callback, interaction)
+			await interaction.send(embed=embed, ephemeral=True)
 			return
 		
 		# refund previous bidder
 		if currentBidderID != "0":
-			await self.bot.get_cog("Economy").addWinnings(currentBidderID, currentBid)
-			previousHighestBidder = await self.bot.fetch_user(currentBidderID)
-			embed.add_field(name="OUTBID!", value=f"You have been outbid for Auction ID#{id} with item {itemName}. Highest bid is now {amnt}")
-			await previousHighestBidder.send(embed=embed)
+			try:
+				previousHighestBidder = await self.bot.fetch_user(currentBidderID)
+				if previousHighestBidder:
+					await self.bot.get_cog("Economy").addWinnings(currentBidderID, currentBid)
+					embed.add_field(name="OUTBID!", value=f"You have been outbid for Auction ID#{id} with item {itemName}. Highest bid is now {amnt:,}{emojis.coin}")
+					await previousHighestBidder.send(embed=embed)
+			except:
+				pass
 		
 		DB.update("UPDATE AuctionListings SET CurrentBid = ?, CurrentBidderID = ?, BidCount = BidCount + 1 WHERE AuctionID = ?", [amnt, interaction.user.id, id])
+
+		embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Auction | Bid")
+		embed.description = f"You have placed a bid on {itemName} for {amnt:,}{emojis.coin}"
+		await interaction.send(embed=embed)
 
 	@auction.subcommand()
 	async def sell(self, interaction:Interaction):
