@@ -58,19 +58,14 @@ class Alerts(commands.Cog):
 		self.latestTimestamp = latestAlert[3]
 		latestAlertID = latestAlert[0]
 		
-		usedWhoViewedAlert = DB.fetchAll("SELECT DiscordID FROM AlertsViewed WHERE AlertID = ?;", [latestAlertID])
-		self.usedWhoViewedAlert = [item[0] for item in usedWhoViewedAlert]
+		usersWhoViewedAlert = DB.fetchAll("SELECT DiscordID FROM AlertsViewed WHERE AlertID = ?;", [latestAlertID])
+		self.usersWhoViewedAlert = [item[0] for item in usersWhoViewedAlert]
 
 		noAlerts = DB.fetchAll("SELECT DiscordID FROM AlertsMuted")
 		self.noAlerts = [item[0] for item in noAlerts]
 
-
-		print((datetime.now()).timestamp())
-
-		print((datetime.now() + timedelta(days=30)).timestamp())
-
 	async def SendAlertNotification(self, interaction:Interaction):
-		if str(interaction.user.id) in self.usedWhoViewedAlert:
+		if str(interaction.user.id) in self.usersWhoViewedAlert:
 			return
 
 		if str(interaction.user.id) in self.noAlerts:
@@ -92,7 +87,7 @@ class Alerts(commands.Cog):
 	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author, cooldown_id='alerts')
 	async def alerts(self, interaction:Interaction):
 		timestamp30DayBeforeNow = (datetime.now() - timedelta(days=30)).timestamp()
-		if timestamp30DayBeforeNow > self.latestTimestamp or str(interaction.user.id) in self.usedWhoViewedAlert:
+		if timestamp30DayBeforeNow > self.latestTimestamp or str(interaction.user.id) in self.usersWhoViewedAlert:
 			embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Alerts")
 			embed.description = "You do not have any unread alerts"
 			await interaction.send(embed=embed, ephemeral=True)
@@ -115,7 +110,7 @@ class Alerts(commands.Cog):
 			await interaction.send(embed=embed, ephemeral=True)
 
 			DB.insert("INSERT INTO AlertsViewed VALUES(?, ?);", [alert[0], interaction.user.id])
-			self.usedWhoViewedAlert.append(str(interaction.user.id))
+			self.usersWhoViewedAlert.append(str(interaction.user.id))
 
 			if alert[3] > 0:
 				if not sendBalMsg:
@@ -170,8 +165,8 @@ class Alerts(commands.Cog):
 		self.latestTimestamp = latestAlert[3]
 		latestAlertID = latestAlert[0]
 		
-		usedWhoViewedAlert = DB.fetchAll("SELECT DiscordID FROM AlertsViewed WHERE AlertID = ?;", [latestAlertID])
-		self.usedWhoViewedAlert = [item[0] for item in usedWhoViewedAlert]
+		usersWhoViewedAlert = DB.fetchAll("SELECT DiscordID FROM AlertsViewed WHERE AlertID = ?;", [latestAlertID])
+		self.usersWhoViewedAlert = [item[0] for item in usersWhoViewedAlert]
 
 		noAlerts = DB.fetchAll("SELECT DiscordID FROM AlertsMuted")
 		self.noAlerts = [item[0] for item in noAlerts]
@@ -187,8 +182,6 @@ class Alerts(commands.Cog):
 		await interaction.response.send_modal(modal)
 
 		await modal.wait()
-		print(modal.name)
-		print(modal.desc)
 		DB.insert("INSERT INTO Alerts(Title, Description, Timestamp) VALUES(?, ?, ?);", [modal.name, modal.desc, datetime.now().timestamp()])
 
 		await self.refreshalerts(interaction)
@@ -196,15 +189,11 @@ class Alerts(commands.Cog):
 	@nextcord.slash_command(name="alerts-history")
 	@cooldowns.cooldown(1, 3, bucket=cooldowns.SlashBucket.author, cooldown_id='alerts-on')
 	async def alerthistory(self, interaction:Interaction):
-		timestamp30DayBeforeNow = (datetime.now() - timedelta(days=30)).timestamp()
-		if str(interaction.user.id) not in self.usedWhoViewedAlert:
+		if str(interaction.user.id) not in self.usersWhoViewedAlert:
 			embed = nextcord.Embed(color=1768431, title=f"{self.bot.user.name} | Alerts")
 			embed.description = "You have unread </alerts:1219808401597534269>. You must read those before you can look at the History."
 			await interaction.send(embed=embed, ephemeral=True)
 			return
-		
-		
-		
 
 		allAlerts = DB.fetchAll("SELECT * FROM Alerts;")
 
