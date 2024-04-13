@@ -134,7 +134,7 @@ for x in sellableItems:
 sellableItemNamesList = [item for sublist in sellableItemNames for item in sublist]
 
 usableItemNames = DB.fetchAll("SELECT Name FROM Items WHERE Type = 'Usable';")
-usableItemNamesList = [item for sublist in usableItemNames for item in sublist]
+usableItemNamesList = [item[0] for item in usableItemNames]
 
 collectibleItems = DB.fetchAll("SELECT * FROM Items WHERE Type = 'Collectible';")
 
