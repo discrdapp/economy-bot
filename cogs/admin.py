@@ -246,7 +246,7 @@ class Admin(commands.Cog):
 		msg = await interaction.original_message()
 		amnt = DB.fetchAll("select DateTime, Activity from logs;")
 
-		totalUses = len(amnt) + 96934
+		totalUses = len(amnt) + 96934 + 1584255
 
 		todaysUses = 0
 		weeksUses = 0
