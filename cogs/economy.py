@@ -268,7 +268,7 @@ class Economy(commands.Cog):
 
 	@nextcord.slash_command()
 	async def leaderboard(self, interaction:Interaction, 
-			   option = nextcord.SlashOption( required=False,name="option", choices=("Balance", "Level", "Profit")), 
+			   option = nextcord.SlashOption( required=False,name="option", choices=("Balance", "Level", "Profit", "Balance+Bank")), 
 			   local = nextcord.SlashOption(required=False,name="local", choices=("local", "global"))):
 		await self.top(interaction, option, local)
 
@@ -278,7 +278,7 @@ class Economy(commands.Cog):
 			   option = nextcord.SlashOption(
 					required=False,
 					name="option", 
-					choices=("Balance", "Level", "Profit")), 
+					choices=("Balance", "Level", "Profit", "Balance+Bank")), 
 				local = nextcord.SlashOption(
 					required=False,
 					name="local", 
@@ -296,6 +296,9 @@ class Economy(commands.Cog):
 			elif option == "Profit":
 				sql = f"SELECT DiscordID, Profit FROM Totals"
 				orderBy = "Profit"
+			elif option == "Balance+Bank":
+				sql = f"SELECT DiscordID, Credits+Bank as Balance FROM Economy"
+				orderBy = "Balance"
 		else:
 			option = "Balance"
 			sql = f"SELECT DiscordID, Credits FROM Economy"
