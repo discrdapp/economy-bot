@@ -5,7 +5,7 @@ from nextcord import Interaction
 # from cogs.auctions import AuctionScheduler
 
 import config
-import ztoken
+import os
 
 bot = commands.AutoShardedBot(intents=nextcord.Intents.all())
 bot.remove_command('help')
@@ -169,6 +169,6 @@ async def main():
 		except Exception as error:
 			print(f"{extension} could not be loaded. [{error}]")
 
-	await bot.start(ztoken.token)
+	await bot.start(os.environ['token']  )
 
 bot.loop.run_until_complete(main())
