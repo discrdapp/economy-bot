@@ -7,6 +7,10 @@ from nextcord import Interaction
 import config
 import os
 
+from keep_alive import keep_alive
+
+keep_alive()
+
 bot = commands.AutoShardedBot(intents=nextcord.Intents.all())
 bot.remove_command('help')
 
